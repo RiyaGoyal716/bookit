@@ -1,0 +1,14 @@
+#!/bin/sh
+# Bookit monorepo pre-commit hook.
+# Git runs hooks from the repo root, but the app (and its package.json)
+# lives in apps/mobile — so cd there before running the checks.
+
+cd apps/mobile || exit 1
+
+echo "[pre-commit] Running lint..."
+npm run lint || exit 1
+
+echo "[pre-commit] Running typecheck..."
+npm run typecheck || exit 1
+
+echo "[pre-commit] OK"
