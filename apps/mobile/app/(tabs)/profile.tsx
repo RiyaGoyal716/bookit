@@ -1,20 +1,26 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Image } from 'expo-image';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Button } from '../../src/components';
+import { Button, EmptyState } from '../../src/components';
+import { route } from '../../src/lib/nav';
+import { getProviderById } from '../../src/mocks';
+import type { Provider } from '../../src/mocks/types';
 import { useAuthStore } from '../../src/stores/authStore';
+import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 
 type RowIcon = keyof typeof Ionicons.glyphMap;
 
-const MENU: { icon: RowIcon; label: string }[] = [
-  { icon: 'notifications-outline', label: 'Notifications' },
-  { icon: 'card-outline', label: 'Payment methods' },
-  { icon: 'location-outline', label: 'Saved addresses' },
-  { icon: 'help-circle-outline', label: 'Help & support' },
+const MENU: { icon: RowIcon; label: string; href: string }[] = [
+  { icon: 'notifications-outline', label: 'Notifications', href: '/notifications' },
+  { icon: 'location-outline', label: 'Saved addresses', href: '/addresses' },
+  { icon: 'settings-outline', label: 'Settings', href: '/settings' },
+  { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
 ];
 
 export default function ProfileScreen() {
@@ -24,6 +30,12 @@ export default function ProfileScreen() {
   const styles = useMemo(() => makeStyles(c), [c]);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const favouriteIds = useFavouritesStore((s) => s.ids);
+
+  const favourites = useMemo(
+    () => favouriteIds.map((id) => getProviderById(id)).filter((p): p is Provider => Boolean(p)),
+    [favouriteIds],
+  );
 
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
 
@@ -50,18 +62,75 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <View style={styles.favHeader}>
+          <Text style={styles.sectionTitle}>Favourites</Text>
+          {favourites.length > 0 ? (
+            <Text style={styles.favCount}>{favourites.length} saved</Text>
+          ) : null}
+        </View>
+        {favourites.length === 0 ? (
+          <View style={styles.favEmpty}>
+            <EmptyState
+              icon="heart-outline"
+              title="No favourites yet"
+              message="Tap the heart on a provider to save them here."
+            />
+          </View>
+        ) : (
+          <View style={styles.favList}>
+            <FlashList
+              data={favourites}
+              horizontal
+              keyExtractor={(p: Provider) => p.id}
+              showsHorizontalScrollIndicator={false}
+              ItemSeparatorComponent={() => <View style={styles.favSeparator} />}
+              renderItem={({ item }: { item: Provider }) => (
+                <Pressable
+                  style={styles.favCard}
+                  onPress={() => router.push(`/provider/${item.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}, favourite`}
+                >
+                  <Image
+                    source={{ uri: item.photo }}
+                    style={styles.favPhoto}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                  <Text style={styles.favName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <View style={styles.favMeta}>
+                    <Ionicons name="star" size={12} color={c.brand.star} />
+                    <Text style={styles.favRating}>{item.rating.toFixed(1)}</Text>
+                    <Text style={styles.favPrice}>· from £{item.priceFrom}</Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          </View>
+        )}
+
         <View style={styles.menu}>
           {MENU.map((item, i) => (
-            <View
+            <Pressable
               key={item.label}
-              style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
+              onPress={() => router.push(route(item.href))}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              style={({ pressed }) => [
+                styles.menuRow,
+                i < MENU.length - 1 && styles.menuDivider,
+                pressed && styles.menuPressed,
+              ]}
             >
               <View style={styles.menuIcon}>
                 <Ionicons name={item.icon} size={18} color={c.brand.tint} />
               </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </View>
+            </Pressable>
           ))}
         </View>
 
@@ -124,6 +193,63 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.small,
       color: c.text.secondary,
     },
+    favHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      marginTop: spacing.xl,
+      marginBottom: spacing.md,
+    },
+    sectionTitle: {
+      ...typography.scale.h2,
+      color: c.text.primary,
+    },
+    favCount: {
+      ...typography.scale.small,
+      color: c.text.muted,
+    },
+    favEmpty: {
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+    },
+    favList: {
+      height: 150,
+    },
+    favSeparator: { width: spacing.md },
+    favCard: {
+      width: 150,
+      padding: spacing.sm,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      gap: spacing.xs,
+    },
+    favPhoto: {
+      width: '100%',
+      height: 84,
+      borderRadius: radius.md,
+      backgroundColor: c.skeleton,
+    },
+    favName: {
+      ...typography.scale.smallMedium,
+      color: c.text.primary,
+    },
+    favMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+    },
+    favRating: {
+      ...typography.scale.caption,
+      color: c.text.primary,
+    },
+    favPrice: {
+      ...typography.scale.caption,
+      color: c.text.muted,
+    },
     menu: {
       marginTop: spacing.xl,
       borderRadius: radius.lg,
@@ -138,6 +264,9 @@ const makeStyles = (c: Palette) =>
       gap: spacing.md,
       minHeight: 56,
       paddingHorizontal: spacing.lg,
+    },
+    menuPressed: {
+      backgroundColor: c.background.muted,
     },
     menuDivider: {
       borderBottomWidth: 1,
