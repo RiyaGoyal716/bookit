@@ -1,13 +1,18 @@
-import { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { Button, EmptyState, RatingStars, Screen } from '../../src/components';
 import { getProviderById } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
+import { getAvailability } from '../../src/mocks/availability';
+import { track } from '../../src/lib/analytics';
+import { useFavouritesStore } from '../../src/stores/favouritesStore';
+import { useReviewsStore, type Review } from '../../src/stores/reviewsStore';
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
@@ -23,6 +28,32 @@ export default function ProviderProfileScreen() {
   const styles = useMemo(() => makeStyles(c), [c]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const provider = getProviderById(id);
+  const isFavourite = useFavouritesStore((s) => (id ? s.ids.includes(id) : false));
+  const toggleFavourite = useFavouritesStore((s) => s.toggle);
+  const reviews = useReviewsStore((s) => s.reviews);
+  const providerReviews = useMemo(
+    () => (id ? reviews.filter((r) => r.providerId === id) : []),
+    [reviews, id],
+  );
+  const availability = useMemo(() => (id ? getAvailability(id) : null), [id]);
+
+  useEffect(() => {
+    if (provider) track('view_provider', { providerId: provider.id, from: 'profile' });
+  }, [provider]);
+
+  const onShare = () => {
+    if (!provider) return;
+    track('share_provider', { providerId: provider.id });
+    Share.share({
+      message: `Check out ${provider.name} on Bookit — ${provider.rating.toFixed(1)}★, from £${provider.priceFrom}.`,
+    }).catch(() => {});
+  };
+
+  const onToggleFavourite = () => {
+    if (!provider) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    toggleFavourite(provider.id);
+  };
 
   if (!provider) {
     return (
@@ -70,6 +101,31 @@ export default function ProviderProfileScreen() {
           >
             <Ionicons name="chevron-back" size={24} color={c.text.primary} />
           </Pressable>
+          <View style={[styles.topActions, { top: insets.top + spacing.sm }]}>
+            <Pressable
+              style={styles.roundBtn}
+              onPress={onShare}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${provider.name}`}
+            >
+              <Ionicons name="share-outline" size={22} color={c.text.primary} />
+            </Pressable>
+            <Pressable
+              style={styles.roundBtn}
+              onPress={onToggleFavourite}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+              accessibilityState={{ selected: isFavourite }}
+            >
+              <Ionicons
+                name={isFavourite ? 'heart' : 'heart-outline'}
+                size={22}
+                color={isFavourite ? c.status.danger : c.text.primary}
+              />
+            </Pressable>
+          </View>
           {provider.verified ? (
             <View style={styles.verifiedPill}>
               <Ionicons name="checkmark-circle" size={14} color={c.brand.tint} />
@@ -91,6 +147,35 @@ export default function ProviderProfileScreen() {
             <Text style={styles.meta}>{provider.distanceKm} km away</Text>
           </View>
 
+          {availability ? (
+            <View
+              style={[
+                styles.availPill,
+                {
+                  backgroundColor: availability.availableToday
+                    ? c.status.successSoft
+                    : c.background.muted,
+                },
+              ]}
+            >
+              <Ionicons
+                name={availability.availableToday ? 'checkmark-circle' : 'time-outline'}
+                size={14}
+                color={availability.availableToday ? c.status.success : c.text.muted}
+              />
+              <Text
+                style={[
+                  styles.availPillText,
+                  { color: availability.availableToday ? c.status.success : c.text.secondary },
+                ]}
+              >
+                {availability.availableToday
+                  ? `Available today · ${availability.nextSlot}`
+                  : `Next free: ${availability.nextSlot}`}
+              </Text>
+            </View>
+          ) : null}
+
           <Text style={styles.bio}>{provider.bio}</Text>
 
           <Text style={styles.sectionTitle}>Services</Text>
@@ -105,6 +190,27 @@ export default function ProviderProfileScreen() {
               </View>
             ))}
           </View>
+
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            <Text style={styles.reviewCount}>{providerReviews.length} total</Text>
+          </View>
+          {providerReviews.length === 0 ? (
+            <Text style={styles.noReviews}>No reviews yet — be the first after your booking.</Text>
+          ) : (
+            <View style={styles.reviews}>
+              {providerReviews.map((r: Review) => (
+                <View key={r.id} style={styles.reviewCard}>
+                  <View style={styles.reviewTop}>
+                    <Text style={styles.reviewAuthor}>{r.author}</Text>
+                    <Text style={styles.reviewDate}>{r.date}</Text>
+                  </View>
+                  <RatingStars value={r.rating} size={13} />
+                  <Text style={styles.reviewText}>{r.text}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -148,6 +254,78 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
       ...shadow.card,
+    },
+    topActions: {
+      position: 'absolute',
+      right: spacing.lg,
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    roundBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      backgroundColor: c.background.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...shadow.card,
+    },
+    availPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: spacing.xs,
+      marginTop: spacing.md,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.pill,
+    },
+    availPillText: {
+      ...typography.scale.caption,
+      fontFamily: typography.font.semibold,
+      fontWeight: '600',
+    },
+    reviewsHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+    },
+    reviewCount: {
+      ...typography.scale.small,
+      color: c.text.muted,
+    },
+    noReviews: {
+      ...typography.scale.small,
+      color: c.text.muted,
+    },
+    reviews: {
+      gap: spacing.sm,
+    },
+    reviewCard: {
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      gap: spacing.xs,
+    },
+    reviewTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    reviewAuthor: {
+      ...typography.scale.bodyMedium,
+      color: c.text.primary,
+    },
+    reviewDate: {
+      ...typography.scale.caption,
+      color: c.text.muted,
+    },
+    reviewText: {
+      ...typography.scale.small,
+      color: c.text.secondary,
+      marginTop: 2,
     },
     verifiedPill: {
       position: 'absolute',
