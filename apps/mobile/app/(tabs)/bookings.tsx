@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Badge, Card, EmptyState } from '../../src/components';
+import { route } from '../../src/lib/nav';
 import { useBookingsStore, type Booking } from '../../src/stores/bookingsStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 
@@ -20,9 +22,10 @@ export default function BookingsScreen() {
 
   const filtered = useMemo(
     () =>
-      bookings.filter((b) =>
-        segment === 'past' ? b.status === 'Completed' : b.status !== 'Completed',
-      ),
+      bookings.filter((b) => {
+        const isPast = b.status === 'Completed' || b.status === 'Cancelled';
+        return segment === 'past' ? isPast : !isPast;
+      }),
     [bookings, segment],
   );
 
@@ -53,9 +56,9 @@ export default function BookingsScreen() {
         </View>
       </View>
 
-      <FlatList
+      <FlashList
         data={filtered}
-        keyExtractor={(b) => b.id}
+        keyExtractor={(b: Booking) => b.id}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -72,24 +75,34 @@ export default function BookingsScreen() {
           />
         }
         renderItem={({ item }: { item: Booking }) => (
-          <Card style={styles.card}>
-            <View style={styles.rowTop}>
-              <Text style={styles.provider} numberOfLines={1}>
-                {item.providerName}
-              </Text>
-              <Badge status={item.status} />
-            </View>
-            <Text style={styles.service}>{item.serviceName}</Text>
-            <View style={styles.metaRow}>
-              <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
-              <Text style={styles.meta}>
-                {item.date} · {item.time}
-              </Text>
-              <Text style={styles.dot}>·</Text>
-              <Text style={styles.price}>£{item.total}</Text>
-            </View>
-            <Text style={styles.bookingId}>{item.id}</Text>
-          </Card>
+          <Pressable
+            onPress={() => router.push(route(`/booking-detail/${item.id}`))}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.providerName}, ${item.serviceName}, ${item.status}`}
+            style={({ pressed }) => pressed && styles.cardPressed}
+          >
+            <Card style={styles.card}>
+              <View style={styles.rowTop}>
+                <Text style={styles.provider} numberOfLines={1}>
+                  {item.providerName}
+                </Text>
+                <Badge status={item.status} />
+              </View>
+              <Text style={styles.service}>{item.serviceName}</Text>
+              <View style={styles.metaRow}>
+                <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
+                <Text style={styles.meta}>
+                  {item.date} · {item.time}
+                </Text>
+                <Text style={styles.dot}>·</Text>
+                <Text style={styles.price}>£{item.total}</Text>
+                <View style={styles.chevronWrap}>
+                  <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
+                </View>
+              </View>
+              <Text style={styles.bookingId}>{item.id}</Text>
+            </Card>
+          </Pressable>
         )}
       />
     </View>
@@ -146,8 +159,13 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.xl,
     },
     separator: { height: spacing.md },
+    cardPressed: { opacity: 0.85 },
     card: {
       gap: spacing.xs,
+    },
+    chevronWrap: {
+      flex: 1,
+      alignItems: 'flex-end',
     },
     rowTop: {
       flexDirection: 'row',
