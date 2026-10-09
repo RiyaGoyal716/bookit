@@ -5,10 +5,25 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { BottomSheet, Chip, EmptyState, ProviderCard, Skeleton } from '../../src/components';
+import {
+  BottomSheet,
+  Chip,
+  EmptyState,
+  ProviderCard,
+  Skeleton,
+  SortFilterSheet,
+  DEFAULT_SORT_FILTER,
+  activeFilterCount,
+  type SortFilterValue,
+} from '../../src/components';
 import { providers as allProviders } from '../../src/mocks';
 import type { Provider, ProviderCategory } from '../../src/mocks/types';
+import { getAvailability } from '../../src/mocks/availability';
+import { track } from '../../src/lib/analytics';
+import { route } from '../../src/lib/nav';
 import { useAuthStore } from '../../src/stores/authStore';
+import { useNotificationsStore } from '../../src/stores/notificationsStore';
+import { useSearchStore } from '../../src/stores/searchStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 
 type Filter = 'all' | ProviderCategory;
@@ -22,16 +37,37 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 const AREAS = ['Leeds, UK', 'Headingley', 'Hyde Park', 'Chapel Allerton', 'Horsforth', 'Roundhay'];
 
+function priceMatches(range: SortFilterValue['priceRange'], priceFrom: number): boolean {
+  switch (range) {
+    case 'low':
+      return priceFrom <= 25;
+    case 'mid':
+      return priceFrom > 25 && priceFrom <= 50;
+    case 'high':
+      return priceFrom > 50;
+    default:
+      return true;
+  }
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const name = useAuthStore((s) => s.user?.name);
+  const unread = useNotificationsStore((s) => s.items.filter((n) => !n.read).length);
+  const recent = useSearchStore((s) => s.recent);
+  const addRecent = useSearchStore((s) => s.addRecent);
+  const removeRecent = useSearchStore((s) => s.removeRecent);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
+  const [sortFilter, setSortFilter] = useState<SortFilterValue>(DEFAULT_SORT_FILTER);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [location, setLocation] = useState('Leeds, UK');
   const [locationOpen, setLocationOpen] = useState(false);
 
@@ -42,21 +78,54 @@ export default function HomeScreen() {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return allProviders
-      .filter((p) => {
-        const matchesCategory = filter === 'all' || p.category === filter;
-        const matchesQuery = q === '' || p.name.toLowerCase().includes(q);
-        return matchesCategory && matchesQuery;
-      })
-      .sort((a, b) => b.rating - a.rating);
-  }, [query, filter]);
+    const filtered = allProviders.filter((p) => {
+      const matchesCategory = filter === 'all' || p.category === filter;
+      const matchesQuery =
+        q === '' ||
+        p.name.toLowerCase().includes(q) ||
+        p.services.some((s) => s.name.toLowerCase().includes(q));
+      const matchesPrice = priceMatches(sortFilter.priceRange, p.priceFrom);
+      const matchesRating = !sortFilter.minRating4 || p.rating >= 4;
+      const matchesAvail = !sortFilter.availableToday || getAvailability(p.id).availableToday;
+      return matchesCategory && matchesQuery && matchesPrice && matchesRating && matchesAvail;
+    });
+
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      switch (sortFilter.sort) {
+        case 'price':
+          return a.priceFrom - b.priceFrom;
+        case 'distance':
+          return a.distanceKm - b.distanceKm;
+        default:
+          return b.rating - a.rating;
+      }
+    });
+    return sorted;
+  }, [query, filter, sortFilter]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 800);
   }, []);
 
+  const commitSearch = (term: string) => {
+    const t = term.trim();
+    if (t.length >= 2) {
+      addRecent(t);
+      track('search', { query: t, results: results.length });
+    }
+  };
+
+  const openProvider = (provider: Provider) => {
+    track('view_provider', { providerId: provider.id, from: 'home' });
+    if (query.trim().length >= 2) addRecent(query.trim());
+    router.push(`/provider/${provider.id}`);
+  };
+
   const initial = name?.charAt(0)?.toUpperCase() ?? 'A';
+  const filterCount = activeFilterCount(sortFilter);
+  const showRecent = searchFocused && query.trim().length === 0 && recent.length > 0;
 
   return (
     <View style={styles.container}>
@@ -71,8 +140,20 @@ export default function HomeScreen() {
           <Text style={styles.locationText}>{location}</Text>
           <Ionicons name="chevron-down" size={14} color={c.text.muted} />
         </Pressable>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initial}</Text>
+        <View style={styles.headerRight}>
+          <Pressable
+            style={styles.bell}
+            onPress={() => router.push(route('/notifications'))}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+          >
+            <Ionicons name="notifications-outline" size={22} color={c.text.primary} />
+            {unread > 0 ? <View style={styles.unreadDot} /> : null}
+          </Pressable>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
         </View>
       </View>
 
@@ -83,38 +164,86 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={onRefresh}
+        keyboardShouldPersistTaps="handled"
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <View>
             <Text style={styles.greeting}>Hi {name ?? 'there'} 👋</Text>
             <Text style={styles.subtitle}>Find trusted local help in Leeds</Text>
 
-            <View style={styles.searchBar}>
-              <Ionicons name="search" size={18} color={c.text.muted} />
-              <TextInput
-                style={styles.searchInput}
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search cleaners, barbers, tutors…"
-                placeholderTextColor={c.text.muted}
-                returnKeyType="search"
-              />
-              {query.length > 0 ? (
-                <Pressable
-                  onPress={() => setQuery('')}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                >
-                  <Ionicons name="close-circle" size={18} color={c.text.muted} />
-                </Pressable>
-              ) : null}
+            <View style={styles.searchRow}>
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={18} color={c.text.muted} />
+                <TextInput
+                  style={styles.searchInput}
+                  value={query}
+                  onChangeText={setQuery}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  onSubmitEditing={(e) => commitSearch(e.nativeEvent.text)}
+                  placeholder="Search cleaners, barbers, tutors…"
+                  placeholderTextColor={c.text.muted}
+                  returnKeyType="search"
+                />
+                {query.length > 0 ? (
+                  <Pressable
+                    onPress={() => setQuery('')}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
+                  >
+                    <Ionicons name="close-circle" size={18} color={c.text.muted} />
+                  </Pressable>
+                ) : null}
+              </View>
+              <Pressable
+                style={styles.filterBtn}
+                onPress={() => setSheetOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Sort and filter"
+              >
+                <Ionicons name="options-outline" size={20} color={c.text.primary} />
+                {filterCount > 0 ? (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{filterCount}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
             </View>
+
+            {showRecent ? (
+              <View style={styles.recentBlock}>
+                <Text style={styles.recentTitle}>Recent searches</Text>
+                <View style={styles.recentChips}>
+                  {recent.map((term) => (
+                    <Pressable
+                      key={term}
+                      style={styles.recentChip}
+                      onPress={() => setQuery(term)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Search ${term}`}
+                    >
+                      <Ionicons name="time-outline" size={14} color={c.text.muted} />
+                      <Text style={styles.recentText}>{term}</Text>
+                      <Pressable
+                        onPress={() => removeRecent(term)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${term}`}
+                      >
+                        <Ionicons name="close" size={14} color={c.text.muted} />
+                      </Pressable>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
 
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chips}
+              keyboardShouldPersistTaps="handled"
             >
               {FILTERS.map((f) => (
                 <Chip
@@ -126,7 +255,9 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
 
-            <Text style={styles.sectionTitle}>Top rated near you</Text>
+            <Text style={styles.sectionTitle}>
+              {query.trim() ? `Results for “${query.trim()}”` : 'Top rated near you'}
+            </Text>
           </View>
         }
         ListEmptyComponent={
@@ -139,18 +270,29 @@ export default function HomeScreen() {
           ) : (
             <EmptyState
               title="No providers found"
-              message="Try a different search or category."
+              message="Try a different search or adjust your filters."
               actionLabel="Clear filters"
               onAction={() => {
                 setQuery('');
                 setFilter('all');
+                setSortFilter(DEFAULT_SORT_FILTER);
               }}
             />
           )
         }
         renderItem={({ item }: { item: Provider }) => (
-          <ProviderCard provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
+          <ProviderCard provider={item} onPress={() => openProvider(item)} />
         )}
+      />
+
+      <SortFilterSheet
+        visible={sheetOpen}
+        value={sortFilter}
+        onClose={() => setSheetOpen(false)}
+        onApply={(v) => {
+          setSortFilter(v);
+          setSheetOpen(false);
+        }}
       />
 
       <BottomSheet
@@ -223,6 +365,28 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.bodyMedium,
       color: c.text.primary,
     },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    bell: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    unreadDot: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: c.status.danger,
+      borderWidth: 2,
+      borderColor: c.background.base,
+    },
     avatar: {
       width: 40,
       height: 40,
@@ -251,7 +415,13 @@ const makeStyles = (c: Palette) =>
       marginTop: 2,
       marginBottom: spacing.lg,
     },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
     searchBar: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
@@ -267,6 +437,61 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.body,
       color: c.text.primary,
       padding: 0,
+    },
+    filterBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterBadge: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: 3,
+      borderRadius: 8,
+      backgroundColor: c.brand.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterBadgeText: {
+      ...typography.scale.caption,
+      fontSize: 10,
+      color: c.text.inverse,
+    },
+    recentBlock: {
+      marginTop: spacing.md,
+    },
+    recentTitle: {
+      ...typography.scale.smallMedium,
+      color: c.text.secondary,
+      marginBottom: spacing.sm,
+    },
+    recentChips: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    recentChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.pill,
+      backgroundColor: c.background.muted,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    recentText: {
+      ...typography.scale.small,
+      color: c.text.primary,
     },
     chips: {
       gap: spacing.sm,

@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../theme';
 import { Avatar } from './Avatar';
 import type { Provider } from '../mocks/types';
+import { getAvailability } from '../mocks/availability';
+import { useFavouritesStore } from '../stores/favouritesStore';
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
   cleaning: 'Cleaning',
@@ -15,12 +18,22 @@ const CATEGORY_LABEL: Record<Provider['category'], string> = {
 export interface ProviderCardProps {
   provider: Provider;
   onPress?: () => void;
+  /** Show the favourite heart toggle. Default: true. */
+  showFavourite?: boolean;
 }
 
-/** List card: photo, name, verified tick, rating, price and distance. */
-export function ProviderCard({ provider, onPress }: ProviderCardProps) {
+/** List card: photo, name, verified tick, rating, availability, price + heart. */
+export function ProviderCard({ provider, onPress, showFavourite = true }: ProviderCardProps) {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
+  const isFavourite = useFavouritesStore((s) => s.ids.includes(provider.id));
+  const toggle = useFavouritesStore((s) => s.toggle);
+  const availability = useMemo(() => getAvailability(provider.id), [provider.id]);
+
+  const onHeart = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    toggle(provider.id);
+  };
 
   return (
     <Pressable
@@ -48,10 +61,36 @@ export function ProviderCard({ provider, onPress }: ProviderCardProps) {
           <Ionicons name="location-outline" size={13} color={c.text.muted} />
           <Text style={styles.meta}>{provider.distanceKm} km</Text>
         </View>
+        {availability.availableToday ? (
+          <View style={styles.availRow}>
+            <View style={styles.availDot} />
+            <Text style={styles.availText}>Available today · {availability.nextSlot}</Text>
+          </View>
+        ) : (
+          <Text style={styles.nextSlot}>Next free: {availability.nextSlot}</Text>
+        )}
       </View>
-      <View style={styles.priceCol}>
-        <Text style={styles.priceLabel}>from</Text>
-        <Text style={styles.price}>£{provider.priceFrom}</Text>
+      <View style={styles.rightCol}>
+        {showFavourite ? (
+          <Pressable
+            onPress={onHeart}
+            hitSlop={8}
+            style={styles.heart}
+            accessibilityRole="button"
+            accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            accessibilityState={{ selected: isFavourite }}
+          >
+            <Ionicons
+              name={isFavourite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFavourite ? c.status.danger : c.text.muted}
+            />
+          </Pressable>
+        ) : null}
+        <View style={styles.priceCol}>
+          <Text style={styles.priceLabel}>from</Text>
+          <Text style={styles.price}>£{provider.priceFrom}</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -109,6 +148,38 @@ const makeStyles = (c: Palette) =>
     dot: {
       color: c.text.muted,
       marginHorizontal: 2,
+    },
+    availRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      marginTop: 3,
+    },
+    availDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: c.status.success,
+    },
+    availText: {
+      ...typography.scale.caption,
+      color: c.status.success,
+    },
+    nextSlot: {
+      ...typography.scale.caption,
+      color: c.text.muted,
+      marginTop: 3,
+    },
+    rightCol: {
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      alignSelf: 'stretch',
+    },
+    heart: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     priceCol: {
       alignItems: 'flex-end',
