@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme';
+import { useColors, radius, spacing, typography, type Palette } from '../theme';
 
 export interface ChipProps {
   label: string;
@@ -10,10 +11,13 @@ export interface ChipProps {
 
 /** Selectable pill used for category filters, dates and time slots. */
 export function Chip({ label, active = false, onPress }: ChipProps) {
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       style={({ pressed }) => [
         styles.chip,
@@ -28,32 +32,35 @@ export function Chip({ label, active = false, onPress }: ChipProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-  },
-  chipActive: {
-    backgroundColor: colors.brand.primary,
-    borderColor: colors.brand.primary,
-  },
-  chipInactive: {
-    backgroundColor: colors.background.base,
-    borderColor: colors.border,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  label: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: '600',
-  },
-  labelActive: {
-    color: colors.text.inverse,
-  },
-  labelInactive: {
-    color: colors.text.secondary,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    chip: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+    },
+    chipActive: {
+      backgroundColor: c.brand.primary,
+      borderColor: c.brand.primary,
+    },
+    chipInactive: {
+      backgroundColor: c.background.surface,
+      borderColor: c.border,
+    },
+    pressed: {
+      opacity: 0.8,
+      transform: [{ scale: 0.97 }],
+    },
+    label: {
+      ...typography.scale.smallMedium,
+    },
+    labelActive: {
+      color: c.text.inverse,
+    },
+    labelInactive: {
+      color: c.text.secondary,
+    },
+  });

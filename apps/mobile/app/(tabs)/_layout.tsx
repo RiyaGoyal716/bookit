@@ -1,25 +1,28 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, typography } from '../../src/theme';
+import { useColors, typography } from '../../src/theme';
 
 export default function TabsLayout() {
+  const c = useColors();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.brand.primary,
-        tabBarInactiveTintColor: colors.text.muted,
+        sceneStyle: { backgroundColor: c.background.base },
+        tabBarActiveTintColor: c.brand.tint,
+        tabBarInactiveTintColor: c.text.muted,
         tabBarStyle: {
-          borderTopColor: colors.border,
-          backgroundColor: colors.background.base,
+          borderTopColor: c.border,
+          backgroundColor: c.background.surface,
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: typography.fontSize.xs,
-          fontWeight: '600',
+          fontFamily: typography.font.semibold,
+          fontSize: 12,
         },
       }}
     >
@@ -27,21 +30,27 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
           title: 'Bookings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

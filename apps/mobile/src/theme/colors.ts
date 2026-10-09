@@ -1,40 +1,133 @@
 /**
- * Colour tokens for the Bookit app.
- * Plain TypeScript objects — no business logic.
+ * Colour palettes for the Bookit app.
+ *
+ * Two palettes with an identical shape — `light` and `dark`. Screens and
+ * components never import a palette directly; they read the active one through
+ * the `useColors()` / `useTheme()` hooks so dark mode switches at runtime with
+ * the system setting. All contrasts target WCAG AA (>= 4.5:1) for text.
  */
-export const colors = {
+
+export interface Palette {
   brand: {
-    /** Single primary brand colour — a strong indigo used across the app. */
-    primary: '#4F46E5',
-    primaryDark: '#4338CA',
-    primarySoft: '#EEF0FE',
-    accent: '#00C2A8',
-    star: '#F5A623',
+    /** Solid fill (buttons, active chips). White text sits on this. */
+    primary: string;
+    primaryDark: string;
+    /** Soft tinted surface (icon chips, selected rows). */
+    primarySoft: string;
+    /** Accent used for text/icons on the app background. */
+    tint: string;
+    accent: string;
+    accentSoft: string;
+    star: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    inverse: string;
+  };
+  background: {
+    /** App background. */
+    base: string;
+    /** Raised surfaces: cards, sheets, bars. */
+    surface: string;
+    /** Subtle fills: inputs, skeletons backing. */
+    muted: string;
+    elevated: string;
+  };
+  border: string;
+  skeleton: string;
+  status: {
+    success: string;
+    successSoft: string;
+    info: string;
+    infoSoft: string;
+    warning: string;
+    warningSoft: string;
+    danger: string;
+    dangerSoft: string;
+  };
+  overlay: string;
+}
+
+export const lightColors: Palette = {
+  brand: {
+    primary: '#0F766E',
+    primaryDark: '#115E59',
+    primarySoft: '#CCFBF1',
+    tint: '#0F766E',
+    accent: '#F59E0B',
+    accentSoft: '#FEF3C7',
+    star: '#F59E0B',
   },
   text: {
-    primary: '#11181C',
-    secondary: '#5A6B74',
-    muted: '#8A98A0',
+    primary: '#111827',
+    secondary: '#4B5563',
+    muted: '#6B7280',
     inverse: '#FFFFFF',
   },
   background: {
-    base: '#FFFFFF',
-    muted: '#F4F6F8',
-    elevated: '#EEF0FE',
+    base: '#FAFAF9',
+    surface: '#FFFFFF',
+    muted: '#F3F4F6',
+    elevated: '#FFFFFF',
   },
-  border: '#E3E8EC',
-  skeleton: '#E7ECEF',
+  border: '#E5E7EB',
+  skeleton: '#E5E7EB',
   status: {
-    // Requested = amber, Accepted = blue, Completed = green.
-    success: '#1E9E5A',
-    successSoft: '#E4F6EC',
+    success: '#16A34A',
+    successSoft: '#DCFCE7',
     info: '#2563EB',
-    infoSoft: '#E4EDFE',
-    warning: '#D98A00',
-    warningSoft: '#FDF1DC',
-    error: '#D1434B',
+    infoSoft: '#DBEAFE',
+    warning: '#B45309',
+    warningSoft: '#FEF3C7',
+    danger: '#DC2626',
+    dangerSoft: '#FEE2E2',
   },
-  overlay: 'rgba(17,24,28,0.04)',
-} as const;
+  overlay: 'rgba(17,24,39,0.45)',
+};
 
-export type Colors = typeof colors;
+export const darkColors: Palette = {
+  brand: {
+    primary: '#0F766E',
+    primaryDark: '#115E59',
+    primarySoft: '#134E4A',
+    tint: '#2DD4BF',
+    accent: '#FBBF24',
+    accentSoft: '#422006',
+    star: '#FBBF24',
+  },
+  text: {
+    primary: '#F9FAFB',
+    secondary: '#CBD5E1',
+    muted: '#94A3B8',
+    inverse: '#FFFFFF',
+  },
+  background: {
+    base: '#0B1120',
+    surface: '#1A2233',
+    muted: '#232B3B',
+    elevated: '#1A2233',
+  },
+  border: '#2B3547',
+  skeleton: '#232B3B',
+  status: {
+    success: '#4ADE80',
+    successSoft: '#064E3B',
+    info: '#60A5FA',
+    infoSoft: '#1E3A5F',
+    warning: '#FBBF24',
+    warningSoft: '#422006',
+    danger: '#F87171',
+    dangerSoft: '#450A0A',
+  },
+  overlay: 'rgba(0,0,0,0.6)',
+};
+
+/**
+ * Static light palette for module-level / non-React consumers (e.g. defaults
+ * and tests). Components should prefer the `useColors()` hook.
+ */
+export const colors: Palette = lightColors;
+
+export type Colors = Palette;

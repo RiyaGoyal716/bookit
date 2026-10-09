@@ -1,0 +1,13 @@
+<svg width="320" height="88" viewBox="0 0 320 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon: teal rounded square with a white calendar-check -->
+  <rect x="4" y="12" width="64" height="64" rx="18" fill="#0F766E"/>
+  <g stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <rect x="20" y="30" width="32" height="30" rx="6"/>
+    <path d="M27 24 V33"/>
+    <path d="M45 24 V33"/>
+    <path d="M20 40 H52"/>
+    <path d="M28 49 L34 55 L46 42"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="84" y="58" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="700" fill="#111827">Book<tspan fill="#0F766E">it</tspan></text>
+</svg>

@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { StyleSheet, type ImageStyle } from 'react-native';
 
-import { colors, radius } from '../theme';
+import { useColors, radius, type Palette } from '../theme';
 
 export interface AvatarProps {
   uri: string;
@@ -13,6 +14,8 @@ export interface AvatarProps {
 
 /** Remote avatar rendered via expo-image with a graceful placeholder. */
 export function Avatar({ uri, size = 56, rounded = radius.md, style }: AvatarProps) {
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   return (
     <Image
       source={{ uri }}
@@ -20,12 +23,14 @@ export function Avatar({ uri, size = 56, rounded = radius.md, style }: AvatarPro
       contentFit="cover"
       transition={200}
       cachePolicy="memory-disk"
+      accessibilityIgnoresInvertColors
     />
   );
 }
 
-const styles = StyleSheet.create({
-  image: {
-    backgroundColor: colors.skeleton,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    image: {
+      backgroundColor: c.skeleton,
+    },
+  });

@@ -11,8 +11,8 @@ describe('Badge', () => {
 });
 
 describe('theme tokens', () => {
-  it('exposes a single brand primary colour', () => {
-    expect(colors.brand.primary).toBe('#4F46E5');
+  it('exposes the teal brand primary colour', () => {
+    expect(colors.brand.primary).toBe('#0F766E');
   });
 
   it('uses a 4pt spacing base', () => {

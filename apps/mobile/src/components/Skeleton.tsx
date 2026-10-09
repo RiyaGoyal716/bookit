@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, type ViewStyle, type DimensionValue } from 'react-native';
 
-import { colors, radius } from '../theme';
+import { useColors, radius, type Palette } from '../theme';
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -17,6 +17,8 @@ export function Skeleton({
   rounded = radius.sm,
   style,
 }: SkeletonProps) {
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [opacity] = useState(() => new Animated.Value(0.5));
 
   useEffect(() => {
@@ -37,8 +39,9 @@ export function Skeleton({
   );
 }
 
-const styles = StyleSheet.create({
-  block: {
-    backgroundColor: colors.skeleton,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    block: {
+      backgroundColor: c.skeleton,
+    },
+  });

@@ -1,30 +1,44 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { Button, Screen } from '../src/components';
 import { useAuthStore } from '../src/stores/authStore';
-import { colors, radius, spacing, typography } from '../src/theme';
+import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
 const CELLS = [0, 1, 2, 3];
 
 export default function OtpScreen() {
   const router = useRouter();
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   const { phone } = useLocalSearchParams<{ phone?: string }>();
   const login = useAuthStore((s) => s.login);
   const inputRef = useRef<TextInput>(null);
   const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const verify = () => {
-    login(phone ?? '');
-    router.replace('/(tabs)');
+    setVerifying(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setTimeout(() => {
+      login(phone ?? '');
+      router.replace('/(tabs)');
+    }, 450);
   };
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} style={styles.back} hitSlop={8}>
-        <Ionicons name="chevron-back" size={26} color={colors.text.primary} />
+    <Screen keyboardAvoiding>
+      <Pressable
+        onPress={() => router.back()}
+        style={styles.back}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+      >
+        <Ionicons name="chevron-back" size={26} color={c.text.primary} />
       </Pressable>
 
       <View style={styles.flex}>
@@ -33,7 +47,12 @@ export default function OtpScreen() {
           Sent to +44 {phone || 'your number'}. Use any 4 digits for this demo.
         </Text>
 
-        <Pressable style={styles.cells} onPress={() => inputRef.current?.focus()}>
+        <Pressable
+          style={styles.cells}
+          onPress={() => inputRef.current?.focus()}
+          accessibilityRole="button"
+          accessibilityLabel="Enter verification code"
+        >
           {CELLS.map((i) => (
             <View key={i} style={[styles.cell, code.length === i && styles.cellActive]}>
               <Text style={styles.cellText}>{code[i] ?? ''}</Text>
@@ -57,62 +76,65 @@ export default function OtpScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Button label="Verify & continue" disabled={code.length < 4} onPress={verify} />
+        <Button
+          label="Verify & continue"
+          loading={verifying}
+          disabled={code.length < 4}
+          onPress={verify}
+        />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  back: { marginBottom: spacing.lg },
-  title: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: '800',
-    color: colors.text.primary,
-  },
-  subtitle: {
-    fontSize: typography.fontSize.md,
-    color: colors.text.secondary,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  cells: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  cell: {
-    width: 64,
-    height: 72,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.background.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellActive: {
-    borderColor: colors.brand.primary,
-    backgroundColor: colors.brand.primarySoft,
-  },
-  cellText: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: '800',
-    color: colors.text.primary,
-  },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    height: 1,
-    width: 1,
-  },
-  resend: {
-    marginTop: spacing.xl,
-    fontSize: typography.fontSize.sm,
-    fontWeight: '700',
-    color: colors.brand.primary,
-  },
-  footer: {
-    paddingTop: spacing.md,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    back: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
+    title: {
+      ...typography.scale.h1,
+      color: c.text.primary,
+    },
+    subtitle: {
+      ...typography.scale.body,
+      color: c.text.secondary,
+      marginTop: spacing.sm,
+      marginBottom: spacing.xl,
+    },
+    cells: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    cell: {
+      width: 64,
+      height: 72,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cellActive: {
+      borderColor: c.brand.primary,
+      backgroundColor: c.brand.primarySoft,
+    },
+    cellText: {
+      ...typography.scale.h1,
+      color: c.text.primary,
+    },
+    hiddenInput: {
+      position: 'absolute',
+      opacity: 0,
+      height: 1,
+      width: 1,
+    },
+    resend: {
+      marginTop: spacing.xl,
+      ...typography.scale.smallMedium,
+      color: c.brand.tint,
+    },
+    footer: {
+      paddingTop: spacing.md,
+    },
+  });

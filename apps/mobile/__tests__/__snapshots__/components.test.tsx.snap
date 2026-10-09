@@ -1,0 +1,324 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Badge renders each status and matches snapshot 1`] = `
+<>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "borderRadius": 999,
+          "flexDirection": "row",
+          "gap": 4,
+          "paddingHorizontal": 8,
+          "paddingVertical": 4,
+        },
+        {
+          "backgroundColor": "#FEF3C7",
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "borderRadius": 3,
+            "height": 6,
+            "width": 6,
+          },
+          {
+            "backgroundColor": "#B45309",
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "fontFamily": "Inter_700Bold",
+            "fontSize": 12,
+            "fontWeight": "700",
+            "lineHeight": 16,
+          },
+          {
+            "color": "#B45309",
+          },
+        ]
+      }
+    >
+      Requested
+    </Text>
+  </View>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "borderRadius": 999,
+          "flexDirection": "row",
+          "gap": 4,
+          "paddingHorizontal": 8,
+          "paddingVertical": 4,
+        },
+        {
+          "backgroundColor": "#DBEAFE",
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "borderRadius": 3,
+            "height": 6,
+            "width": 6,
+          },
+          {
+            "backgroundColor": "#2563EB",
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "fontFamily": "Inter_700Bold",
+            "fontSize": 12,
+            "fontWeight": "700",
+            "lineHeight": 16,
+          },
+          {
+            "color": "#2563EB",
+          },
+        ]
+      }
+    >
+      Accepted
+    </Text>
+  </View>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "borderRadius": 999,
+          "flexDirection": "row",
+          "gap": 4,
+          "paddingHorizontal": 8,
+          "paddingVertical": 4,
+        },
+        {
+          "backgroundColor": "#DCFCE7",
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "borderRadius": 3,
+            "height": 6,
+            "width": 6,
+          },
+          {
+            "backgroundColor": "#16A34A",
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "fontFamily": "Inter_700Bold",
+            "fontSize": 12,
+            "fontWeight": "700",
+            "lineHeight": 16,
+          },
+          {
+            "color": "#16A34A",
+          },
+        ]
+      }
+    >
+      Completed
+    </Text>
+  </View>
+</>
+`;
+
+exports[`Button renders a primary button and matches snapshot 1`] = `
+<View
+  accessibilityLabel="Continue"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": false,
+      "checked": undefined,
+      "disabled": false,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 16,
+        "justifyContent": "center",
+        "minHeight": 54,
+        "paddingHorizontal": 16,
+      },
+      {
+        "backgroundColor": "#0F766E",
+      },
+      false,
+      false,
+      false,
+      false,
+      undefined,
+    ]
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "gap": 8,
+      }
+    }
+  >
+    <Text
+      style={
+        [
+          {
+            "fontFamily": "Inter_700Bold",
+            "fontSize": 16,
+            "fontWeight": "700",
+            "lineHeight": 24,
+          },
+          {
+            "color": "#FFFFFF",
+          },
+        ]
+      }
+    >
+      Continue
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`Input renders a labelled field with an error and matches snapshot 1`] = `
+<View
+  style={
+    [
+      {
+        "gap": 8,
+      },
+      undefined,
+    ]
+  }
+>
+  <Text
+    style={
+      {
+        "color": "#4B5563",
+        "fontFamily": "Inter_600SemiBold",
+        "fontSize": 14,
+        "fontWeight": "600",
+        "lineHeight": 20,
+      }
+    }
+  >
+    Mobile number
+  </Text>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#E5E7EB",
+          "borderRadius": 12,
+          "borderWidth": 1.5,
+          "flexDirection": "row",
+          "gap": 8,
+          "minHeight": 56,
+          "paddingHorizontal": 16,
+        },
+        undefined,
+        false,
+        {
+          "borderColor": "#DC2626",
+        },
+      ]
+    }
+  >
+    <TextInput
+      onBlur={[Function]}
+      onFocus={[Function]}
+      placeholder="Phone"
+      placeholderTextColor="#6B7280"
+      style={
+        [
+          {
+            "color": "#111827",
+            "flex": 1,
+            "fontFamily": "Inter_400Regular",
+            "fontSize": 16,
+            "fontWeight": "400",
+            "lineHeight": 24,
+            "padding": 0,
+            "textAlignVertical": "top",
+          },
+          undefined,
+        ]
+      }
+      value="123"
+    />
+  </View>
+  <Text
+    style={
+      {
+        "color": "#DC2626",
+        "fontFamily": "Inter_500Medium",
+        "fontSize": 12,
+        "fontWeight": "500",
+        "lineHeight": 16,
+      }
+    }
+  >
+    Too short
+  </Text>
+</View>
+`;

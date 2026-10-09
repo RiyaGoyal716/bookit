@@ -1,7 +1,7 @@
-import { type PropsWithChildren } from 'react';
+import { type PropsWithChildren, useMemo } from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
 
-import { colors, radius, shadow, spacing } from '../theme';
+import { useColors, radius, shadow, spacing, type Palette } from '../theme';
 
 export interface CardProps {
   style?: ViewStyle;
@@ -9,16 +9,19 @@ export interface CardProps {
 
 /** Rounded surface with subtle shadow + border. */
 export function Card({ children, style }: PropsWithChildren<CardProps>) {
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.background.base,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    ...shadow.card,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: c.background.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: spacing.lg,
+      ...shadow.card,
+    },
+  });
