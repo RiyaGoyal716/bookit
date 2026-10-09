@@ -8,7 +8,7 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  /** Mock login — any phone works. Stores the phone plus a demo name. */
+  /** Mock login — stores the E.164 phone plus a demo name. */
   login: (phone: string) => void;
   logout: () => void;
 }

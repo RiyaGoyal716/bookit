@@ -1,5 +1,6 @@
 import { useColorScheme } from 'react-native';
 
+import { useThemeStore } from '../stores/themeStore';
 import { lightColors, darkColors, colors, type Palette } from './colors';
 import { spacing, radius, shadow } from './spacing';
 import { typography, font } from './typography';
@@ -13,16 +14,20 @@ export type { Typography } from './typography';
 
 export type ColorScheme = 'light' | 'dark';
 
-/** The active colour palette, following the system light/dark setting. */
-export function useColors(): Palette {
-  const scheme = useColorScheme();
-  return scheme === 'dark' ? darkColors : lightColors;
+/**
+ * Resolve the active scheme from the user's preference and the OS scheme.
+ * 'system' follows the OS; 'light'/'dark' force that scheme.
+ */
+export function useColorSchemeName(): ColorScheme {
+  const system = useColorScheme();
+  const preference = useThemeStore((s) => s.preference);
+  const resolved = preference === 'system' ? system : preference;
+  return resolved === 'dark' ? 'dark' : 'light';
 }
 
-/** The active colour scheme name. */
-export function useColorSchemeName(): ColorScheme {
-  const scheme = useColorScheme();
-  return scheme === 'dark' ? 'dark' : 'light';
+/** The active colour palette, honouring the user's theme preference. */
+export function useColors(): Palette {
+  return useColorSchemeName() === 'dark' ? darkColors : lightColors;
 }
 
 /** Full active theme: themeable colours + static spacing/radius/typography. */

@@ -11,9 +11,12 @@ function toneFor(c: Palette, status: BookingStatus): Tone {
     case 'Requested':
       return { bg: c.status.warningSoft, fg: c.status.warning };
     case 'Accepted':
+    case 'On the way':
       return { bg: c.status.infoSoft, fg: c.status.info };
     case 'Completed':
       return { bg: c.status.successSoft, fg: c.status.success };
+    case 'Cancelled':
+      return { bg: c.status.dangerSoft, fg: c.status.danger };
   }
 }
 

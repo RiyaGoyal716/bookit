@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 
-export type BookingStatus = 'Requested' | 'Accepted' | 'Completed';
+import { track } from '../lib/analytics';
+
+export type BookingStatus = 'Requested' | 'Accepted' | 'On the way' | 'Completed' | 'Cancelled';
+
+/** Ordered lifecycle used for the status timeline and "advance" action. */
+export const BOOKING_TIMELINE: readonly BookingStatus[] = [
+  'Requested',
+  'Accepted',
+  'On the way',
+  'Completed',
+];
+
+/** The next status in the lifecycle, or null if already complete/cancelled. */
+export function nextStatus(status: BookingStatus): BookingStatus | null {
+  const i = BOOKING_TIMELINE.indexOf(status);
+  if (i === -1 || i >= BOOKING_TIMELINE.length - 1) return null;
+  return BOOKING_TIMELINE[i + 1];
+}
 
 export interface Booking {
   id: string;
@@ -82,13 +99,42 @@ interface BookingsState {
   bookings: Booking[];
   /** Prepend a new booking (newest first). */
   addBooking: (booking: Booking) => void;
+  /** Look up a booking by id. */
+  getById: (id: string) => Booking | undefined;
+  /** Mark a booking as Cancelled. */
+  cancelBooking: (id: string) => void;
+  /** Change the date/time of a booking (reschedule). */
+  rescheduleBooking: (id: string, date: string, time: string) => void;
+  /** Advance a booking to the next status in the lifecycle. */
+  advanceStatus: (id: string) => void;
 }
 
 /**
  * In-memory bookings store, seeded with three demo bookings. Persists for the
  * session only.
  */
-export const useBookingsStore = create<BookingsState>((set) => ({
+export const useBookingsStore = create<BookingsState>((set, get) => ({
   bookings: seededBookings,
   addBooking: (booking: Booking) => set((state) => ({ bookings: [booking, ...state.bookings] })),
+  getById: (id: string) => get().bookings.find((b) => b.id === id),
+  cancelBooking: (id: string) => {
+    track('cancel_booking', { bookingId: id });
+    set((state) => ({
+      bookings: state.bookings.map((b) => (b.id === id ? { ...b, status: 'Cancelled' } : b)),
+    }));
+  },
+  rescheduleBooking: (id: string, date: string, time: string) => {
+    track('reschedule_booking', { bookingId: id, date, time });
+    set((state) => ({
+      bookings: state.bookings.map((b) => (b.id === id ? { ...b, date, time } : b)),
+    }));
+  },
+  advanceStatus: (id: string) =>
+    set((state) => ({
+      bookings: state.bookings.map((b) => {
+        if (b.id !== id) return b;
+        const next = nextStatus(b.status);
+        return next ? { ...b, status: next } : b;
+      }),
+    })),
 }));

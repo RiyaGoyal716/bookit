@@ -46,7 +46,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
-            <Text style={styles.phone}>+44 {user?.phone ?? '—'}</Text>
+            <Text style={styles.phone}>{user?.phone ?? '—'}</Text>
           </View>
         </View>
 
