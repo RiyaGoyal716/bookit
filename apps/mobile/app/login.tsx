@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { View, Text, StyleSheet, Pressable, TextInput, Modal, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Localization from 'expo-localization';
 
-import { BottomSheet, Button, Input, Screen } from '../src/components';
+import { Button, Input, Screen } from '../src/components';
 import {
   COUNTRIES,
   dialCodeFor,
@@ -19,6 +19,7 @@ import { useColors, radius, spacing, typography, type Palette } from '../src/the
 export default function LoginScreen() {
   const router = useRouter();
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const defaultCountry = useMemo(() => {
@@ -41,11 +42,15 @@ export default function LoginScreen() {
     setNational(formatAsYouType(capped, country.code));
   };
 
+  const openPicker = () => {
+    setSearch('');
+    setPickerOpen(true);
+  };
+
   const onPickCountry = (next: Country) => {
     setCountry(next);
     setPickerOpen(false);
     setSearch('');
-    // Re-apply formatting for the new country.
     setNational(formatAsYouType(digitsOnly(national).slice(0, next.nationalLength), next.code));
   };
 
@@ -94,11 +99,11 @@ export default function LoginScreen() {
           helper="Standard message rates may apply"
           left={
             <Pressable
-              onPress={() => setPickerOpen(true)}
+              onPress={openPicker}
               style={styles.prefix}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel={`Country code, currently ${country.name} plus ${dialCodeFor(country.code)}`}
+              accessibilityLabel={`Country code, currently ${country.name} plus ${dialCodeFor(country.code)}. Tap to change.`}
             >
               <Text style={styles.prefixFlag}>{flagEmoji(country.code)}</Text>
               <Text style={styles.prefixText}>+{dialCodeFor(country.code)}</Text>
@@ -112,51 +117,66 @@ export default function LoginScreen() {
         <Button label="Continue" disabled={!canContinue} onPress={onContinue} />
       </View>
 
-      <BottomSheet
+      <Modal
         visible={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        title="Select country"
-        snapPoints={['80%']}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setPickerOpen(false)}
       >
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={c.text.muted} />
-          <TextInput
-            style={styles.searchInput}
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search country or code"
-            placeholderTextColor={c.text.muted}
-            autoCorrect={false}
+        <View style={styles.modalRoot}>
+          <Pressable
+            style={styles.backdrop}
+            onPress={() => setPickerOpen(false)}
+            accessibilityLabel="Close country picker"
           />
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
+            <View style={styles.handle} />
+            <Text style={styles.sheetTitle}>Select country</Text>
+
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={18} color={c.text.muted} />
+              <TextInput
+                style={styles.searchInput}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search country or code"
+                placeholderTextColor={c.text.muted}
+                autoCorrect={false}
+                autoFocus
+              />
+            </View>
+
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.code}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={styles.list}
+              ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
+              renderItem={({ item }) => {
+                const selected = item.code === country.code;
+                return (
+                  <Pressable
+                    style={styles.countryRow}
+                    onPress={() => onPickCountry(item)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${item.name} plus ${dialCodeFor(item.code)}`}
+                  >
+                    <Text style={styles.countryFlag}>{flagEmoji(item.code)}</Text>
+                    <Text style={styles.countryName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.countryDial}>+{dialCodeFor(item.code)}</Text>
+                    {selected ? <Ionicons name="checkmark" size={18} color={c.brand.tint} /> : null}
+                  </Pressable>
+                );
+              }}
+            />
+          </View>
         </View>
-        <View style={styles.listWrap}>
-          <FlashList
-            data={filtered}
-            keyExtractor={(item: Country) => item.code}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }: { item: Country }) => {
-              const selected = item.code === country.code;
-              return (
-                <Pressable
-                  style={styles.countryRow}
-                  onPress={() => onPickCountry(item)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${item.name} plus ${dialCodeFor(item.code)}`}
-                >
-                  <Text style={styles.countryFlag}>{flagEmoji(item.code)}</Text>
-                  <Text style={styles.countryName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.countryDial}>+{dialCodeFor(item.code)}</Text>
-                  {selected ? <Ionicons name="checkmark" size={18} color={c.brand.tint} /> : null}
-                </Pressable>
-              );
-            }}
-          />
-        </View>
-      </BottomSheet>
+      </Modal>
     </Screen>
   );
 }
@@ -195,6 +215,38 @@ const makeStyles = (c: Palette) =>
     footer: {
       paddingTop: spacing.md,
     },
+    modalRoot: {
+      flex: 1,
+      justifyContent: 'flex-end',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    sheet: {
+      backgroundColor: c.background.surface,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+    handle: {
+      alignSelf: 'center',
+      width: 40,
+      height: 4,
+      borderRadius: radius.pill,
+      backgroundColor: c.border,
+      marginBottom: spacing.md,
+    },
+    sheetTitle: {
+      ...typography.scale.h2,
+      color: c.text.primary,
+      marginBottom: spacing.md,
+    },
     searchBar: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -213,8 +265,13 @@ const makeStyles = (c: Palette) =>
       color: c.text.primary,
       padding: 0,
     },
-    listWrap: {
-      height: 440,
+    list: {
+      maxHeight: 400,
+    },
+    rowSeparator: {
+      height: 1,
+      backgroundColor: c.border,
+      opacity: 0.5,
     },
     countryRow: {
       flexDirection: 'row',
