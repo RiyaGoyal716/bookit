@@ -16,6 +16,9 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { queryClient } from '../src/lib/queryClient';
 import { initMonitoring } from '../src/lib/monitoring';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { OfflineBanner } from '../src/components/OfflineBanner';
+import { ToastHost } from '../src/components/Toast';
 import { useColors, useColorSchemeName } from '../src/theme';
 
 // Keep the native splash up until fonts are ready.
@@ -29,8 +32,9 @@ function ThemedStack() {
   const scheme = useColorSchemeName();
 
   return (
-    <>
+    <ErrorBoundary scheme={scheme}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <OfflineBanner />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -39,14 +43,22 @@ function ThemedStack() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="login" />
         <Stack.Screen name="otp" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="provider/[id]" />
         <Stack.Screen name="booking/[providerId]" />
+        <Stack.Screen name="booking-detail/[id]" />
+        <Stack.Screen name="review" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="addresses" />
+        <Stack.Screen name="help" />
         <Stack.Screen name="success" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack>
-    </>
+      <ToastHost />
+    </ErrorBoundary>
   );
 }
 

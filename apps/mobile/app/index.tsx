@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Button, Logo } from '../src/components';
+import { route } from '../src/lib/nav';
+import { useOnboardingStore } from '../src/stores/onboardingStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
 export default function WelcomeScreen() {
@@ -14,6 +16,11 @@ export default function WelcomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
+  const seenOnboarding = useOnboardingStore((s) => s.seen);
+
+  if (!seenOnboarding) {
+    return <Redirect href={route('/onboarding')} />;
+  }
 
   return (
     <View style={styles.root}>
