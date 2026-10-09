@@ -4,26 +4,37 @@
  */
 export const colors = {
   brand: {
-    primary: '#208AEF',
-    primaryDark: '#1667B8',
+    /** Single primary brand colour — a strong indigo used across the app. */
+    primary: '#4F46E5',
+    primaryDark: '#4338CA',
+    primarySoft: '#EEF0FE',
     accent: '#00C2A8',
+    star: '#F5A623',
   },
   text: {
     primary: '#11181C',
-    secondary: '#49636E',
+    secondary: '#5A6B74',
+    muted: '#8A98A0',
     inverse: '#FFFFFF',
   },
   background: {
     base: '#FFFFFF',
-    muted: '#F2F5F7',
-    elevated: '#E6F4FE',
+    muted: '#F4F6F8',
+    elevated: '#EEF0FE',
   },
-  border: '#D5DEE3',
+  border: '#E3E8EC',
+  skeleton: '#E7ECEF',
   status: {
-    success: '#2E9E5B',
-    warning: '#E0A106',
+    // Requested = amber, Accepted = blue, Completed = green.
+    success: '#1E9E5A',
+    successSoft: '#E4F6EC',
+    info: '#2563EB',
+    infoSoft: '#E4EDFE',
+    warning: '#D98A00',
+    warningSoft: '#FDF1DC',
     error: '#D1434B',
   },
+  overlay: 'rgba(17,24,28,0.04)',
 } as const;
 
 export type Colors = typeof colors;

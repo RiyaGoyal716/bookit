@@ -1,18 +1,18 @@
 import { render } from '@testing-library/react-native';
 
-import HomeScreen from '../app/index';
+import { Badge } from '../src/components/Badge';
 import { colors, spacing } from '../src/theme';
 
-describe('HomeScreen', () => {
-  it('renders the Bookit title', async () => {
-    const { getByText } = await render(<HomeScreen />);
-    expect(getByText('Bookit')).toBeTruthy();
+describe('Badge', () => {
+  it('renders its status label', async () => {
+    const { getByText } = await render(<Badge status="Requested" />);
+    expect(getByText('Requested')).toBeTruthy();
   });
 });
 
 describe('theme tokens', () => {
-  it('exposes the brand primary colour', () => {
-    expect(colors.brand.primary).toBe('#208AEF');
+  it('exposes a single brand primary colour', () => {
+    expect(colors.brand.primary).toBe('#4F46E5');
   });
 
   it('uses a 4pt spacing base', () => {

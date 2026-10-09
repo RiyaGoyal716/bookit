@@ -1,0 +1,206 @@
+[
+  {
+    "id": "p1",
+    "name": "Hyde Park Home Cleaning",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=12",
+    "rating": 4.8,
+    "reviewCount": 214,
+    "priceFrom": 18,
+    "distanceKm": 1.2,
+    "bio": "Reliable deep cleans and weekly tidy-ups across LS6 and the city centre.",
+    "verified": true,
+    "services": [
+      { "name": "Standard home clean", "price": 18, "durationMin": 60 },
+      { "name": "Deep clean", "price": 45, "durationMin": 150 },
+      { "name": "End of tenancy clean", "price": 120, "durationMin": 240 }
+    ]
+  },
+  {
+    "id": "p2",
+    "name": "Headingley Sparkle Cleaners",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=5",
+    "rating": 4.6,
+    "reviewCount": 132,
+    "priceFrom": 20,
+    "distanceKm": 2.4,
+    "bio": "Eco-friendly products and a fully insured team for homes and flats.",
+    "verified": true,
+    "services": [
+      { "name": "One-off clean", "price": 20, "durationMin": 90 },
+      { "name": "Oven deep clean", "price": 55, "durationMin": 120 },
+      { "name": "Carpet shampoo", "price": 70, "durationMin": 120 }
+    ]
+  },
+  {
+    "id": "p3",
+    "name": "LS1 Office & Home Clean",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=33",
+    "rating": 4.7,
+    "reviewCount": 98,
+    "priceFrom": 22,
+    "distanceKm": 0.8,
+    "bio": "City-centre specialists keeping apartments and small offices spotless.",
+    "verified": true,
+    "services": [
+      { "name": "Apartment clean", "price": 22, "durationMin": 75 },
+      { "name": "Office clean", "price": 60, "durationMin": 120 },
+      { "name": "Window & glass clean", "price": 35, "durationMin": 60 }
+    ]
+  },
+  {
+    "id": "p4",
+    "name": "Chapel Allerton Housekeepers",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=47",
+    "rating": 4.9,
+    "reviewCount": 176,
+    "priceFrom": 25,
+    "distanceKm": 3.1,
+    "bio": "Trusted regular housekeeping with the same cleaner every visit.",
+    "verified": true,
+    "services": [
+      { "name": "Weekly housekeeping", "price": 25, "durationMin": 90 },
+      { "name": "Ironing service", "price": 30, "durationMin": 90 },
+      { "name": "Spring deep clean", "price": 95, "durationMin": 210 }
+    ]
+  },
+  {
+    "id": "p5",
+    "name": "Headingley Barber Co",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=11",
+    "rating": 4.9,
+    "reviewCount": 301,
+    "priceFrom": 15,
+    "distanceKm": 1.5,
+    "bio": "Classic cuts, skin fades and hot-towel shaves in the heart of Headingley.",
+    "verified": true,
+    "services": [
+      { "name": "Skin fade", "price": 18, "durationMin": 40 },
+      { "name": "Cut & beard trim", "price": 25, "durationMin": 50 },
+      { "name": "Hot towel shave", "price": 15, "durationMin": 30 }
+    ]
+  },
+  {
+    "id": "p6",
+    "name": "Roundhay Beauty Studio",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=20",
+    "rating": 4.8,
+    "reviewCount": 188,
+    "priceFrom": 20,
+    "distanceKm": 4.2,
+    "bio": "Gel nails, lashes and facials delivered by qualified beauty therapists.",
+    "verified": true,
+    "services": [
+      { "name": "Gel manicure", "price": 25, "durationMin": 60 },
+      { "name": "Classic lash set", "price": 45, "durationMin": 90 },
+      { "name": "Express facial", "price": 20, "durationMin": 30 }
+    ]
+  },
+  {
+    "id": "p7",
+    "name": "City Centre Hair Lounge",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=25",
+    "rating": 4.7,
+    "reviewCount": 142,
+    "priceFrom": 30,
+    "distanceKm": 0.6,
+    "bio": "Cut, colour and blow-dry from senior stylists just off Briggate.",
+    "verified": true,
+    "services": [
+      { "name": "Cut & blow-dry", "price": 35, "durationMin": 60 },
+      { "name": "Full head colour", "price": 70, "durationMin": 120 },
+      { "name": "Balayage", "price": 110, "durationMin": 180 }
+    ]
+  },
+  {
+    "id": "p8",
+    "name": "Meanwood Mobile Beauty",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=32",
+    "rating": 4.6,
+    "reviewCount": 76,
+    "priceFrom": 22,
+    "distanceKm": 3.7,
+    "bio": "Salon-quality nails and waxing brought to your door across north Leeds.",
+    "verified": true,
+    "services": [
+      { "name": "Mobile manicure", "price": 22, "durationMin": 50 },
+      { "name": "Pedicure", "price": 28, "durationMin": 60 },
+      { "name": "Leg wax", "price": 24, "durationMin": 45 }
+    ]
+  },
+  {
+    "id": "p9",
+    "name": "LS6 Maths Tutor",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=52",
+    "rating": 4.9,
+    "reviewCount": 64,
+    "priceFrom": 28,
+    "distanceKm": 1.1,
+    "bio": "GCSE and A-level maths specialist with a 100% grade-improvement record.",
+    "verified": true,
+    "services": [
+      { "name": "GCSE maths (1 hr)", "price": 28, "durationMin": 60 },
+      { "name": "A-level maths (1 hr)", "price": 35, "durationMin": 60 },
+      { "name": "Exam crash course", "price": 90, "durationMin": 180 }
+    ]
+  },
+  {
+    "id": "p10",
+    "name": "Headingley English & Essays",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=60",
+    "rating": 4.8,
+    "reviewCount": 51,
+    "priceFrom": 26,
+    "distanceKm": 1.8,
+    "bio": "Friendly English tutor helping students master essays and comprehension.",
+    "verified": true,
+    "services": [
+      { "name": "KS3 English (1 hr)", "price": 26, "durationMin": 60 },
+      { "name": "GCSE English (1 hr)", "price": 30, "durationMin": 60 },
+      { "name": "Personal statement review", "price": 50, "durationMin": 90 }
+    ]
+  },
+  {
+    "id": "p11",
+    "name": "Leeds Science Tutors",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=14",
+    "rating": 4.7,
+    "reviewCount": 83,
+    "priceFrom": 30,
+    "distanceKm": 2.9,
+    "bio": "Physics, chemistry and biology tuition for GCSE and A-level students.",
+    "verified": true,
+    "services": [
+      { "name": "GCSE science (1 hr)", "price": 30, "durationMin": 60 },
+      { "name": "A-level physics (1 hr)", "price": 38, "durationMin": 60 },
+      { "name": "Revision bootcamp", "price": 100, "durationMin": 180 }
+    ]
+  },
+  {
+    "id": "p12",
+    "name": "Hyde Park Music Lessons",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=65",
+    "rating": 4.9,
+    "reviewCount": 47,
+    "priceFrom": 24,
+    "distanceKm": 1.3,
+    "bio": "Patient piano and guitar teacher for complete beginners to grade 8.",
+    "verified": true,
+    "services": [
+      { "name": "Piano lesson (30 min)", "price": 24, "durationMin": 30 },
+      { "name": "Guitar lesson (1 hr)", "price": 34, "durationMin": 60 },
+      { "name": "Theory & grade prep", "price": 40, "durationMin": 60 }
+    ]
+  }
+]

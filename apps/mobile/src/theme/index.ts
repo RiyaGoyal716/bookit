@@ -1,11 +1,11 @@
 import { colors } from './colors';
-import { spacing, radius } from './spacing';
+import { spacing, radius, shadow } from './spacing';
 import { typography } from './typography';
 
 export { colors } from './colors';
 export type { Colors } from './colors';
-export { spacing, radius } from './spacing';
-export type { Spacing, Radius } from './spacing';
+export { spacing, radius, shadow } from './spacing';
+export type { Spacing, Radius, Shadow } from './spacing';
 export { typography } from './typography';
 export type { Typography } from './typography';
 
@@ -14,6 +14,7 @@ export const theme = {
   colors,
   spacing,
   radius,
+  shadow,
   typography,
 } as const;
 
