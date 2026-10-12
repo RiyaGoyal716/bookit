@@ -9,12 +9,14 @@ import { Badge, Card, EmptyState } from '../../src/components';
 import { route } from '../../src/lib/nav';
 import { useBookingsStore, type Booking } from '../../src/stores/bookingsStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useMoney } from '../../src/i18n';
 
 type Segment = 'upcoming' | 'past';
 
 export default function BookingsScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const bookings = useBookingsStore((s) => s.bookings);
@@ -95,7 +97,7 @@ export default function BookingsScreen() {
                   {item.date} · {item.time}
                 </Text>
                 <Text style={styles.dot}>·</Text>
-                <Text style={styles.price}>£{item.total}</Text>
+                <Text style={styles.price}>{money(item.total)}</Text>
                 <View style={styles.chevronWrap}>
                   <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
                 </View>

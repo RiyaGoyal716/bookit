@@ -33,6 +33,7 @@ import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useReviewsStore, type Review } from '../../src/stores/reviewsStore';
 import { useCartStore } from '../../src/stores/cartStore';
 import { showToast } from '../../src/stores/toastStore';
+import { useT, useMoney } from '../../src/i18n';
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
@@ -71,6 +72,8 @@ type ReviewFilter = 'all' | 'five' | 'photos';
 export default function ProviderProfileScreen() {
   const router = useRouter();
   const c = useColors();
+  const t = useT();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { width } = useWindowDimensions();
@@ -148,7 +151,7 @@ export default function ProviderProfileScreen() {
   const onShare = () => {
     track('share_provider', { providerId: provider.id });
     Share.share({
-      message: `Check out ${provider.name} on Bookit — ${provider.rating.toFixed(1)}★, from £${provider.priceFrom}.`,
+      message: `Check out ${provider.name} on Bookit — ${provider.rating.toFixed(1)}★, ${t('money.from')} ${money(provider.priceFrom)}.`,
     }).catch(() => {});
   };
 
@@ -372,7 +375,7 @@ export default function ProviderProfileScreen() {
                     </View>
                     {s.description ? <Text style={styles.serviceDesc}>{s.description}</Text> : null}
                     <Text style={styles.serviceMeta}>
-                      {s.durationMin} min · £{s.price}
+                      {s.durationMin} min · {money(s.price)}
                     </Text>
                   </View>
                   {qty > 0 ? (
@@ -563,12 +566,12 @@ export default function ProviderProfileScreen() {
           {cartCount > 0 && sameProviderCart ? (
             <>
               <Text style={styles.priceLabel}>{cartCount} in cart</Text>
-              <Text style={styles.priceValue}>£{cartTotal}</Text>
+              <Text style={styles.priceValue}>{money(cartTotal)}</Text>
             </>
           ) : (
             <>
               <Text style={styles.priceLabel}>from</Text>
-              <Text style={styles.priceValue}>£{fromPrice}</Text>
+              <Text style={styles.priceValue}>{money(fromPrice)}</Text>
             </>
           )}
         </View>

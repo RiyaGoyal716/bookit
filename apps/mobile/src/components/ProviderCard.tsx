@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../theme';
+import { useT, useMoney } from '../i18n';
 import { Avatar } from './Avatar';
 import type { Provider } from '../mocks/types';
 import { getAvailability } from '../mocks/availability';
@@ -25,6 +26,8 @@ export interface ProviderCardProps {
 /** List card: photo, name, verified tick, rating, availability, price + heart. */
 export function ProviderCard({ provider, onPress, showFavourite = true }: ProviderCardProps) {
   const c = useColors();
+  const t = useT();
+  const money = useMoney();
   const styles = useMemo(() => makeStyles(c), [c]);
   const isFavourite = useFavouritesStore((s) => s.ids.includes(provider.id));
   const toggle = useFavouritesStore((s) => s.toggle);
@@ -39,7 +42,7 @@ export function ProviderCard({ provider, onPress, showFavourite = true }: Provid
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${provider.name}, ${CATEGORY_LABEL[provider.category]}, rated ${provider.rating.toFixed(1)}, from £${provider.priceFrom}`}
+      accessibilityLabel={`${provider.name}, ${CATEGORY_LABEL[provider.category]}, rated ${provider.rating.toFixed(1)}, ${t('money.from')} ${money(provider.priceFrom)}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <Avatar uri={provider.photo} size={64} rounded={radius.md} />
@@ -88,8 +91,8 @@ export function ProviderCard({ provider, onPress, showFavourite = true }: Provid
           </Pressable>
         ) : null}
         <View style={styles.priceCol}>
-          <Text style={styles.priceLabel}>from</Text>
-          <Text style={styles.price}>£{provider.priceFrom}</Text>
+          <Text style={styles.priceLabel}>{t('money.from')}</Text>
+          <Text style={styles.price}>{money(provider.priceFrom)}</Text>
         </View>
       </View>
     </Pressable>

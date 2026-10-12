@@ -19,6 +19,7 @@ import type { SubService } from '../../src/mocks/categories';
 import { getAvailability } from '../../src/mocks/availability';
 import { route } from '../../src/lib/nav';
 import { useCartStore } from '../../src/stores/cartStore';
+import { useT, useMoney } from '../../src/i18n';
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 
 function priceMatches(range: SortFilterValue['priceRange'], priceFrom: number): boolean {
@@ -44,6 +45,8 @@ function subServiceKeywords(sub: SubService): string[] {
 export default function CategoryScreen() {
   const router = useRouter();
   const c = useColors();
+  const t = useT();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -146,7 +149,7 @@ export default function CategoryScreen() {
                     onPress={() => setActiveSub(selected ? null : sub.id)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
-                    accessibilityLabel={`${sub.name}, from £${sub.priceFrom}`}
+                    accessibilityLabel={`${sub.name}, ${t('money.from')} ${money(sub.priceFrom)}`}
                   >
                     {sub.popular ? (
                       <View style={styles.popularTag}>
@@ -158,7 +161,9 @@ export default function CategoryScreen() {
                       {sub.description}
                     </Text>
                     <View style={styles.subMeta}>
-                      <Text style={styles.subPrice}>from £{sub.priceFrom}</Text>
+                      <Text style={styles.subPrice}>
+                        {t('money.from')} {money(sub.priceFrom)}
+                      </Text>
                       <Text style={styles.subDuration}>· {sub.durationMin} min</Text>
                     </View>
                   </Pressable>
@@ -230,13 +235,13 @@ export default function CategoryScreen() {
           style={[styles.cartBar, { paddingBottom: insets.bottom + spacing.sm }]}
           onPress={() => router.push(route('/cart'))}
           accessibilityRole="button"
-          accessibilityLabel={`View cart, ${cartCount} items, £${cartTotal}`}
+          accessibilityLabel={`View cart, ${cartCount} items, ${money(cartTotal)}`}
         >
           <View style={styles.cartBadge}>
             <Text style={styles.cartBadgeText}>{cartCount}</Text>
           </View>
           <Text style={styles.cartBarText}>View cart</Text>
-          <Text style={styles.cartBarTotal}>£{cartTotal}</Text>
+          <Text style={styles.cartBarTotal}>{money(cartTotal)}</Text>
           <Ionicons name="arrow-forward" size={18} color={c.text.inverse} />
         </Pressable>
       ) : null}

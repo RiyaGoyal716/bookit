@@ -14,6 +14,7 @@ import { useAddressStore, type Address } from '../src/stores/addressStore';
 import { computeCart, useCartStore } from '../src/stores/cartStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useMoney } from '../src/i18n';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -50,6 +51,7 @@ function dayFullLabel(offset: number): string {
 export default function CheckoutScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -437,7 +439,7 @@ export default function CheckoutScreen() {
                 <ReviewRow
                   key={it.key}
                   label={`${it.name} × ${it.quantity}`}
-                  value={`£${it.price * it.quantity}`}
+                  value={money(it.price * it.quantity)}
                   styles={styles}
                 />
               ))}
@@ -459,24 +461,24 @@ export default function CheckoutScreen() {
               <View style={styles.divider} />
               <ReviewRow
                 label="Services & add-ons"
-                value={`£${breakdown.subtotal}`}
+                value={money(breakdown.subtotal)}
                 styles={styles}
               />
-              <ReviewRow label="Platform fee (12%)" value={`£${breakdown.fee}`} styles={styles} />
+              <ReviewRow label="Platform fee (12%)" value={money(breakdown.fee)} styles={styles} />
               {breakdown.tip > 0 ? (
-                <ReviewRow label="Tip" value={`£${breakdown.tip}`} styles={styles} />
+                <ReviewRow label="Tip" value={money(breakdown.tip)} styles={styles} />
               ) : null}
               {breakdown.discount > 0 ? (
                 <ReviewRow
                   label="Promo discount"
-                  value={`-£${breakdown.discount}`}
+                  value={`-${money(breakdown.discount)}`}
                   styles={styles}
                 />
               ) : null}
               <View style={styles.divider} />
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>£{breakdown.total}</Text>
+                <Text style={styles.totalValue}>{money(breakdown.total)}</Text>
               </View>
             </View>
             <Pressable
@@ -496,7 +498,7 @@ export default function CheckoutScreen() {
         {step < 3 ? (
           <View style={styles.footerTotalRow}>
             <Text style={styles.footerLabel}>Total</Text>
-            <Text style={styles.footerTotal}>£{breakdown.total}</Text>
+            <Text style={styles.footerTotal}>{money(breakdown.total)}</Text>
           </View>
         ) : null}
         <Button

@@ -8,10 +8,12 @@ import { Button, Confetti, Screen } from '../src/components';
 import { useBookingsStore } from '../src/stores/bookingsStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useMoney } from '../src/i18n';
 
 export default function SuccessScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
   const booking = useBookingsStore((s) => (bookingId ? s.getById(bookingId) : undefined));
@@ -68,7 +70,7 @@ export default function SuccessScreen() {
               />
               <SummaryRow
                 icon="pricetag-outline"
-                label={`£${booking.total} total`}
+                label={`${money(booking.total)} total`}
                 styles={styles}
                 c={c}
               />

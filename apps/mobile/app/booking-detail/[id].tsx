@@ -14,6 +14,7 @@ import {
   type BookingStatus,
 } from '../../src/stores/bookingsStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useMoney } from '../../src/i18n';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -34,6 +35,7 @@ function nextSevenDays(): { key: string; label: string }[] {
 export default function BookingDetailScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -144,7 +146,7 @@ export default function BookingDetailScreen() {
               {booking.date} · {booking.time}
             </Text>
             <Text style={styles.dot}>·</Text>
-            <Text style={styles.price}>£{booking.total}</Text>
+            <Text style={styles.price}>{money(booking.total)}</Text>
           </View>
           <Text style={styles.bookingId}>{booking.id}</Text>
         </View>

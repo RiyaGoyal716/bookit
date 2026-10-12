@@ -11,10 +11,12 @@ import { route } from '../src/lib/nav';
 import { ADD_ONS, computeCart, useCartStore } from '../src/stores/cartStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useMoney } from '../src/i18n';
 
 export default function CartScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -50,11 +52,11 @@ export default function CartScreen() {
     const tenPct = Math.round(breakdown.subtotal * 0.1);
     return [
       { label: 'No tip', value: 0 },
-      { label: '£2', value: 2 },
-      { label: '£5', value: 5 },
-      { label: `10% (£${tenPct})`, value: tenPct },
+      { label: money(2), value: 2 },
+      { label: money(5), value: 5 },
+      { label: `10% (${money(tenPct)})`, value: tenPct },
     ];
-  }, [breakdown.subtotal]);
+  }, [breakdown.subtotal, money]);
 
   const onApplyPromo = () => {
     if (applyPromo(promo)) {
@@ -118,7 +120,7 @@ export default function CartScreen() {
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemMeta}>
-                  {item.durationMin} min · £{item.price}
+                  {item.durationMin} min · {money(item.price)}
                 </Text>
               </View>
               <View style={styles.stepper}>
@@ -153,7 +155,7 @@ export default function CartScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${item.name}`}
               >
-                <Text style={styles.itemLineTotal}>£{item.price * item.quantity}</Text>
+                <Text style={styles.itemLineTotal}>{money(item.price * item.quantity)}</Text>
               </Pressable>
             </View>
           ))}
@@ -173,7 +175,7 @@ export default function CartScreen() {
                   <Text style={styles.suggestName} numberOfLines={2}>
                     {s.name}
                   </Text>
-                  <Text style={styles.suggestPrice}>£{s.price}</Text>
+                  <Text style={styles.suggestPrice}>{money(s.price)}</Text>
                   <Pressable
                     style={styles.suggestAdd}
                     onPress={() => {
@@ -211,13 +213,13 @@ export default function CartScreen() {
                 onPress={() => toggleAddOn(a.id)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected }}
-                accessibilityLabel={`${a.name}, £${a.price}`}
+                accessibilityLabel={`${a.name}, ${money(a.price)}`}
               >
                 <View style={[styles.checkbox, selected && styles.checkboxOn]}>
                   {selected ? <Ionicons name="checkmark" size={14} color={c.text.inverse} /> : null}
                 </View>
                 <Text style={styles.addOnName}>{a.name}</Text>
-                <Text style={styles.addOnPrice}>+£{a.price}</Text>
+                <Text style={styles.addOnPrice}>+{money(a.price)}</Text>
               </Pressable>
             );
           })}
@@ -269,15 +271,15 @@ export default function CartScreen() {
 
         {/* Breakdown */}
         <View style={[styles.card, styles.breakdownCard]}>
-          <Row label="Services & add-ons" value={`£${breakdown.subtotal}`} styles={styles} />
-          <Row label="Platform fee (12%)" value={`£${breakdown.fee}`} styles={styles} />
+          <Row label="Services & add-ons" value={money(breakdown.subtotal)} styles={styles} />
+          <Row label="Platform fee (12%)" value={money(breakdown.fee)} styles={styles} />
           {breakdown.tip > 0 ? (
-            <Row label="Tip" value={`£${breakdown.tip}`} styles={styles} />
+            <Row label="Tip" value={money(breakdown.tip)} styles={styles} />
           ) : null}
           {breakdown.discount > 0 ? (
             <Row
               label="Promo discount"
-              value={`-£${breakdown.discount}`}
+              value={`-${money(breakdown.discount)}`}
               styles={styles}
               discount
             />
@@ -285,7 +287,7 @@ export default function CartScreen() {
           <View style={styles.divider} />
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>£{breakdown.total}</Text>
+            <Text style={styles.totalValue}>{money(breakdown.total)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -293,7 +295,7 @@ export default function CartScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.footerPrice}>
           <Text style={styles.footerLabel}>Total</Text>
-          <Text style={styles.footerTotal}>£{breakdown.total}</Text>
+          <Text style={styles.footerTotal}>{money(breakdown.total)}</Text>
         </View>
         <Button
           label="Proceed to checkout"

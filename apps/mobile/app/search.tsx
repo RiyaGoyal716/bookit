@@ -13,6 +13,7 @@ import { track } from '../src/lib/analytics';
 import { route } from '../src/lib/nav';
 import { useSearchStore } from '../src/stores/searchStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useMoney } from '../src/i18n';
 
 const TRENDING = [
   'Deep clean',
@@ -32,6 +33,7 @@ interface Suggestion {
 export default function SearchScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const inputRef = useRef<TextInput>(null);
@@ -275,7 +277,7 @@ export default function SearchScreen() {
                   <Text style={styles.providerArea}>{item.area ?? `${item.distanceKm} km`}</Text>
                 </View>
               </View>
-              <Text style={styles.providerPrice}>from £{item.priceFrom}</Text>
+              <Text style={styles.providerPrice}>from {money(item.priceFrom)}</Text>
             </Pressable>
           )}
         />

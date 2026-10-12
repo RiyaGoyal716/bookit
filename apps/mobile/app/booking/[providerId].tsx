@@ -13,6 +13,7 @@ import { computeFees, generateBookingId, useBookingsStore } from '../../src/stor
 import { useAddressStore, type Address } from '../../src/stores/addressStore';
 import { showToast } from '../../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useMoney } from '../../src/i18n';
 
 const PROMO_CODE = 'BOOKIT10';
 const PROMO_RATE = 0.1;
@@ -37,6 +38,7 @@ function nextSevenDays(): { key: string; label: string }[] {
 export default function BookingFlowScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { providerId } = useLocalSearchParams<{ providerId: string }>();
@@ -228,7 +230,7 @@ export default function BookingFlowScreen() {
                     <Text style={styles.serviceName}>{s.name}</Text>
                     <Text style={styles.serviceMeta}>{s.durationMin} min</Text>
                   </View>
-                  <Text style={styles.servicePrice}>£{s.price}</Text>
+                  <Text style={styles.servicePrice}>{money(s.price)}</Text>
                   <Ionicons
                     name={selected ? 'radio-button-on' : 'radio-button-off'}
                     size={22}
@@ -339,18 +341,18 @@ export default function BookingFlowScreen() {
               <ReviewRow label="When" value={`${date} · ${time}`} styles={styles} />
               <ReviewRow label="Address" value={address} styles={styles} />
               <View style={styles.divider} />
-              <ReviewRow label="Service price" value={`£${service.price}`} styles={styles} />
-              <ReviewRow label="Platform fee (12%)" value={`£${fees.fee}`} styles={styles} />
+              <ReviewRow label="Service price" value={money(service.price)} styles={styles} />
+              <ReviewRow label="Platform fee (12%)" value={money(fees.fee)} styles={styles} />
               {promoApplied ? (
                 <View style={styles.reviewRow}>
                   <Text style={styles.discountLabel}>Promo {PROMO_CODE} (10% off)</Text>
-                  <Text style={styles.discountValue}>-£{discount}</Text>
+                  <Text style={styles.discountValue}>-{money(discount)}</Text>
                 </View>
               ) : null}
               <View style={styles.divider} />
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>£{finalTotal}</Text>
+                <Text style={styles.totalValue}>{money(finalTotal)}</Text>
               </View>
             </View>
 

@@ -14,6 +14,7 @@ import { useAuthStore } from '../../src/stores/authStore';
 import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useMoney } from '../../src/i18n';
 
 type RowIcon = keyof typeof Ionicons.glyphMap;
 
@@ -31,6 +32,7 @@ const MENU: { icon: RowIcon; label: string; href: string }[] = [
 export default function AccountScreen() {
   const router = useRouter();
   const c = useColors();
+  const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const user = useAuthStore((s) => s.user);
@@ -146,7 +148,7 @@ export default function AccountScreen() {
                   <View style={styles.favMeta}>
                     <Ionicons name="star" size={12} color={c.brand.star} />
                     <Text style={styles.favRating}>{item.rating.toFixed(1)}</Text>
-                    <Text style={styles.favPrice}>· from £{item.priceFrom}</Text>
+                    <Text style={styles.favPrice}>· from {money(item.priceFrom)}</Text>
                   </View>
                 </Pressable>
               )}
