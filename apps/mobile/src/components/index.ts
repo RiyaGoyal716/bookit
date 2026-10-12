@@ -31,3 +31,15 @@ export type { SortFilterSheetProps, SortFilterValue, SortKey, PriceRange } from 
 export { ToastHost } from './Toast';
 export { OfflineBanner } from './OfflineBanner';
 export { ErrorBoundary } from './ErrorBoundary';
+export { HeroCarousel } from './HeroCarousel';
+export type { HeroCarouselProps, HeroBanner } from './HeroCarousel';
+export { SideDrawer } from './SideDrawer';
+export type { SideDrawerProps } from './SideDrawer';
+export { ImageGalleryViewer } from './ImageGalleryViewer';
+export type { ImageGalleryViewerProps } from './ImageGalleryViewer';
+export { Confetti } from './Confetti';
+export type { ConfettiProps } from './Confetti';
+export { Accordion } from './Accordion';
+export type { AccordionProps, AccordionItem } from './Accordion';
+export { ConfirmModal } from './ConfirmModal';
+export type { ConfirmModalProps } from './ConfirmModal';
