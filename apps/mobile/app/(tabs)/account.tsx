@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
@@ -6,24 +6,29 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Button, EmptyState } from '../../src/components';
+import { AppDrawer, Button, ConfirmModal, EmptyState } from '../../src/components';
 import { route } from '../../src/lib/nav';
 import { getProviderById } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
 import { useAuthStore } from '../../src/stores/authStore';
+import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 
 type RowIcon = keyof typeof Ionicons.glyphMap;
 
 const MENU: { icon: RowIcon; label: string; href: string }[] = [
-  { icon: 'notifications-outline', label: 'Notifications', href: '/notifications' },
+  { icon: 'card-outline', label: 'Payment methods', href: '/payments' },
   { icon: 'location-outline', label: 'Saved addresses', href: '/addresses' },
+  { icon: 'gift-outline', label: 'Refer & earn', href: '/referrals' },
+  { icon: 'notifications-outline', label: 'Notifications', href: '/notifications' },
+  { icon: 'document-text-outline', label: 'Booking & cancellation policy', href: '/policies' },
   { icon: 'settings-outline', label: 'Settings', href: '/settings' },
   { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
+  { icon: 'shield-checkmark-outline', label: 'Legal & guidelines', href: '/legal' },
 ];
 
-export default function ProfileScreen() {
+export default function AccountScreen() {
   const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -31,6 +36,10 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const favouriteIds = useFavouritesStore((s) => s.ids);
+  const bookingCount = useBookingsStore((s) => s.bookings.length);
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   const favourites = useMemo(
     () => favouriteIds.map((id) => getProviderById(id)).filter((p): p is Provider => Boolean(p)),
@@ -40,19 +49,36 @@ export default function ProfileScreen() {
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
 
   const handleLogout = () => {
+    setLogoutOpen(false);
     logout();
     router.replace('/');
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={styles.topBar}>
+        <Text style={styles.heading}>Account</Text>
+        <Pressable
+          style={styles.menuBtn}
+          onPress={() => setDrawerOpen(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Open menu"
+        >
+          <Ionicons name="menu" size={24} color={c.text.primary} />
+        </Pressable>
+      </View>
+
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Profile</Text>
-
-        <View style={styles.userCard}>
+        <Pressable
+          style={styles.userCard}
+          onPress={() => setDrawerOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Open menu"
+        >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initial}</Text>
           </View>
@@ -60,12 +86,28 @@ export default function ProfileScreen() {
             <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
             <Text style={styles.phone}>{user?.phone ?? '—'}</Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color={c.brand.tint} />
+        </Pressable>
+
+        <View style={styles.statsRow}>
+          <Stat value={`${bookingCount}`} label="Bookings" styles={styles} />
+          <View style={styles.statDivider} />
+          <Stat value={`${favourites.length}`} label="Favourites" styles={styles} />
+          <View style={styles.statDivider} />
+          <Stat value="£10" label="Referral credit" styles={styles} />
         </View>
 
         <View style={styles.favHeader}>
           <Text style={styles.sectionTitle}>Favourites</Text>
           {favourites.length > 0 ? (
-            <Text style={styles.favCount}>{favourites.length} saved</Text>
+            <Pressable
+              onPress={() => router.push(route('/favourites'))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="See all favourites"
+            >
+              <Text style={styles.seeAll}>See all</Text>
+            </Pressable>
           ) : null}
         </View>
         {favourites.length === 0 ? (
@@ -138,29 +180,56 @@ export default function ProfileScreen() {
           label="Log out"
           variant="secondary"
           icon="log-out-outline"
-          onPress={handleLogout}
+          onPress={() => setLogoutOpen(true)}
           style={styles.logout}
         />
       </ScrollView>
+
+      <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <ConfirmModal
+        visible={logoutOpen}
+        icon="log-out-outline"
+        title="Log out?"
+        message="You'll need to sign in again to manage your bookings."
+        confirmLabel="Log out"
+        destructive
+        onConfirm={handleLogout}
+        onCancel={() => setLogoutOpen(false)}
+      />
+    </View>
+  );
+}
+
+function Stat({
+  value,
+  label,
+  styles,
+}: {
+  value: string;
+  label: string;
+  styles: ReturnType<typeof makeStyles>;
+}) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: c.background.base,
-    },
-    content: {
+    container: { flex: 1, backgroundColor: c.background.base },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
+      paddingBottom: spacing.sm,
     },
-    heading: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-      marginBottom: spacing.lg,
-    },
+    heading: { ...typography.scale.h1, color: c.text.primary },
+    menuBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
     userCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -177,22 +246,24 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: {
-      ...typography.scale.h2,
-      color: c.text.inverse,
+    avatarText: { ...typography.scale.h2, color: c.text.inverse },
+    userInfo: { flex: 1, gap: 2 },
+    name: { ...typography.scale.h2, color: c.text.primary },
+    phone: { ...typography.scale.small, color: c.text.secondary },
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: spacing.lg,
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
     },
-    userInfo: {
-      flex: 1,
-      gap: 2,
-    },
-    name: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
-    phone: {
-      ...typography.scale.small,
-      color: c.text.secondary,
-    },
+    stat: { flex: 1, alignItems: 'center', gap: 2 },
+    statDivider: { width: 1, height: 32, backgroundColor: c.border },
+    statValue: { ...typography.scale.h2, color: c.brand.tint },
+    statLabel: { ...typography.scale.caption, color: c.text.muted },
     favHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -200,23 +271,15 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.xl,
       marginBottom: spacing.md,
     },
-    sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
-    favCount: {
-      ...typography.scale.small,
-      color: c.text.muted,
-    },
+    sectionTitle: { ...typography.scale.h2, color: c.text.primary },
+    seeAll: { ...typography.scale.smallMedium, color: c.brand.tint },
     favEmpty: {
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
-    favList: {
-      height: 150,
-    },
+    favList: { height: 150 },
     favSeparator: { width: spacing.md },
     favCard: {
       width: 150,
@@ -227,29 +290,11 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
       gap: spacing.xs,
     },
-    favPhoto: {
-      width: '100%',
-      height: 84,
-      borderRadius: radius.md,
-      backgroundColor: c.skeleton,
-    },
-    favName: {
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
-    },
-    favMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 3,
-    },
-    favRating: {
-      ...typography.scale.caption,
-      color: c.text.primary,
-    },
-    favPrice: {
-      ...typography.scale.caption,
-      color: c.text.muted,
-    },
+    favPhoto: { width: '100%', height: 84, borderRadius: radius.md, backgroundColor: c.skeleton },
+    favName: { ...typography.scale.smallMedium, color: c.text.primary },
+    favMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    favRating: { ...typography.scale.caption, color: c.text.primary },
+    favPrice: { ...typography.scale.caption, color: c.text.muted },
     menu: {
       marginTop: spacing.xl,
       borderRadius: radius.lg,
@@ -265,13 +310,8 @@ const makeStyles = (c: Palette) =>
       minHeight: 56,
       paddingHorizontal: spacing.lg,
     },
-    menuPressed: {
-      backgroundColor: c.background.muted,
-    },
-    menuDivider: {
-      borderBottomWidth: 1,
-      borderBottomColor: c.border,
-    },
+    menuPressed: { backgroundColor: c.background.muted },
+    menuDivider: { borderBottomWidth: 1, borderBottomColor: c.border },
     menuIcon: {
       width: 34,
       height: 34,
@@ -280,12 +320,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    menuLabel: {
-      flex: 1,
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    logout: {
-      marginTop: spacing.xl,
-    },
+    menuLabel: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
+    logout: { marginTop: spacing.xl },
   });

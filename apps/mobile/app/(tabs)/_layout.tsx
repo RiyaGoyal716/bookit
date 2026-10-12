@@ -1,10 +1,44 @@
+import { useEffect, useState } from 'react';
+import { Animated, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useNotificationsStore } from '../../src/stores/notificationsStore';
 import { useColors, typography } from '../../src/theme';
+
+/** Tab icon with a subtle scale/opacity pop when active. */
+function TabIcon({
+  name,
+  color,
+  size,
+  focused,
+}: {
+  name: keyof typeof Ionicons.glyphMap;
+  color: ColorValue;
+  size: number;
+  focused: boolean;
+}) {
+  const [scale] = useState(() => new Animated.Value(focused ? 1 : 0.9));
+
+  useEffect(() => {
+    Animated.spring(scale, {
+      toValue: focused ? 1 : 0.9,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 140,
+    }).start();
+  }, [focused, scale]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Ionicons name={name} size={size} color={color} />
+    </Animated.View>
+  );
+}
 
 export default function TabsLayout() {
   const c = useColors();
+  const unread = useNotificationsStore((s) => s.items.filter((n) => !n.read).length);
 
   return (
     <Tabs
@@ -31,7 +65,12 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+            <TabIcon
+              name={focused ? 'home' : 'home-outline'}
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -40,16 +79,46 @@ export default function TabsLayout() {
         options={{
           title: 'Bookings',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+            <TabIcon
+              name={focused ? 'calendar' : 'calendar-outline'}
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="inbox"
         options={{
-          title: 'Profile',
+          title: 'Inbox',
+          tabBarBadge: unread > 0 ? unread : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: c.status.danger,
+            color: c.text.inverse,
+            fontSize: 10,
+          },
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+            <TabIcon
+              name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
+              color={color}
+              size={size}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon
+              name={focused ? 'person' : 'person-outline'}
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
