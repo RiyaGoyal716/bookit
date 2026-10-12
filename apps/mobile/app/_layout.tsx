@@ -47,6 +47,15 @@ function ThemedStack() {
         <Stack.Screen name="login" />
         <Stack.Screen name="otp" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="search" options={{ animation: 'fade' }} />
+        <Stack.Screen name="category/[slug]" />
+        <Stack.Screen name="cart" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="checkout" />
+        <Stack.Screen name="payments" />
+        <Stack.Screen name="referrals" />
+        <Stack.Screen name="favourites" />
+        <Stack.Screen name="legal" />
+        <Stack.Screen name="policies" />
         <Stack.Screen name="provider/[id]" />
         <Stack.Screen name="booking/[providerId]" />
         <Stack.Screen name="booking-detail/[id]" />

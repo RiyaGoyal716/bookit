@@ -43,3 +43,5 @@ export { Accordion } from './Accordion';
 export type { AccordionProps, AccordionItem } from './Accordion';
 export { ConfirmModal } from './ConfirmModal';
 export type { ConfirmModalProps } from './ConfirmModal';
+export { AppDrawer } from './AppDrawer';
+export type { AppDrawerProps } from './AppDrawer';

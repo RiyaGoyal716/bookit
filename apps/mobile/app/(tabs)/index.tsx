@@ -1,131 +1,122 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+  useWindowDimensions,
+} from 'react-native';
+import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
-import {
-  BottomSheet,
-  Chip,
-  EmptyState,
-  ProviderCard,
-  Skeleton,
-  SortFilterSheet,
-  DEFAULT_SORT_FILTER,
-  activeFilterCount,
-  type SortFilterValue,
-} from '../../src/components';
-import { providers as allProviders } from '../../src/mocks';
-import type { Provider, ProviderCategory } from '../../src/mocks/types';
-import { getAvailability } from '../../src/mocks/availability';
+import { BottomSheet, HeroCarousel, Skeleton, type HeroBanner } from '../../src/components';
+import { AppDrawer } from '../../src/components/AppDrawer';
+import { providers as allProviders, categories } from '../../src/mocks';
+import type { Provider } from '../../src/mocks/types';
+import type { Category } from '../../src/mocks/categories';
 import { track } from '../../src/lib/analytics';
 import { route } from '../../src/lib/nav';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
-import { useSearchStore } from '../../src/stores/searchStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
-
-type Filter = 'all' | ProviderCategory;
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'cleaning', label: 'Cleaning' },
-  { key: 'beauty', label: 'Beauty' },
-  { key: 'tutoring', label: 'Tutoring' },
-];
+import { showToast } from '../../src/stores/toastStore';
+import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 
 const AREAS = ['Leeds, UK', 'Headingley', 'Hyde Park', 'Chapel Allerton', 'Horsforth', 'Roundhay'];
 
-function priceMatches(range: SortFilterValue['priceRange'], priceFrom: number): boolean {
-  switch (range) {
-    case 'low':
-      return priceFrom <= 25;
-    case 'mid':
-      return priceFrom > 25 && priceFrom <= 50;
-    case 'high':
-      return priceFrom > 50;
-    default:
-      return true;
-  }
-}
+const TRUST = [
+  { icon: 'shield-checkmark' as const, label: 'Verified pros' },
+  { icon: 'lock-closed' as const, label: 'Secure payments' },
+  { icon: 'ribbon' as const, label: 'Satisfaction guarantee' },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
+  const { width } = useWindowDimensions();
   const name = useAuthStore((s) => s.user?.name);
   const unread = useNotificationsStore((s) => s.items.filter((n) => !n.read).length);
-  const recent = useSearchStore((s) => s.recent);
-  const addRecent = useSearchStore((s) => s.addRecent);
-  const removeRecent = useSearchStore((s) => s.removeRecent);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [query, setQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [sortFilter, setSortFilter] = useState<SortFilterValue>(DEFAULT_SORT_FILTER);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [location, setLocation] = useState('Leeds, UK');
   const [locationOpen, setLocationOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
+    const timer = setTimeout(() => setLoading(false), 650);
     return () => clearTimeout(timer);
   }, []);
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = allProviders.filter((p) => {
-      const matchesCategory = filter === 'all' || p.category === filter;
-      const matchesQuery =
-        q === '' ||
-        p.name.toLowerCase().includes(q) ||
-        p.services.some((s) => s.name.toLowerCase().includes(q));
-      const matchesPrice = priceMatches(sortFilter.priceRange, p.priceFrom);
-      const matchesRating = !sortFilter.minRating4 || p.rating >= 4;
-      const matchesAvail = !sortFilter.availableToday || getAvailability(p.id).availableToday;
-      return matchesCategory && matchesQuery && matchesPrice && matchesRating && matchesAvail;
-    });
-
-    const sorted = [...filtered];
-    sorted.sort((a, b) => {
-      switch (sortFilter.sort) {
-        case 'price':
-          return a.priceFrom - b.priceFrom;
-        case 'distance':
-          return a.distanceKm - b.distanceKm;
-        default:
-          return b.rating - a.rating;
-      }
-    });
-    return sorted;
-  }, [query, filter, sortFilter]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 800);
   }, []);
 
-  const commitSearch = (term: string) => {
-    const t = term.trim();
-    if (t.length >= 2) {
-      addRecent(t);
-      track('search', { query: t, results: results.length });
+  const banners = useMemo<HeroBanner[]>(
+    () => [
+      {
+        id: 'b1',
+        title: '20% off your first clean',
+        subtitle: 'New customers · code SPARKLE20',
+        cta: 'Book cleaning',
+        icon: 'sparkles',
+        colors: [c.brand.primary, c.brand.primaryDark],
+        onPress: () => router.push(route('/category/cleaning')),
+      },
+      {
+        id: 'b2',
+        title: 'Top-rated barbers',
+        subtitle: 'Fresh cuts across Leeds',
+        cta: 'Explore beauty',
+        icon: 'cut',
+        colors: ['#7C3AED', '#4F46E5'],
+        onPress: () => router.push(route('/category/beauty')),
+      },
+      {
+        id: 'b3',
+        title: 'Ace your exams',
+        subtitle: 'Expert tutors from £22/hr',
+        cta: 'Find a tutor',
+        icon: 'school',
+        colors: ['#0EA5E9', '#2563EB'],
+        onPress: () => router.push(route('/category/tutoring')),
+      },
+    ],
+    [c, router],
+  );
+
+  const mostBooked = useMemo(() => allProviders.filter((p) => p.mostBooked).slice(0, 10), []);
+  const topRated = useMemo(
+    () => [...allProviders].sort((a, b) => b.rating - a.rating).slice(0, 10),
+    [],
+  );
+  const newOnBookit = useMemo(() => allProviders.filter((p) => p.isNew).slice(0, 10), []);
+
+  const openCategory = (cat: Category) => {
+    Haptics.selectionAsync().catch(() => {});
+    if (cat.live) {
+      router.push(route(`/category/${cat.slug}`));
+    } else {
+      showToast(`${cat.label} is coming soon to Leeds`);
     }
   };
 
-  const openProvider = (provider: Provider) => {
-    track('view_provider', { providerId: provider.id, from: 'home' });
-    if (query.trim().length >= 2) addRecent(query.trim());
-    router.push(`/provider/${provider.id}`);
+  const openProvider = (p: Provider) => {
+    track('view_provider', { providerId: p.id, from: 'home' });
+    router.push(`/provider/${p.id}`);
   };
 
   const initial = name?.charAt(0)?.toUpperCase() ?? 'A';
-  const filterCount = activeFilterCount(sortFilter);
-  const showRecent = searchFocused && query.trim().length === 0 && recent.length > 0;
+  // Two rows of 4 category tiles.
+  const tileWidth = (width - spacing.lg * 2 - spacing.md * 3) / 4;
 
   return (
     <View style={styles.container}>
@@ -137,8 +128,13 @@ export default function HomeScreen() {
           accessibilityLabel={`Change location, current ${location}`}
         >
           <Ionicons name="location" size={16} color={c.brand.tint} />
-          <Text style={styles.locationText}>{location}</Text>
-          <Ionicons name="chevron-down" size={14} color={c.text.muted} />
+          <View>
+            <Text style={styles.locationLabel}>Location</Text>
+            <View style={styles.locationRow}>
+              <Text style={styles.locationText}>{location}</Text>
+              <Ionicons name="chevron-down" size={14} color={c.text.muted} />
+            </View>
+          </View>
         </Pressable>
         <View style={styles.headerRight}>
           <Pressable
@@ -149,151 +145,139 @@ export default function HomeScreen() {
             accessibilityLabel={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
           >
             <Ionicons name="notifications-outline" size={22} color={c.text.primary} />
-            {unread > 0 ? <View style={styles.unreadDot} /> : null}
+            {unread > 0 ? (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{unread > 9 ? '9+' : unread}</Text>
+              </View>
+            ) : null}
           </Pressable>
-          <View style={styles.avatar}>
+          <Pressable
+            style={styles.avatar}
+            onPress={() => setDrawerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Open menu"
+          >
             <Text style={styles.avatarText}>{initial}</Text>
-          </View>
+          </Pressable>
         </View>
       </View>
 
-      <FlashList
-        data={loading ? [] : results}
-        keyExtractor={(item: Provider) => item.id}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        keyboardShouldPersistTaps="handled"
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListHeaderComponent={
-          <View>
-            <Text style={styles.greeting}>Hi {name ?? 'there'} 👋</Text>
-            <Text style={styles.subtitle}>Find trusted local help in Leeds</Text>
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={c.brand.tint}
+            colors={[c.brand.primary]}
+          />
+        }
+      >
+        <View style={styles.greetBlock}>
+          <Text style={styles.greeting}>Hi {name ?? 'there'} 👋</Text>
+          <Text style={styles.subtitle}>What do you need done today?</Text>
+        </View>
 
-            <View style={styles.searchRow}>
-              <View style={styles.searchBar}>
-                <Ionicons name="search" size={18} color={c.text.muted} />
-                <TextInput
-                  style={styles.searchInput}
-                  value={query}
-                  onChangeText={setQuery}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                  onSubmitEditing={(e) => commitSearch(e.nativeEvent.text)}
-                  placeholder="Search cleaners, barbers, tutors…"
-                  placeholderTextColor={c.text.muted}
-                  returnKeyType="search"
-                />
-                {query.length > 0 ? (
-                  <Pressable
-                    onPress={() => setQuery('')}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Clear search"
-                  >
-                    <Ionicons name="close-circle" size={18} color={c.text.muted} />
-                  </Pressable>
-                ) : null}
-              </View>
-              <Pressable
-                style={styles.filterBtn}
-                onPress={() => setSheetOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Sort and filter"
-              >
-                <Ionicons name="options-outline" size={20} color={c.text.primary} />
-                {filterCount > 0 ? (
-                  <View style={styles.filterBadge}>
-                    <Text style={styles.filterBadgeText}>{filterCount}</Text>
+        <Pressable
+          style={styles.searchBar}
+          onPress={() => router.push(route('/search'))}
+          accessibilityRole="search"
+          accessibilityLabel="Search services and providers"
+        >
+          <Ionicons name="search" size={18} color={c.text.muted} />
+          <Text style={styles.searchPlaceholder}>Search cleaners, barbers, tutors…</Text>
+        </Pressable>
+
+        {loading ? (
+          <HomeSkeleton styles={styles} />
+        ) : (
+          <>
+            <View style={styles.carousel}>
+              <HeroCarousel banners={banners} />
+            </View>
+
+            <SectionHeader title="Services" styles={styles} />
+            <View style={styles.grid}>
+              {categories.map((cat) => (
+                <Pressable
+                  key={cat.slug}
+                  style={[styles.tile, { width: tileWidth }]}
+                  onPress={() => openCategory(cat)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${cat.label}${cat.live ? '' : ', coming soon'}`}
+                >
+                  <View style={[styles.tileIcon, !cat.live && styles.tileIconMuted]}>
+                    <Ionicons
+                      name={cat.icon}
+                      size={24}
+                      color={cat.live ? c.brand.tint : c.text.muted}
+                    />
+                    {!cat.live ? (
+                      <View style={styles.soonDot}>
+                        <Ionicons name="time" size={10} color={c.text.inverse} />
+                      </View>
+                    ) : null}
                   </View>
-                ) : null}
-              </Pressable>
-            </View>
-
-            {showRecent ? (
-              <View style={styles.recentBlock}>
-                <Text style={styles.recentTitle}>Recent searches</Text>
-                <View style={styles.recentChips}>
-                  {recent.map((term) => (
-                    <Pressable
-                      key={term}
-                      style={styles.recentChip}
-                      onPress={() => setQuery(term)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Search ${term}`}
-                    >
-                      <Ionicons name="time-outline" size={14} color={c.text.muted} />
-                      <Text style={styles.recentText}>{term}</Text>
-                      <Pressable
-                        onPress={() => removeRecent(term)}
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Remove ${term}`}
-                      >
-                        <Ionicons name="close" size={14} color={c.text.muted} />
-                      </Pressable>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            ) : null}
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chips}
-              keyboardShouldPersistTaps="handled"
-            >
-              {FILTERS.map((f) => (
-                <Chip
-                  key={f.key}
-                  label={f.label}
-                  active={filter === f.key}
-                  onPress={() => setFilter(f.key)}
-                />
-              ))}
-            </ScrollView>
-
-            <Text style={styles.sectionTitle}>
-              {query.trim() ? `Results for “${query.trim()}”` : 'Top rated near you'}
-            </Text>
-          </View>
-        }
-        ListEmptyComponent={
-          loading ? (
-            <View style={styles.skeletonList}>
-              {[0, 1, 2, 3, 4].map((i) => (
-                <ProviderSkeleton key={i} styles={styles} />
+                  <Text style={styles.tileLabel} numberOfLines={1}>
+                    {cat.label}
+                  </Text>
+                  {!cat.live ? <Text style={styles.soonText}>Soon</Text> : null}
+                </Pressable>
               ))}
             </View>
-          ) : (
-            <EmptyState
-              title="No providers found"
-              message="Try a different search or adjust your filters."
-              actionLabel="Clear filters"
-              onAction={() => {
-                setQuery('');
-                setFilter('all');
-                setSortFilter(DEFAULT_SORT_FILTER);
-              }}
+
+            <Rail
+              title="Most booked near you"
+              data={mostBooked}
+              onProvider={openProvider}
+              styles={styles}
+              c={c}
             />
-          )
-        }
-        renderItem={({ item }: { item: Provider }) => (
-          <ProviderCard provider={item} onPress={() => openProvider(item)} />
-        )}
-      />
+            <Rail
+              title="Top rated"
+              data={topRated}
+              onProvider={openProvider}
+              styles={styles}
+              c={c}
+            />
+            <Rail
+              title="New on Bookit"
+              data={newOnBookit}
+              onProvider={openProvider}
+              styles={styles}
+              c={c}
+            />
 
-      <SortFilterSheet
-        visible={sheetOpen}
-        value={sortFilter}
-        onClose={() => setSheetOpen(false)}
-        onApply={(v) => {
-          setSortFilter(v);
-          setSheetOpen(false);
-        }}
-      />
+            <View style={styles.trustStrip}>
+              {TRUST.map((t) => (
+                <View key={t.label} style={styles.trustItem}>
+                  <Ionicons name={t.icon} size={20} color={c.brand.tint} />
+                  <Text style={styles.trustLabel}>{t.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Pressable
+              style={styles.referral}
+              onPress={() => router.push(route('/referrals'))}
+              accessibilityRole="button"
+              accessibilityLabel="Refer a friend: give £10, get £10"
+            >
+              <View style={styles.referralIcon}>
+                <Ionicons name="gift" size={26} color={c.brand.tint} />
+              </View>
+              <View style={styles.referralBody}>
+                <Text style={styles.referralTitle}>Give £10, get £10</Text>
+                <Text style={styles.referralText}>
+                  Invite a friend to Bookit and you both save on your next booking.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={c.text.muted} />
+            </Pressable>
+          </>
+        )}
+      </ScrollView>
 
       <BottomSheet
         visible={locationOpen}
@@ -323,18 +307,111 @@ export default function HomeScreen() {
           );
         })}
       </BottomSheet>
+
+      <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </View>
   );
 }
 
-function ProviderSkeleton({ styles }: { styles: ReturnType<typeof makeStyles> }) {
+function SectionHeader({
+  title,
+  styles,
+  onSeeAll,
+}: {
+  title: string;
+  styles: ReturnType<typeof makeStyles>;
+  onSeeAll?: () => void;
+}) {
   return (
-    <View style={styles.skeletonCard}>
-      <Skeleton width={64} height={64} rounded={radius.md} />
-      <View style={styles.skeletonBody}>
-        <Skeleton width="70%" height={16} />
-        <Skeleton width="40%" height={12} />
-        <Skeleton width="55%" height={12} />
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {onSeeAll ? (
+        <Pressable
+          onPress={onSeeAll}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`See all ${title}`}
+        >
+          <Text style={styles.seeAll}>See all</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+function Rail({
+  title,
+  data,
+  onProvider,
+  styles,
+  c,
+}: {
+  title: string;
+  data: Provider[];
+  onProvider: (p: Provider) => void;
+  styles: ReturnType<typeof makeStyles>;
+  c: Palette;
+}) {
+  if (data.length === 0) return null;
+  return (
+    <View style={styles.rail}>
+      <SectionHeader title={title} styles={styles} />
+      <FlashList
+        data={data}
+        horizontal
+        keyExtractor={(p: Provider) => p.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.railContent}
+        ItemSeparatorComponent={() => <View style={styles.railGap} />}
+        renderItem={({ item }: { item: Provider }) => (
+          <Pressable
+            style={styles.railCard}
+            onPress={() => onProvider(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.name}, rated ${item.rating.toFixed(1)}, from £${item.priceFrom}`}
+          >
+            <Image
+              source={{ uri: item.photo }}
+              style={styles.railPhoto}
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+            />
+            <View style={styles.railInfo}>
+              <Text style={styles.railName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <View style={styles.railMeta}>
+                <Ionicons name="star" size={12} color={c.brand.star} />
+                <Text style={styles.railRating}>{item.rating.toFixed(1)}</Text>
+                <Text style={styles.railDot}>·</Text>
+                <Text style={styles.railArea} numberOfLines={1}>
+                  {item.area ?? `${item.distanceKm} km`}
+                </Text>
+              </View>
+              <Text style={styles.railPrice}>from £{item.priceFrom}</Text>
+            </View>
+          </Pressable>
+        )}
+      />
+    </View>
+  );
+}
+
+function HomeSkeleton({ styles }: { styles: ReturnType<typeof makeStyles> }) {
+  return (
+    <View style={styles.skeletonWrap}>
+      <Skeleton width="100%" height={150} rounded={radius.xl} />
+      <View style={styles.skeletonGrid}>
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <Skeleton key={i} width={56} height={72} rounded={radius.md} />
+        ))}
+      </View>
+      <Skeleton width="55%" height={20} />
+      <View style={styles.skeletonRow}>
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} width={160} height={190} rounded={radius.lg} />
+        ))}
       </View>
     </View>
   );
@@ -342,10 +419,7 @@ function ProviderSkeleton({ styles }: { styles: ReturnType<typeof makeStyles> })
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: c.background.base,
-    },
+    container: { flex: 1, backgroundColor: c.background.base },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -353,39 +427,34 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.sm,
       backgroundColor: c.background.base,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: c.border,
     },
-    location: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    locationText: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    headerRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    bell: {
-      width: 40,
-      height: 40,
+    location: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    locationLabel: { ...typography.scale.caption, color: c.text.muted },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    locationText: { ...typography.scale.bodyMedium, color: c.text.primary },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    bell: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    unreadBadge: {
+      position: 'absolute',
+      top: 4,
+      right: 2,
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 4,
+      borderRadius: 9,
+      backgroundColor: c.status.danger,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    unreadDot: {
-      position: 'absolute',
-      top: 8,
-      right: 8,
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: c.status.danger,
       borderWidth: 2,
       borderColor: c.background.base,
+    },
+    unreadText: {
+      ...typography.scale.caption,
+      fontSize: 9,
+      lineHeight: 12,
+      color: c.text.inverse,
+      fontFamily: typography.font.bold,
+      fontWeight: '700',
     },
     avatar: {
       width: 40,
@@ -395,36 +464,16 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: {
-      ...typography.scale.bodyMedium,
-      color: c.brand.tint,
-    },
-    listContent: {
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.lg,
-      paddingBottom: spacing.xl,
-    },
-    separator: { height: spacing.md },
-    greeting: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-    },
-    subtitle: {
-      ...typography.scale.body,
-      color: c.text.secondary,
-      marginTop: 2,
-      marginBottom: spacing.lg,
-    },
-    searchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
+    avatarText: { ...typography.scale.bodyMedium, color: c.brand.tint },
+    greetBlock: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+    greeting: { ...typography.scale.h1, color: c.text.primary },
+    subtitle: { ...typography.scale.body, color: c.text.secondary, marginTop: 2 },
     searchBar: {
-      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.lg,
       height: 52,
       paddingHorizontal: spacing.lg,
       borderRadius: radius.md,
@@ -432,99 +481,116 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.border,
     },
-    searchInput: {
-      flex: 1,
-      ...typography.scale.body,
-      color: c.text.primary,
-      padding: 0,
-    },
-    filterBtn: {
-      width: 52,
-      height: 52,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    filterBadge: {
-      position: 'absolute',
-      top: 6,
-      right: 6,
-      minWidth: 16,
-      height: 16,
-      paddingHorizontal: 3,
-      borderRadius: 8,
-      backgroundColor: c.brand.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    filterBadgeText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.text.inverse,
-    },
-    recentBlock: {
-      marginTop: spacing.md,
-    },
-    recentTitle: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
-      marginBottom: spacing.sm,
-    },
-    recentChips: {
+    searchPlaceholder: { ...typography.scale.body, color: c.text.muted },
+    carousel: { marginTop: spacing.xl },
+    sectionHeader: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.sm,
-    },
-    recentChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.muted,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    recentText: {
-      ...typography.scale.small,
-      color: c.text.primary,
-    },
-    chips: {
-      gap: spacing.sm,
-      paddingVertical: spacing.lg,
-    },
-    sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.xl,
       marginBottom: spacing.md,
     },
-    skeletonList: { gap: spacing.md },
-    skeletonCard: {
+    sectionTitle: { ...typography.scale.h2, color: c.text.primary },
+    seeAll: { ...typography.scale.smallMedium, color: c.brand.tint },
+    grid: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: spacing.md,
-      padding: spacing.md,
+      paddingHorizontal: spacing.lg,
+    },
+    tile: {
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    tileIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
+      backgroundColor: c.brand.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tileIconMuted: {
+      backgroundColor: c.background.muted,
+    },
+    soonDot: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: c.brand.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tileLabel: { ...typography.scale.caption, color: c.text.primary, textAlign: 'center' },
+    soonText: { ...typography.scale.caption, fontSize: 10, color: c.text.muted },
+    rail: { marginTop: spacing.xs },
+    railContent: { paddingHorizontal: spacing.lg },
+    railGap: { width: spacing.md },
+    railCard: {
+      width: 170,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.background.surface,
+      overflow: 'hidden',
+      ...shadow.card,
     },
-    skeletonBody: {
-      flex: 1,
-      justifyContent: 'center',
+    railPhoto: { width: '100%', height: 110, backgroundColor: c.skeleton },
+    railInfo: { padding: spacing.md, gap: 2 },
+    railName: { ...typography.scale.smallMedium, color: c.text.primary },
+    railMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    railRating: { ...typography.scale.caption, color: c.text.primary },
+    railDot: { color: c.text.muted },
+    railArea: { ...typography.scale.caption, color: c.text.muted, flexShrink: 1 },
+    railPrice: { ...typography.scale.smallMedium, color: c.brand.tint, marginTop: 2 },
+    trustStrip: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       gap: spacing.sm,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.xxl,
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      backgroundColor: c.brand.primarySoft,
     },
-    areaRow: {
+    trustItem: { flex: 1, alignItems: 'center', gap: spacing.xs },
+    trustLabel: { ...typography.scale.caption, color: c.text.primary, textAlign: 'center' },
+    referral: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
-      minHeight: 48,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.lg,
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      ...shadow.card,
     },
-    areaText: {
-      ...typography.scale.body,
-      color: c.text.primary,
+    referralIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: radius.md,
+      backgroundColor: c.brand.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
+    referralBody: { flex: 1, gap: 2 },
+    referralTitle: { ...typography.scale.bodyMedium, color: c.text.primary },
+    referralText: { ...typography.scale.caption, color: c.text.secondary },
+    areaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48 },
+    areaText: { ...typography.scale.body, color: c.text.primary },
+    skeletonWrap: { paddingHorizontal: spacing.lg, marginTop: spacing.xl, gap: spacing.lg },
+    skeletonGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.md,
+      justifyContent: 'space-between',
+    },
+    skeletonRow: { flexDirection: 'row', gap: spacing.md },
   });
