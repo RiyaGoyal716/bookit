@@ -11,7 +11,7 @@ import { track } from '../src/lib/analytics';
 import { getSlotsForDay } from '../src/mocks/availability';
 import { generateBookingId, useBookingsStore } from '../src/stores/bookingsStore';
 import { useAddressStore, type Address } from '../src/stores/addressStore';
-import { useCartStore } from '../src/stores/cartStore';
+import { computeCart, useCartStore } from '../src/stores/cartStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
@@ -56,8 +56,14 @@ export default function CheckoutScreen() {
   const items = useCartStore((s) => s.items);
   const providerId = useCartStore((s) => s.providerId);
   const providerName = useCartStore((s) => s.providerName);
-  const breakdown = useCartStore((s) => s.breakdown());
+  const addOnIds = useCartStore((s) => s.addOnIds);
+  const tip = useCartStore((s) => s.tip);
+  const promoApplied = useCartStore((s) => s.promoApplied);
   const clearCart = useCartStore((s) => s.clear);
+  const breakdown = useMemo(
+    () => computeCart({ items, addOnIds, tip, promoApplied }),
+    [items, addOnIds, tip, promoApplied],
+  );
 
   const addresses = useAddressStore((s) => s.addresses);
   const addAddress = useAddressStore((s) => s.add);

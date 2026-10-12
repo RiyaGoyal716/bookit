@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { Button, EmptyState, Input } from '../src/components';
 import { getProviderById } from '../src/mocks';
 import { route } from '../src/lib/nav';
-import { ADD_ONS, useCartStore } from '../src/stores/cartStore';
+import { ADD_ONS, computeCart, useCartStore } from '../src/stores/cartStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
@@ -32,7 +32,10 @@ export default function CartScreen() {
   const applyPromo = useCartStore((s) => s.applyPromo);
   const clearPromo = useCartStore((s) => s.clearPromo);
   const addItem = useCartStore((s) => s.addItem);
-  const breakdown = useCartStore((s) => s.breakdown());
+  const breakdown = useMemo(
+    () => computeCart({ items, addOnIds, tip, promoApplied }),
+    [items, addOnIds, tip, promoApplied],
+  );
 
   const [promo, setPromo] = useState('');
 
