@@ -9,26 +9,30 @@ import {
   type TextInputKeyPressEventData,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft, Pencil } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Screen } from '../src/components';
+import { Screen, GradientButton } from '../src/components';
+import { useT, useDirectionalStyles } from '../src/i18n';
 import { track } from '../src/lib/analytics';
 import { useAuthStore } from '../src/stores/authStore';
+import { route } from '../src/lib/nav';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
-const CELLS = [0, 1, 2, 3];
+const CELLS = [0, 1, 2, 3, 4, 5];
 const RESEND_SECONDS = 30;
 
 export default function OtpScreen() {
   const router = useRouter();
   const c = useColors();
+  const t = useT();
+  const dir = useDirectionalStyles();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { phone } = useLocalSearchParams<{ phone?: string }>();
   const login = useAuthStore((s) => s.login);
 
   const inputs = useRef<(TextInput | null)[]>([]);
-  const [code, setCode] = useState<string[]>(['', '', '', '']);
+  const [code, setCode] = useState<string[]>(CELLS.map(() => ''));
   const [verifying, setVerifying] = useState(false);
   const [seconds, setSeconds] = useState(RESEND_SECONDS);
 
@@ -39,13 +43,13 @@ export default function OtpScreen() {
   }, [seconds]);
 
   const verify = (full: string) => {
-    if (full.length < 4 || verifying) return;
+    if (full.length < CELLS.length || verifying) return;
     setVerifying(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setTimeout(() => {
       login(phone ?? '');
       track('login', { phone });
-      router.replace('/(tabs)');
+      router.replace(route('/permissions'));
     }, 450);
   };
 
@@ -54,13 +58,9 @@ export default function OtpScreen() {
     const next = [...code];
     next[index] = digit;
     setCode(next);
-    if (digit && index < CELLS.length - 1) {
-      inputs.current[index + 1]?.focus();
-    }
+    if (digit && index < CELLS.length - 1) inputs.current[index + 1]?.focus();
     const full = next.join('');
-    if (full.length === 4 && next.every((d) => d !== '')) {
-      verify(full);
-    }
+    if (full.length === CELLS.length && next.every((d) => d !== '')) verify(full);
   };
 
   const onKeyPress = (index: number, e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -75,7 +75,7 @@ export default function OtpScreen() {
   const resend = () => {
     if (seconds > 0) return;
     setSeconds(RESEND_SECONDS);
-    setCode(['', '', '', '']);
+    setCode(CELLS.map(() => ''));
     inputs.current[0]?.focus();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   };
@@ -89,18 +89,18 @@ export default function OtpScreen() {
         style={styles.back}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel="Go back"
+        accessibilityLabel={t('common.back')}
       >
-        <Ionicons name="chevron-back" size={26} color={c.text.primary} />
+        <ChevronLeft size={26} color={c.text.primary} />
       </Pressable>
 
       <View style={styles.flex}>
-        <Text style={styles.title}>Enter the code</Text>
-        <Text style={styles.subtitle}>
-          Sent to {phone || 'your number'}. Use any 4 digits for this demo.
+        <Text style={[styles.title, dir.textAlign]}>{t('auth.otpTitle')}</Text>
+        <Text style={[styles.subtitle, dir.textAlign]}>
+          {t('auth.otpSubtitle')} {phone || ''}
         </Text>
 
-        <View style={styles.cells}>
+        <View style={[styles.cells, dir.row]}>
           {CELLS.map((i) => (
             <TextInput
               key={i}
@@ -115,22 +115,16 @@ export default function OtpScreen() {
               maxLength={1}
               autoFocus={i === 0}
               selectTextOnFocus
-              accessibilityLabel={`Digit ${i + 1} of 4`}
+              accessibilityLabel={`Digit ${i + 1} of ${CELLS.length}`}
             />
           ))}
         </View>
 
-        <Pressable
-          onPress={resend}
-          disabled={seconds > 0}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={
-            seconds > 0 ? `Resend available in ${seconds} seconds` : 'Resend code'
-          }
-        >
+        <Pressable onPress={resend} disabled={seconds > 0} hitSlop={8} accessibilityRole="button">
           <Text style={[styles.resend, seconds > 0 && styles.resendDisabled]}>
-            {seconds > 0 ? `Resend in 0:${String(seconds).padStart(2, '0')}` : 'Resend code'}
+            {seconds > 0
+              ? `${t('auth.resend')} 0:${String(seconds).padStart(2, '0')}`
+              : t('auth.resend')}
           </Text>
         </Pressable>
 
@@ -138,19 +132,18 @@ export default function OtpScreen() {
           onPress={() => router.back()}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Change number"
-          style={styles.changeRow}
+          style={[styles.changeRow, dir.row]}
         >
-          <Ionicons name="pencil" size={14} color={c.brand.tint} />
-          <Text style={styles.change}>Change number</Text>
+          <Pencil size={14} color={c.brand.tint} />
+          <Text style={styles.change}>{t('common.back')}</Text>
         </Pressable>
       </View>
 
       <View style={styles.footer}>
-        <Button
-          label="Verify & continue"
+        <GradientButton
+          label={t('auth.verify')}
           loading={verifying}
-          disabled={full.length < 4}
+          disabled={full.length < CELLS.length}
           onPress={() => verify(full)}
         />
       </View>
@@ -162,23 +155,17 @@ const makeStyles = (c: Palette) =>
   StyleSheet.create({
     flex: { flex: 1 },
     back: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
-    title: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-    },
+    title: { ...typography.scale.h1, color: c.text.primary },
     subtitle: {
       ...typography.scale.body,
       color: c.text.secondary,
       marginTop: spacing.sm,
       marginBottom: spacing.xl,
     },
-    cells: {
-      flexDirection: 'row',
-      gap: spacing.md,
-    },
+    cells: { gap: spacing.sm },
     cell: {
-      width: 64,
-      height: 72,
+      flex: 1,
+      height: 64,
       borderRadius: radius.md,
       borderWidth: 1.5,
       borderColor: c.border,
@@ -187,29 +174,10 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.h1,
       color: c.text.primary,
     },
-    cellFilled: {
-      borderColor: c.brand.primary,
-      backgroundColor: c.brand.primarySoft,
-    },
-    resend: {
-      marginTop: spacing.xl,
-      ...typography.scale.smallMedium,
-      color: c.brand.tint,
-    },
-    resendDisabled: {
-      color: c.text.muted,
-    },
-    changeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      marginTop: spacing.md,
-    },
-    change: {
-      ...typography.scale.smallMedium,
-      color: c.brand.tint,
-    },
-    footer: {
-      paddingTop: spacing.md,
-    },
+    cellFilled: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
+    resend: { marginTop: spacing.xl, ...typography.scale.smallMedium, color: c.brand.tint },
+    resendDisabled: { color: c.text.muted },
+    changeRow: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
+    change: { ...typography.scale.smallMedium, color: c.brand.tint },
+    footer: { paddingTop: spacing.md },
   });
