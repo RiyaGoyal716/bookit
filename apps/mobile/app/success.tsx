@@ -4,7 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Screen } from '../src/components';
+import { Button, Confetti, Screen } from '../src/components';
+import { useBookingsStore } from '../src/stores/bookingsStore';
+import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
 export default function SuccessScreen() {
@@ -12,9 +14,12 @@ export default function SuccessScreen() {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
   const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
+  const booking = useBookingsStore((s) => (bookingId ? s.getById(bookingId) : undefined));
 
   const [scale] = useState(() => new Animated.Value(0));
   const [fade] = useState(() => new Animated.Value(0));
+  // Confetti fires on mount.
+  const [confetti] = useState(true);
 
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -41,6 +46,35 @@ export default function SuccessScreen() {
             Your provider will confirm shortly. We&apos;ve saved the details to your bookings.
           </Text>
 
+          {booking ? (
+            <View style={styles.summaryCard}>
+              <SummaryRow
+                icon="storefront-outline"
+                label={booking.providerName}
+                styles={styles}
+                c={c}
+              />
+              <SummaryRow
+                icon="construct-outline"
+                label={booking.serviceName}
+                styles={styles}
+                c={c}
+              />
+              <SummaryRow
+                icon="calendar-outline"
+                label={`${booking.date} · ${booking.time}`}
+                styles={styles}
+                c={c}
+              />
+              <SummaryRow
+                icon="pricetag-outline"
+                label={`£${booking.total} total`}
+                styles={styles}
+                c={c}
+              />
+            </View>
+          ) : null}
+
           <View style={styles.idCard}>
             <Text style={styles.idLabel}>Booking reference</Text>
             <Text style={styles.idValue}>{bookingId ?? 'BK------'}</Text>
@@ -50,17 +84,42 @@ export default function SuccessScreen() {
 
       <View style={styles.footer}>
         <Button
-          label="View booking"
-          icon="calendar"
-          onPress={() => router.replace('/(tabs)/bookings')}
+          label="Add to calendar"
+          variant="secondary"
+          icon="calendar-outline"
+          onPress={() => showToast('Added to your calendar')}
         />
         <Button
-          label="Back to home"
-          variant="secondary"
-          onPress={() => router.replace('/(tabs)')}
+          label="View booking"
+          icon="receipt-outline"
+          onPress={() => router.replace('/(tabs)/bookings')}
         />
+        <Button label="Back to home" variant="ghost" onPress={() => router.replace('/(tabs)')} />
       </View>
+
+      <Confetti run={confetti} />
     </Screen>
+  );
+}
+
+function SummaryRow({
+  icon,
+  label,
+  styles,
+  c,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  styles: ReturnType<typeof makeStyles>;
+  c: Palette;
+}) {
+  return (
+    <View style={styles.summaryRow}>
+      <Ionicons name={icon} size={16} color={c.brand.tint} />
+      <Text style={styles.summaryText} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -81,18 +140,27 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       marginBottom: spacing.sm,
     },
-    title: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-    },
+    title: { ...typography.scale.h1, color: c.text.primary },
     subtitle: {
       ...typography.scale.body,
       color: c.text.secondary,
       textAlign: 'center',
       paddingHorizontal: spacing.lg,
     },
+    summaryCard: {
+      alignSelf: 'stretch',
+      marginTop: spacing.sm,
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      gap: spacing.sm,
+    },
+    summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    summaryText: { flex: 1, ...typography.scale.smallMedium, color: c.text.primary },
     idCard: {
-      marginTop: spacing.lg,
+      marginTop: spacing.sm,
       alignItems: 'center',
       gap: spacing.xs,
       paddingVertical: spacing.lg,
@@ -100,16 +168,7 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       backgroundColor: c.brand.primarySoft,
     },
-    idLabel: {
-      ...typography.scale.caption,
-      color: c.text.secondary,
-    },
-    idValue: {
-      ...typography.scale.h2,
-      color: c.brand.tint,
-      letterSpacing: 1,
-    },
-    footer: {
-      gap: spacing.md,
-    },
+    idLabel: { ...typography.scale.caption, color: c.text.secondary },
+    idValue: { ...typography.scale.h2, color: c.brand.tint, letterSpacing: 1 },
+    footer: { gap: spacing.sm },
   });
