@@ -1,0 +1,103 @@
+{
+  "common": {
+    "skip": "छोड़ें",
+    "next": "आगे",
+    "continue": "जारी रखें",
+    "back": "पीछे",
+    "done": "हो गया",
+    "cancel": "रद्द करें",
+    "search": "खोजें",
+    "seeAll": "सभी देखें",
+    "getStarted": "शुरू करें",
+    "book": "बुक करें",
+    "bookNow": "अभी बुक करें",
+    "bookThis": "इसे बुक करें"
+  },
+  "intro": {
+    "slide1Title": "भरोसेमंद पेशेवर खोजें",
+    "slide1Body": "हर काम के लिए जांचे-परखे, समीक्षित स्थानीय विशेषज्ञ, जहाँ भी आप हों।",
+    "slide2Title": "सेकंडों में बुक करें",
+    "slide2Body": "समय चुनें, पुष्टि करें, हो गया। न फ़ोन, न इंतज़ार।",
+    "slide3Title": "सुरक्षित भुगतान, निश्चिंत रहें",
+    "slide3Body": "सुरक्षित भुगतान और असली समीक्षाएँ। पेशेवर काम करें, आप आराम करें।"
+  },
+  "region": {
+    "title": "अपना क्षेत्र चुनें",
+    "subtitle": "हम आपकी मुद्रा, भाषा और डायल कोड सेट करेंगे।",
+    "searchPlaceholder": "देश खोजें"
+  },
+  "auth": {
+    "phoneTitle": "अपना मोबाइल दर्ज करें",
+    "phoneSubtitle": "पुष्टि के लिए हम आपको एक कोड भेजेंगे।",
+    "phonePlaceholder": "मोबाइल नंबर",
+    "sendCode": "कोड भेजें",
+    "continueApple": "Apple से जारी रखें",
+    "continueGoogle": "Google से जारी रखें",
+    "guest": "अतिथि के रूप में जारी रखें",
+    "or": "या",
+    "otpTitle": "अपना कोड दर्ज करें",
+    "otpSubtitle": "हमने 6 अंकों का कोड भेजा है",
+    "verify": "सत्यापित करें",
+    "resend": "कोड फिर भेजें"
+  },
+  "permissions": {
+    "locationTitle": "आपके पास के पेशेवर",
+    "locationBody": "अपना स्थान साझा करें ताकि हम आपके क्षेत्र के प्रदाता और सही यात्रा समय दिखा सकें।",
+    "notifTitle": "अपडेट पाते रहें",
+    "notifBody": "बुकिंग पुष्टि, पेशेवर अपडेट और डील अलर्ट तुरंत पाएं।",
+    "allow": "अनुमति दें",
+    "enable": "सूचनाएँ चालू करें",
+    "notNow": "अभी नहीं"
+  },
+  "home": {
+    "greetingMorning": "सुप्रभात",
+    "greetingAfternoon": "नमस्कार",
+    "greetingEvening": "शुभ संध्या",
+    "conciergePlaceholder": "बताइए आपको क्या चाहिए…",
+    "categories": "आपको क्या चाहिए?",
+    "instantEstimateTitle": "तुरंत अनुमान",
+    "instantEstimateBody": "काम की फ़ोटो लें और सेकंडों में कीमत सीमा पाएं।",
+    "pickPhoto": "फ़ोटो चुनें",
+    "estimateRange": "अनुमानित सीमा",
+    "topRated": "शीर्ष रेटेड",
+    "availableNow": "अभी उपलब्ध",
+    "newPros": "नए पेशेवर",
+    "dealsEnding": "जल्द खत्म होने वाले ऑफ़र",
+    "referralTitle": "£10 दें, £10 पाएं",
+    "referralBody": "किसी मित्र को आमंत्रित करें और दोनों अगली बुकिंग पर बचत करें।",
+    "plusTitle": "Bookit Plus",
+    "plusBody": "प्राथमिकता बुकिंग, हर काम पर 10% छूट और कोई सेवा शुल्क नहीं।",
+    "plusCta": "30 दिन मुफ़्त आज़माएं",
+    "postJob": "काम पोस्ट करें",
+    "trustVerified": "आईडी सत्यापित",
+    "trustSecure": "सुरक्षित भुगतान",
+    "trustRated": "असली समीक्षाएँ"
+  },
+  "concierge": {
+    "title": "कंसीयज",
+    "subtitle": "आपका AI बुकिंग सहायक",
+    "placeholder": "कुछ भी पूछें…",
+    "greeting": "नमस्ते! बताइए क्या चाहिए और मैं सही पेशेवर खोजूँगा।",
+    "foundIntro": "यहाँ कुछ बढ़िया विकल्प हैं:"
+  },
+  "postJob": {
+    "title": "काम पोस्ट करें",
+    "jobTitle": "आपको क्या करवाना है?",
+    "jobTitlePlaceholder": "जैसे 2-बेड फ्लैट की गहरी सफाई",
+    "description": "विवरण जोड़ें",
+    "descriptionPlaceholder": "काम, पहुँच और ज़रूरी बातें बताएं…",
+    "photos": "फ़ोटो",
+    "addPhoto": "फ़ोटो जोड़ें",
+    "budget": "बजट",
+    "date": "पसंदीदा तारीख",
+    "submit": "ऑफ़र पाएं",
+    "responsePromise": "3 पेशेवर 1 घंटे में जवाब देंगे",
+    "offersTitle": "आपके ऑफ़र",
+    "compare": "तुलना करें",
+    "accept": "स्वीकारें"
+  },
+  "money": {
+    "from": "से",
+    "perHour": "/घंटा"
+  }
+}

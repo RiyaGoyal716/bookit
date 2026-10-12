@@ -1,0 +1,103 @@
+{
+  "common": {
+    "skip": "Skip",
+    "next": "Next",
+    "continue": "Continue",
+    "back": "Back",
+    "done": "Done",
+    "cancel": "Cancel",
+    "search": "Search",
+    "seeAll": "See all",
+    "getStarted": "Get started",
+    "book": "Book",
+    "bookNow": "Book now",
+    "bookThis": "Book this"
+  },
+  "intro": {
+    "slide1Title": "Find trusted pros",
+    "slide1Body": "Vetted, reviewed local experts for every job, wherever you are.",
+    "slide2Title": "Book in seconds",
+    "slide2Body": "Pick a time, confirm, done. No phone tag, no waiting around.",
+    "slide3Title": "Pay securely, relax",
+    "slide3Body": "Protected payments and real reviews. Sit back while the pros work."
+  },
+  "region": {
+    "title": "Choose your region",
+    "subtitle": "We'll set your currency, language and dial code.",
+    "searchPlaceholder": "Search countries"
+  },
+  "auth": {
+    "phoneTitle": "Enter your mobile",
+    "phoneSubtitle": "We'll text you a code to confirm it's you.",
+    "phonePlaceholder": "Mobile number",
+    "sendCode": "Send code",
+    "continueApple": "Continue with Apple",
+    "continueGoogle": "Continue with Google",
+    "guest": "Continue as guest",
+    "or": "or",
+    "otpTitle": "Enter your code",
+    "otpSubtitle": "We sent a 6-digit code to",
+    "verify": "Verify",
+    "resend": "Resend code"
+  },
+  "permissions": {
+    "locationTitle": "Pros near you",
+    "locationBody": "Share your location so we can show providers in your area and accurate travel times.",
+    "notifTitle": "Stay in the loop",
+    "notifBody": "Get booking confirmations, pro updates and deal alerts the moment they happen.",
+    "allow": "Allow",
+    "enable": "Enable notifications",
+    "notNow": "Not now"
+  },
+  "home": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "conciergePlaceholder": "Tell me what you need…",
+    "categories": "What do you need?",
+    "instantEstimateTitle": "Instant estimate",
+    "instantEstimateBody": "Snap a photo of the job and get a price range in seconds.",
+    "pickPhoto": "Pick a photo",
+    "estimateRange": "Estimated range",
+    "topRated": "Top rated",
+    "availableNow": "Available now",
+    "newPros": "New pros",
+    "dealsEnding": "Deals ending soon",
+    "referralTitle": "Give £10, get £10",
+    "referralBody": "Invite a friend and you both save on your next booking.",
+    "plusTitle": "Bookit Plus",
+    "plusBody": "Free priority booking, 10% off every job and no service fees.",
+    "plusCta": "Try 30 days free",
+    "postJob": "Post a job",
+    "trustVerified": "ID verified",
+    "trustSecure": "Secure payments",
+    "trustRated": "Real reviews"
+  },
+  "concierge": {
+    "title": "Concierge",
+    "subtitle": "Your AI booking assistant",
+    "placeholder": "Ask for anything…",
+    "greeting": "Hi! Tell me what you need and I'll find the right pro.",
+    "foundIntro": "Here are a few great matches I found:"
+  },
+  "postJob": {
+    "title": "Post a job",
+    "jobTitle": "What do you need done?",
+    "jobTitlePlaceholder": "e.g. Deep clean a 2-bed flat",
+    "description": "Add details",
+    "descriptionPlaceholder": "Describe the job, access, anything pros should know…",
+    "photos": "Photos",
+    "addPhoto": "Add photo",
+    "budget": "Budget",
+    "date": "Preferred date",
+    "submit": "Get offers",
+    "responsePromise": "3 pros will respond within 1 hour",
+    "offersTitle": "Your offers",
+    "compare": "Compare",
+    "accept": "Accept"
+  },
+  "money": {
+    "from": "from",
+    "perHour": "/hr"
+  }
+}

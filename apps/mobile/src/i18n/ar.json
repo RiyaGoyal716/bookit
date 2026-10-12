@@ -1,0 +1,103 @@
+{
+  "common": {
+    "skip": "تخطّي",
+    "next": "التالي",
+    "continue": "متابعة",
+    "back": "رجوع",
+    "done": "تم",
+    "cancel": "إلغاء",
+    "search": "بحث",
+    "seeAll": "عرض الكل",
+    "getStarted": "ابدأ",
+    "book": "احجز",
+    "bookNow": "احجز الآن",
+    "bookThis": "احجز هذا"
+  },
+  "intro": {
+    "slide1Title": "اعثر على محترفين موثوقين",
+    "slide1Body": "خبراء محليون موثّقون ومراجَعون لكل مهمة، أينما كنت.",
+    "slide2Title": "احجز في ثوانٍ",
+    "slide2Body": "اختر الوقت، أكّد، تم. دون مكالمات أو انتظار.",
+    "slide3Title": "ادفع بأمان واسترخِ",
+    "slide3Body": "مدفوعات محمية ومراجعات حقيقية. استرخِ بينما يعمل المحترفون."
+  },
+  "region": {
+    "title": "اختر منطقتك",
+    "subtitle": "سنضبط عملتك ولغتك ورمز الاتصال.",
+    "searchPlaceholder": "ابحث عن دولة"
+  },
+  "auth": {
+    "phoneTitle": "أدخل رقم جوالك",
+    "phoneSubtitle": "سنرسل لك رمزًا للتأكد من هويتك.",
+    "phonePlaceholder": "رقم الجوال",
+    "sendCode": "إرسال الرمز",
+    "continueApple": "المتابعة عبر Apple",
+    "continueGoogle": "المتابعة عبر Google",
+    "guest": "المتابعة كضيف",
+    "or": "أو",
+    "otpTitle": "أدخل الرمز",
+    "otpSubtitle": "أرسلنا رمزًا من 6 أرقام إلى",
+    "verify": "تحقّق",
+    "resend": "إعادة إرسال الرمز"
+  },
+  "permissions": {
+    "locationTitle": "محترفون بالقرب منك",
+    "locationBody": "شارك موقعك لنعرض لك مزوّدي الخدمة في منطقتك وأوقات وصول دقيقة.",
+    "notifTitle": "ابقَ على اطّلاع",
+    "notifBody": "استلم تأكيدات الحجز وتحديثات المحترفين وتنبيهات العروض فور حدوثها.",
+    "allow": "السماح",
+    "enable": "تفعيل الإشعارات",
+    "notNow": "ليس الآن"
+  },
+  "home": {
+    "greetingMorning": "صباح الخير",
+    "greetingAfternoon": "مساء الخير",
+    "greetingEvening": "مساء الخير",
+    "conciergePlaceholder": "أخبرني بما تحتاجه…",
+    "categories": "ماذا تحتاج؟",
+    "instantEstimateTitle": "تقدير فوري",
+    "instantEstimateBody": "التقط صورة للمهمة واحصل على نطاق السعر في ثوانٍ.",
+    "pickPhoto": "اختر صورة",
+    "estimateRange": "النطاق التقديري",
+    "topRated": "الأعلى تقييمًا",
+    "availableNow": "متاح الآن",
+    "newPros": "محترفون جدد",
+    "dealsEnding": "عروض تنتهي قريبًا",
+    "referralTitle": "امنح 10، واحصل على 10",
+    "referralBody": "ادعُ صديقًا ويوفّر كلاكما في الحجز التالي.",
+    "plusTitle": "Bookit Plus",
+    "plusBody": "حجز بالأولوية، خصم 10% على كل مهمة، وبدون رسوم خدمة.",
+    "plusCta": "جرّب 30 يومًا مجانًا",
+    "postJob": "انشر مهمة",
+    "trustVerified": "هوية موثّقة",
+    "trustSecure": "مدفوعات آمنة",
+    "trustRated": "مراجعات حقيقية"
+  },
+  "concierge": {
+    "title": "الكونسيرج",
+    "subtitle": "مساعد الحجز الذكي",
+    "placeholder": "اسأل عن أي شيء…",
+    "greeting": "مرحبًا! أخبرني بما تحتاجه وسأجد المحترف المناسب.",
+    "foundIntro": "إليك بعض الخيارات الرائعة:"
+  },
+  "postJob": {
+    "title": "انشر مهمة",
+    "jobTitle": "ما الذي تريد إنجازه؟",
+    "jobTitlePlaceholder": "مثال: تنظيف عميق لشقة بغرفتين",
+    "description": "أضف التفاصيل",
+    "descriptionPlaceholder": "صف المهمة والوصول وأي شيء يجب أن يعرفه المحترفون…",
+    "photos": "الصور",
+    "addPhoto": "أضف صورة",
+    "budget": "الميزانية",
+    "date": "التاريخ المفضّل",
+    "submit": "احصل على عروض",
+    "responsePromise": "سيرد 3 محترفين خلال ساعة",
+    "offersTitle": "عروضك",
+    "compare": "قارن",
+    "accept": "اقبل"
+  },
+  "money": {
+    "from": "من",
+    "perHour": "/ساعة"
+  }
+}
