@@ -1,0 +1,225 @@
+import type { Ionicons } from '@expo/vector-icons';
+
+import type { ProviderCategory } from './types';
+
+export type IconName = keyof typeof Ionicons.glyphMap;
+
+export interface SubService {
+  id: string;
+  name: string;
+  /** "From" price in whole GBP. */
+  priceFrom: number;
+  durationMin: number;
+  description: string;
+  popular?: boolean;
+}
+
+export interface Category {
+  /** URL slug used by /category/[slug]. */
+  slug: string;
+  /** Display label. */
+  label: string;
+  icon: IconName;
+  /** Live categories map to a provider category; coming-soon ones don't. */
+  providerCategory?: ProviderCategory;
+  /** False => "Coming soon" (not yet bookable). */
+  live: boolean;
+  /** Short tagline for the category hero. */
+  tagline: string;
+  /** Curated sub-services shown on the category page. */
+  subServices: SubService[];
+}
+
+/** The eight home-grid categories — three live, five coming soon. */
+export const categories: Category[] = [
+  {
+    slug: 'cleaning',
+    label: 'Cleaning',
+    icon: 'sparkles-outline',
+    providerCategory: 'cleaning',
+    live: true,
+    tagline: 'Vetted cleaners for a spotless home',
+    subServices: [
+      {
+        id: 'regular-clean',
+        name: 'Regular clean',
+        priceFrom: 18,
+        durationMin: 60,
+        description: 'Weekly or fortnightly tidy-up',
+        popular: true,
+      },
+      {
+        id: 'deep-clean',
+        name: 'Deep clean',
+        priceFrom: 45,
+        durationMin: 150,
+        description: 'Top-to-bottom reset for your home',
+        popular: true,
+      },
+      {
+        id: 'end-of-tenancy',
+        name: 'End of tenancy',
+        priceFrom: 85,
+        durationMin: 240,
+        description: 'Deposit-back standard move-out clean',
+      },
+      {
+        id: 'oven-clean',
+        name: 'Oven clean',
+        priceFrom: 48,
+        durationMin: 120,
+        description: 'Degreased racks, door and interior',
+      },
+      {
+        id: 'carpet-clean',
+        name: 'Carpet & upholstery',
+        priceFrom: 48,
+        durationMin: 90,
+        description: 'Shampoo and refresh carpets or sofas',
+      },
+    ],
+  },
+  {
+    slug: 'beauty',
+    label: 'Beauty',
+    icon: 'cut-outline',
+    providerCategory: 'beauty',
+    live: true,
+    tagline: 'Barber, hair and beauty pros near you',
+    subServices: [
+      {
+        id: 'haircut',
+        name: 'Haircut & styling',
+        priceFrom: 16,
+        durationMin: 45,
+        description: 'Cuts, fades and blow-dries',
+        popular: true,
+      },
+      {
+        id: 'nails',
+        name: 'Nails',
+        priceFrom: 22,
+        durationMin: 60,
+        description: 'Gel manicures and pedicures',
+        popular: true,
+      },
+      {
+        id: 'lashes-brows',
+        name: 'Lashes & brows',
+        priceFrom: 18,
+        durationMin: 45,
+        description: 'Lifts, tints and shaping',
+      },
+      {
+        id: 'facial',
+        name: 'Facial & skincare',
+        priceFrom: 20,
+        durationMin: 45,
+        description: 'Express and deep-cleanse facials',
+      },
+      {
+        id: 'waxing',
+        name: 'Waxing',
+        priceFrom: 24,
+        durationMin: 45,
+        description: 'Smooth, salon-quality waxing',
+      },
+    ],
+  },
+  {
+    slug: 'tutoring',
+    label: 'Tutoring',
+    icon: 'school-outline',
+    providerCategory: 'tutoring',
+    live: true,
+    tagline: 'Expert tutors for every subject',
+    subServices: [
+      {
+        id: 'maths',
+        name: 'Maths',
+        priceFrom: 22,
+        durationMin: 60,
+        description: 'KS2 to A-level maths',
+        popular: true,
+      },
+      {
+        id: 'english',
+        name: 'English',
+        priceFrom: 26,
+        durationMin: 60,
+        description: 'Comprehension, essays and exams',
+        popular: true,
+      },
+      {
+        id: 'science',
+        name: 'Science',
+        priceFrom: 30,
+        durationMin: 60,
+        description: 'Physics, chemistry and biology',
+      },
+      {
+        id: 'languages',
+        name: 'Languages',
+        priceFrom: 27,
+        durationMin: 60,
+        description: 'Spanish, French and more',
+      },
+      {
+        id: 'music',
+        name: 'Music',
+        priceFrom: 24,
+        durationMin: 30,
+        description: 'Piano, guitar and theory',
+      },
+    ],
+  },
+  {
+    slug: 'handyman',
+    label: 'Handyman',
+    icon: 'hammer-outline',
+    live: false,
+    tagline: 'Odd jobs and repairs, done right',
+    subServices: [],
+  },
+  {
+    slug: 'plumbing',
+    label: 'Plumbing',
+    icon: 'water-outline',
+    live: false,
+    tagline: 'Leaks, taps and installations',
+    subServices: [],
+  },
+  {
+    slug: 'electrician',
+    label: 'Electrician',
+    icon: 'flash-outline',
+    live: false,
+    tagline: 'Certified electrical work',
+    subServices: [],
+  },
+  {
+    slug: 'moving',
+    label: 'Moving',
+    icon: 'cube-outline',
+    live: false,
+    tagline: 'Man-and-van and removals',
+    subServices: [],
+  },
+  {
+    slug: 'pet-care',
+    label: 'Pet care',
+    icon: 'paw-outline',
+    live: false,
+    tagline: 'Walking, sitting and grooming',
+    subServices: [],
+  },
+];
+
+export function getCategoryBySlug(slug: string): Category | undefined {
+  return categories.find((c) => c.slug === slug);
+}
+
+/** Map a live provider-category back to its category metadata. */
+export function getCategoryForProvider(pc: ProviderCategory): Category | undefined {
+  return categories.find((c) => c.providerCategory === pc);
+}

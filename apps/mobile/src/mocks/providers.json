@@ -8,13 +8,52 @@
     "reviewCount": 214,
     "priceFrom": 18,
     "distanceKm": 1.2,
+    "area": "Hyde Park",
     "bio": "Reliable deep cleans and weekly tidy-ups across LS6 and the city centre.",
-    "verified": true,
+    "tagline": "Spotless homes, every visit",
     "services": [
-      { "name": "Standard home clean", "price": 18, "durationMin": 60 },
-      { "name": "Deep clean", "price": 45, "durationMin": 150 },
-      { "name": "End of tenancy clean", "price": 120, "durationMin": 240 }
-    ]
+      {
+        "name": "Standard home clean",
+        "price": 18,
+        "durationMin": 60,
+        "description": "Kitchen, bathroom and living areas",
+        "popular": true
+      },
+      {
+        "name": "Deep clean",
+        "price": 45,
+        "durationMin": 150,
+        "description": "Top-to-bottom reset for your home",
+        "popular": true
+      },
+      {
+        "name": "End of tenancy clean",
+        "price": 120,
+        "durationMin": 240,
+        "description": "Deposit-back standard clean"
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p1-0/600/400",
+      "https://picsum.photos/seed/p1-1/600/400",
+      "https://picsum.photos/seed/p1-2/600/400",
+      "https://picsum.photos/seed/p1-3/600/400",
+      "https://picsum.photos/seed/p1-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 941,
+      "yearsExperience": 7,
+      "responseTime": "within 30 min",
+      "repeatRate": 81
+    },
+    "mostBooked": true,
+    "isNew": false
   },
   {
     "id": "p2",
@@ -25,13 +64,48 @@
     "reviewCount": 132,
     "priceFrom": 20,
     "distanceKm": 2.4,
+    "area": "Headingley",
     "bio": "Eco-friendly products and a fully insured team for homes and flats.",
-    "verified": true,
+    "tagline": "Green cleaning you can trust",
     "services": [
-      { "name": "One-off clean", "price": 20, "durationMin": 90 },
-      { "name": "Oven deep clean", "price": 55, "durationMin": 120 },
-      { "name": "Carpet shampoo", "price": 70, "durationMin": 120 }
-    ]
+      {
+        "name": "One-off clean",
+        "price": 20,
+        "durationMin": 90,
+        "popular": true
+      },
+      {
+        "name": "Oven deep clean",
+        "price": 55,
+        "durationMin": 120,
+        "description": "Degreased racks, door and interior"
+      },
+      {
+        "name": "Carpet shampoo",
+        "price": 70,
+        "durationMin": 120
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p2-0/600/400",
+      "https://picsum.photos/seed/p2-1/600/400",
+      "https://picsum.photos/seed/p2-2/600/400",
+      "https://picsum.photos/seed/p2-3/600/400",
+      "https://picsum.photos/seed/p2-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 942,
+      "yearsExperience": 8,
+      "responseTime": "within 1 hour",
+      "repeatRate": 82
+    },
+    "mostBooked": true,
+    "isNew": false
   },
   {
     "id": "p3",
@@ -42,13 +116,46 @@
     "reviewCount": 98,
     "priceFrom": 22,
     "distanceKm": 0.8,
+    "area": "City Centre",
     "bio": "City-centre specialists keeping apartments and small offices spotless.",
-    "verified": true,
     "services": [
-      { "name": "Apartment clean", "price": 22, "durationMin": 75 },
-      { "name": "Office clean", "price": 60, "durationMin": 120 },
-      { "name": "Window & glass clean", "price": 35, "durationMin": 60 }
-    ]
+      {
+        "name": "Apartment clean",
+        "price": 22,
+        "durationMin": 75,
+        "popular": true
+      },
+      {
+        "name": "Office clean",
+        "price": 60,
+        "durationMin": 120
+      },
+      {
+        "name": "Window & glass clean",
+        "price": 35,
+        "durationMin": 60
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p3-0/600/400",
+      "https://picsum.photos/seed/p3-1/600/400",
+      "https://picsum.photos/seed/p3-2/600/400",
+      "https://picsum.photos/seed/p3-3/600/400",
+      "https://picsum.photos/seed/p3-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 943,
+      "yearsExperience": 9,
+      "responseTime": "within 2 hours",
+      "repeatRate": 83
+    },
+    "mostBooked": false,
+    "isNew": false
   },
   {
     "id": "p4",
@@ -59,13 +166,149 @@
     "reviewCount": 176,
     "priceFrom": 25,
     "distanceKm": 3.1,
+    "area": "Chapel Allerton",
     "bio": "Trusted regular housekeeping with the same cleaner every visit.",
-    "verified": true,
+    "tagline": "Your dedicated housekeeper",
     "services": [
-      { "name": "Weekly housekeeping", "price": 25, "durationMin": 90 },
-      { "name": "Ironing service", "price": 30, "durationMin": 90 },
-      { "name": "Spring deep clean", "price": 95, "durationMin": 210 }
-    ]
+      {
+        "name": "Weekly housekeeping",
+        "price": 25,
+        "durationMin": 90,
+        "popular": true
+      },
+      {
+        "name": "Ironing service",
+        "price": 30,
+        "durationMin": 90
+      },
+      {
+        "name": "Spring deep clean",
+        "price": 95,
+        "durationMin": 210
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p4-0/600/400",
+      "https://picsum.photos/seed/p4-1/600/400",
+      "https://picsum.photos/seed/p4-2/600/400",
+      "https://picsum.photos/seed/p4-3/600/400",
+      "https://picsum.photos/seed/p4-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 944,
+      "yearsExperience": 10,
+      "responseTime": "within 15 min",
+      "repeatRate": 84
+    },
+    "mostBooked": true,
+    "isNew": false
+  },
+  {
+    "id": "p13",
+    "name": "Horsforth Home Helpers",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=15",
+    "rating": 4.5,
+    "reviewCount": 41,
+    "priceFrom": 19,
+    "distanceKm": 5.2,
+    "area": "Horsforth",
+    "bio": "Friendly local cleaners for busy households in north-west Leeds.",
+    "services": [
+      {
+        "name": "Regular clean",
+        "price": 19,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Fridge & freezer clean",
+        "price": 28,
+        "durationMin": 60
+      },
+      {
+        "name": "Move-in clean",
+        "price": 85,
+        "durationMin": 180
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p13-0/600/400",
+      "https://picsum.photos/seed/p13-1/600/400",
+      "https://picsum.photos/seed/p13-2/600/400",
+      "https://picsum.photos/seed/p13-3/600/400",
+      "https://picsum.photos/seed/p13-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 422,
+      "yearsExperience": 4,
+      "responseTime": "within 1 hour",
+      "repeatRate": 62
+    },
+    "mostBooked": false,
+    "isNew": false
+  },
+  {
+    "id": "p14",
+    "name": "Roundhay Green Clean",
+    "category": "cleaning",
+    "photo": "https://i.pravatar.cc/300?img=28",
+    "rating": 4.8,
+    "reviewCount": 23,
+    "priceFrom": 21,
+    "distanceKm": 4.6,
+    "area": "Roundhay",
+    "bio": "Plant-based products and allergy-friendly cleaning for family homes.",
+    "isNew": true,
+    "services": [
+      {
+        "name": "Eco home clean",
+        "price": 21,
+        "durationMin": 75,
+        "popular": true
+      },
+      {
+        "name": "Allergy deep clean",
+        "price": 60,
+        "durationMin": 150
+      },
+      {
+        "name": "Upholstery refresh",
+        "price": 48,
+        "durationMin": 90
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p14-0/600/400",
+      "https://picsum.photos/seed/p14-1/600/400",
+      "https://picsum.photos/seed/p14-2/600/400",
+      "https://picsum.photos/seed/p14-3/600/400",
+      "https://picsum.photos/seed/p14-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 423,
+      "yearsExperience": 5,
+      "responseTime": "within 2 hours",
+      "repeatRate": 63
+    },
+    "mostBooked": false
   },
   {
     "id": "p5",
@@ -76,13 +319,49 @@
     "reviewCount": 301,
     "priceFrom": 15,
     "distanceKm": 1.5,
+    "area": "Headingley",
     "bio": "Classic cuts, skin fades and hot-towel shaves in the heart of Headingley.",
-    "verified": true,
+    "tagline": "Sharp cuts, proper service",
     "services": [
-      { "name": "Skin fade", "price": 18, "durationMin": 40 },
-      { "name": "Cut & beard trim", "price": 25, "durationMin": 50 },
-      { "name": "Hot towel shave", "price": 15, "durationMin": 30 }
-    ]
+      {
+        "name": "Skin fade",
+        "price": 18,
+        "durationMin": 40,
+        "popular": true
+      },
+      {
+        "name": "Cut & beard trim",
+        "price": 25,
+        "durationMin": 50,
+        "popular": true
+      },
+      {
+        "name": "Hot towel shave",
+        "price": 15,
+        "durationMin": 30
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p5-0/600/400",
+      "https://picsum.photos/seed/p5-1/600/400",
+      "https://picsum.photos/seed/p5-2/600/400",
+      "https://picsum.photos/seed/p5-3/600/400",
+      "https://picsum.photos/seed/p5-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 945,
+      "yearsExperience": 11,
+      "responseTime": "within 30 min",
+      "repeatRate": 85
+    },
+    "mostBooked": true,
+    "isNew": false
   },
   {
     "id": "p6",
@@ -93,13 +372,47 @@
     "reviewCount": 188,
     "priceFrom": 20,
     "distanceKm": 4.2,
+    "area": "Roundhay",
     "bio": "Gel nails, lashes and facials delivered by qualified beauty therapists.",
-    "verified": true,
     "services": [
-      { "name": "Gel manicure", "price": 25, "durationMin": 60 },
-      { "name": "Classic lash set", "price": 45, "durationMin": 90 },
-      { "name": "Express facial", "price": 20, "durationMin": 30 }
-    ]
+      {
+        "name": "Gel manicure",
+        "price": 25,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Classic lash set",
+        "price": 45,
+        "durationMin": 90
+      },
+      {
+        "name": "Express facial",
+        "price": 20,
+        "durationMin": 30
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p6-0/600/400",
+      "https://picsum.photos/seed/p6-1/600/400",
+      "https://picsum.photos/seed/p6-2/600/400",
+      "https://picsum.photos/seed/p6-3/600/400",
+      "https://picsum.photos/seed/p6-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 946,
+      "yearsExperience": 12,
+      "responseTime": "within 1 hour",
+      "repeatRate": 86
+    },
+    "mostBooked": true,
+    "isNew": false
   },
   {
     "id": "p7",
@@ -110,13 +423,46 @@
     "reviewCount": 142,
     "priceFrom": 30,
     "distanceKm": 0.6,
+    "area": "City Centre",
     "bio": "Cut, colour and blow-dry from senior stylists just off Briggate.",
-    "verified": true,
     "services": [
-      { "name": "Cut & blow-dry", "price": 35, "durationMin": 60 },
-      { "name": "Full head colour", "price": 70, "durationMin": 120 },
-      { "name": "Balayage", "price": 110, "durationMin": 180 }
-    ]
+      {
+        "name": "Cut & blow-dry",
+        "price": 35,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Full head colour",
+        "price": 70,
+        "durationMin": 120
+      },
+      {
+        "name": "Balayage",
+        "price": 110,
+        "durationMin": 180
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p7-0/600/400",
+      "https://picsum.photos/seed/p7-1/600/400",
+      "https://picsum.photos/seed/p7-2/600/400",
+      "https://picsum.photos/seed/p7-3/600/400",
+      "https://picsum.photos/seed/p7-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 947,
+      "yearsExperience": 13,
+      "responseTime": "within 2 hours",
+      "repeatRate": 87
+    },
+    "mostBooked": true,
+    "isNew": false
   },
   {
     "id": "p8",
@@ -127,13 +473,148 @@
     "reviewCount": 76,
     "priceFrom": 22,
     "distanceKm": 3.7,
+    "area": "Meanwood",
     "bio": "Salon-quality nails and waxing brought to your door across north Leeds.",
-    "verified": true,
+    "tagline": "Beauty at your door",
     "services": [
-      { "name": "Mobile manicure", "price": 22, "durationMin": 50 },
-      { "name": "Pedicure", "price": 28, "durationMin": 60 },
-      { "name": "Leg wax", "price": 24, "durationMin": 45 }
-    ]
+      {
+        "name": "Mobile manicure",
+        "price": 22,
+        "durationMin": 50,
+        "popular": true
+      },
+      {
+        "name": "Pedicure",
+        "price": 28,
+        "durationMin": 60
+      },
+      {
+        "name": "Leg wax",
+        "price": 24,
+        "durationMin": 45
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p8-0/600/400",
+      "https://picsum.photos/seed/p8-1/600/400",
+      "https://picsum.photos/seed/p8-2/600/400",
+      "https://picsum.photos/seed/p8-3/600/400",
+      "https://picsum.photos/seed/p8-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 948,
+      "yearsExperience": 2,
+      "responseTime": "within 15 min",
+      "repeatRate": 88
+    },
+    "mostBooked": false,
+    "isNew": false
+  },
+  {
+    "id": "p15",
+    "name": "Briggate Brows & Lashes",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=48",
+    "rating": 4.9,
+    "reviewCount": 64,
+    "priceFrom": 18,
+    "distanceKm": 0.9,
+    "area": "City Centre",
+    "bio": "Brow shaping, lash lifts and tints by an award-winning technician.",
+    "isNew": true,
+    "services": [
+      {
+        "name": "Brow shape & tint",
+        "price": 18,
+        "durationMin": 30,
+        "popular": true
+      },
+      {
+        "name": "Lash lift",
+        "price": 40,
+        "durationMin": 60
+      },
+      {
+        "name": "HD brows",
+        "price": 30,
+        "durationMin": 45
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p15-0/600/400",
+      "https://picsum.photos/seed/p15-1/600/400",
+      "https://picsum.photos/seed/p15-2/600/400",
+      "https://picsum.photos/seed/p15-3/600/400",
+      "https://picsum.photos/seed/p15-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 424,
+      "yearsExperience": 6,
+      "responseTime": "within 15 min",
+      "repeatRate": 64
+    },
+    "mostBooked": false
+  },
+  {
+    "id": "p16",
+    "name": "Kirkstall Grooming Room",
+    "category": "beauty",
+    "photo": "https://i.pravatar.cc/300?img=52",
+    "rating": 4.7,
+    "reviewCount": 110,
+    "priceFrom": 16,
+    "distanceKm": 2.8,
+    "area": "Kirkstall",
+    "bio": "Modern barbering and grooming with a relaxed, welcoming vibe.",
+    "services": [
+      {
+        "name": "Classic cut",
+        "price": 16,
+        "durationMin": 35,
+        "popular": true
+      },
+      {
+        "name": "Beard sculpt",
+        "price": 14,
+        "durationMin": 25
+      },
+      {
+        "name": "Cut, wash & style",
+        "price": 28,
+        "durationMin": 55
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p16-0/600/400",
+      "https://picsum.photos/seed/p16-1/600/400",
+      "https://picsum.photos/seed/p16-2/600/400",
+      "https://picsum.photos/seed/p16-3/600/400",
+      "https://picsum.photos/seed/p16-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "insured"
+    ],
+    "stats": {
+      "jobsDone": 425,
+      "yearsExperience": 7,
+      "responseTime": "within 30 min",
+      "repeatRate": 65
+    },
+    "mostBooked": false,
+    "isNew": false
   },
   {
     "id": "p9",
@@ -144,13 +625,47 @@
     "reviewCount": 64,
     "priceFrom": 28,
     "distanceKm": 1.1,
+    "area": "Hyde Park",
     "bio": "GCSE and A-level maths specialist with a 100% grade-improvement record.",
-    "verified": true,
+    "tagline": "Results-driven maths tuition",
     "services": [
-      { "name": "GCSE maths (1 hr)", "price": 28, "durationMin": 60 },
-      { "name": "A-level maths (1 hr)", "price": 35, "durationMin": 60 },
-      { "name": "Exam crash course", "price": 90, "durationMin": 180 }
-    ]
+      {
+        "name": "GCSE maths (1 hr)",
+        "price": 28,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "A-level maths (1 hr)",
+        "price": 35,
+        "durationMin": 60
+      },
+      {
+        "name": "Exam crash course",
+        "price": 90,
+        "durationMin": 180
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p9-0/600/400",
+      "https://picsum.photos/seed/p9-1/600/400",
+      "https://picsum.photos/seed/p9-2/600/400",
+      "https://picsum.photos/seed/p9-3/600/400",
+      "https://picsum.photos/seed/p9-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated"
+    ],
+    "stats": {
+      "jobsDone": 949,
+      "yearsExperience": 3,
+      "responseTime": "within 30 min",
+      "repeatRate": 89
+    },
+    "mostBooked": false,
+    "isNew": false
   },
   {
     "id": "p10",
@@ -161,13 +676,46 @@
     "reviewCount": 51,
     "priceFrom": 26,
     "distanceKm": 1.8,
+    "area": "Headingley",
     "bio": "Friendly English tutor helping students master essays and comprehension.",
-    "verified": true,
     "services": [
-      { "name": "KS3 English (1 hr)", "price": 26, "durationMin": 60 },
-      { "name": "GCSE English (1 hr)", "price": 30, "durationMin": 60 },
-      { "name": "Personal statement review", "price": 50, "durationMin": 90 }
-    ]
+      {
+        "name": "KS3 English (1 hr)",
+        "price": 26,
+        "durationMin": 60
+      },
+      {
+        "name": "GCSE English (1 hr)",
+        "price": 30,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Personal statement review",
+        "price": 50,
+        "durationMin": 90
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p10-0/600/400",
+      "https://picsum.photos/seed/p10-1/600/400",
+      "https://picsum.photos/seed/p10-2/600/400",
+      "https://picsum.photos/seed/p10-3/600/400",
+      "https://picsum.photos/seed/p10-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated"
+    ],
+    "stats": {
+      "jobsDone": 419,
+      "yearsExperience": 13,
+      "responseTime": "within 2 hours",
+      "repeatRate": 94
+    },
+    "mostBooked": false,
+    "isNew": false
   },
   {
     "id": "p11",
@@ -178,13 +726,45 @@
     "reviewCount": 83,
     "priceFrom": 30,
     "distanceKm": 2.9,
+    "area": "City Centre",
     "bio": "Physics, chemistry and biology tuition for GCSE and A-level students.",
-    "verified": true,
     "services": [
-      { "name": "GCSE science (1 hr)", "price": 30, "durationMin": 60 },
-      { "name": "A-level physics (1 hr)", "price": 38, "durationMin": 60 },
-      { "name": "Revision bootcamp", "price": 100, "durationMin": 180 }
-    ]
+      {
+        "name": "GCSE science (1 hr)",
+        "price": 30,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "A-level physics (1 hr)",
+        "price": 38,
+        "durationMin": 60
+      },
+      {
+        "name": "Revision bootcamp",
+        "price": 100,
+        "durationMin": 180
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p11-0/600/400",
+      "https://picsum.photos/seed/p11-1/600/400",
+      "https://picsum.photos/seed/p11-2/600/400",
+      "https://picsum.photos/seed/p11-3/600/400",
+      "https://picsum.photos/seed/p11-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked"
+    ],
+    "stats": {
+      "jobsDone": 420,
+      "yearsExperience": 2,
+      "responseTime": "within 15 min",
+      "repeatRate": 60
+    },
+    "mostBooked": false,
+    "isNew": false
   },
   {
     "id": "p12",
@@ -195,12 +775,244 @@
     "reviewCount": 47,
     "priceFrom": 24,
     "distanceKm": 1.3,
+    "area": "Hyde Park",
     "bio": "Patient piano and guitar teacher for complete beginners to grade 8.",
-    "verified": true,
+    "tagline": "Learn an instrument you love",
     "services": [
-      { "name": "Piano lesson (30 min)", "price": 24, "durationMin": 30 },
-      { "name": "Guitar lesson (1 hr)", "price": 34, "durationMin": 60 },
-      { "name": "Theory & grade prep", "price": 40, "durationMin": 60 }
-    ]
+      {
+        "name": "Piano lesson (30 min)",
+        "price": 24,
+        "durationMin": 30,
+        "popular": true
+      },
+      {
+        "name": "Guitar lesson (1 hr)",
+        "price": 34,
+        "durationMin": 60
+      },
+      {
+        "name": "Theory & grade prep",
+        "price": 40,
+        "durationMin": 60
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p12-0/600/400",
+      "https://picsum.photos/seed/p12-1/600/400",
+      "https://picsum.photos/seed/p12-2/600/400",
+      "https://picsum.photos/seed/p12-3/600/400",
+      "https://picsum.photos/seed/p12-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated"
+    ],
+    "stats": {
+      "jobsDone": 421,
+      "yearsExperience": 3,
+      "responseTime": "within 30 min",
+      "repeatRate": 61
+    },
+    "mostBooked": false,
+    "isNew": false
+  },
+  {
+    "id": "p17",
+    "name": "Chapel Allerton Languages",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=36",
+    "rating": 4.8,
+    "reviewCount": 38,
+    "priceFrom": 27,
+    "distanceKm": 3,
+    "area": "Chapel Allerton",
+    "bio": "Spanish and French tuition for all levels, from beginner to fluency.",
+    "isNew": true,
+    "services": [
+      {
+        "name": "Spanish (1 hr)",
+        "price": 27,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "French (1 hr)",
+        "price": 27,
+        "durationMin": 60
+      },
+      {
+        "name": "Conversation club",
+        "price": 20,
+        "durationMin": 60
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p17-0/600/400",
+      "https://picsum.photos/seed/p17-1/600/400",
+      "https://picsum.photos/seed/p17-2/600/400",
+      "https://picsum.photos/seed/p17-3/600/400",
+      "https://picsum.photos/seed/p17-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated"
+    ],
+    "stats": {
+      "jobsDone": 426,
+      "yearsExperience": 8,
+      "responseTime": "within 1 hour",
+      "repeatRate": 66
+    },
+    "mostBooked": false
+  },
+  {
+    "id": "p18",
+    "name": "Leeds Coding Coach",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=68",
+    "rating": 4.9,
+    "reviewCount": 29,
+    "priceFrom": 32,
+    "distanceKm": 2.1,
+    "area": "City Centre",
+    "bio": "Python, web and GCSE computer science tuition for curious minds.",
+    "isNew": true,
+    "services": [
+      {
+        "name": "GCSE computer science",
+        "price": 32,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Python for beginners",
+        "price": 35,
+        "durationMin": 60
+      },
+      {
+        "name": "Project mentoring",
+        "price": 45,
+        "durationMin": 90
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p18-0/600/400",
+      "https://picsum.photos/seed/p18-1/600/400",
+      "https://picsum.photos/seed/p18-2/600/400",
+      "https://picsum.photos/seed/p18-3/600/400",
+      "https://picsum.photos/seed/p18-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked",
+      "top-rated"
+    ],
+    "stats": {
+      "jobsDone": 427,
+      "yearsExperience": 9,
+      "responseTime": "within 2 hours",
+      "repeatRate": 67
+    },
+    "mostBooked": false
+  },
+  {
+    "id": "p19",
+    "name": "Horsforth Primary Tutor",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=43",
+    "rating": 4.7,
+    "reviewCount": 55,
+    "priceFrom": 22,
+    "distanceKm": 5,
+    "area": "Horsforth",
+    "bio": "SATs and 11+ preparation with a gentle, confidence-building approach.",
+    "services": [
+      {
+        "name": "KS2 maths & English",
+        "price": 22,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "11+ preparation",
+        "price": 30,
+        "durationMin": 60
+      },
+      {
+        "name": "SATs booster",
+        "price": 26,
+        "durationMin": 60
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p19-0/600/400",
+      "https://picsum.photos/seed/p19-1/600/400",
+      "https://picsum.photos/seed/p19-2/600/400",
+      "https://picsum.photos/seed/p19-3/600/400",
+      "https://picsum.photos/seed/p19-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked"
+    ],
+    "stats": {
+      "jobsDone": 428,
+      "yearsExperience": 10,
+      "responseTime": "within 15 min",
+      "repeatRate": 68
+    },
+    "mostBooked": false,
+    "isNew": false
+  },
+  {
+    "id": "p20",
+    "name": "Armley Art & Design Tutor",
+    "category": "tutoring",
+    "photo": "https://i.pravatar.cc/300?img=19",
+    "rating": 4.6,
+    "reviewCount": 18,
+    "priceFrom": 25,
+    "distanceKm": 3.4,
+    "area": "Armley",
+    "bio": "GCSE and A-level art tuition plus portfolio prep for art-school hopefuls.",
+    "isNew": true,
+    "services": [
+      {
+        "name": "GCSE art (1 hr)",
+        "price": 25,
+        "durationMin": 60,
+        "popular": true
+      },
+      {
+        "name": "Portfolio review",
+        "price": 40,
+        "durationMin": 90
+      },
+      {
+        "name": "Drawing fundamentals",
+        "price": 28,
+        "durationMin": 60
+      }
+    ],
+    "gallery": [
+      "https://picsum.photos/seed/p20-0/600/400",
+      "https://picsum.photos/seed/p20-1/600/400",
+      "https://picsum.photos/seed/p20-2/600/400",
+      "https://picsum.photos/seed/p20-3/600/400",
+      "https://picsum.photos/seed/p20-4/600/400"
+    ],
+    "badges": [
+      "verified-id",
+      "background-checked"
+    ],
+    "stats": {
+      "jobsDone": 450,
+      "yearsExperience": 8,
+      "responseTime": "within 1 hour",
+      "repeatRate": 90
+    },
+    "mostBooked": false
   }
 ]

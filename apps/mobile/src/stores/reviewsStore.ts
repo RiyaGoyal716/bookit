@@ -10,6 +10,8 @@ export interface Review {
   text: string;
   /** Human-readable date, e.g. "3 Oct 2026". */
   date: string;
+  /** Optional photo attached to the review (remote URL). */
+  photo?: string;
 }
 
 const seeded: Review[] = [
@@ -28,6 +30,7 @@ const seeded: Review[] = [
     rating: 4,
     text: 'Great job on the kitchen, arrived right on time.',
     date: '28 Sep 2026',
+    photo: 'https://picsum.photos/seed/review-p1-a/400/400',
   },
   {
     id: 'r3',
@@ -36,6 +39,7 @@ const seeded: Review[] = [
     rating: 5,
     text: 'Best fade in Headingley, no question. Sharp and quick.',
     date: '1 Oct 2026',
+    photo: 'https://picsum.photos/seed/review-p5-a/400/400',
   },
   {
     id: 'r4',
@@ -44,6 +48,23 @@ const seeded: Review[] = [
     rating: 5,
     text: 'My son went up two grades. Patient and clear explanations.',
     date: '30 Sep 2026',
+  },
+  {
+    id: 'r5',
+    providerId: 'p1',
+    author: 'Grace M.',
+    rating: 5,
+    text: 'Immaculate end-of-tenancy clean — got my full deposit back.',
+    date: '25 Sep 2026',
+    photo: 'https://picsum.photos/seed/review-p1-b/400/400',
+  },
+  {
+    id: 'r6',
+    providerId: 'p5',
+    author: 'Josh P.',
+    rating: 4,
+    text: 'Solid cut and a relaxed chat. Will be back next month.',
+    date: '22 Sep 2026',
   },
 ];
 
