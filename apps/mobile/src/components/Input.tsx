@@ -1,9 +1,10 @@
-import { forwardRef, useMemo, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
+  Animated,
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
@@ -30,15 +31,31 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const styles = useMemo(() => makeStyles(c), [c]);
   const [focused, setFocused] = useState(false);
 
+  // Shake the field horizontally when an error first appears (core Animated).
+  const shake = useRef(new Animated.Value(0)).current;
+  const hasError = !!error;
+  useEffect(() => {
+    if (!hasError) return;
+    Animated.sequence([
+      Animated.timing(shake, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -6, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  }, [hasError, shake]);
+  const shakeStyle = { transform: [{ translateX: shake }] };
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <View
+      <Animated.View
         style={[
           styles.field,
           multiline && styles.fieldMultiline,
           focused && styles.fieldFocused,
           !!error && styles.fieldError,
+          shakeStyle,
         ]}
       >
         {left}
@@ -57,7 +74,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           }}
           {...rest}
         />
-      </View>
+      </Animated.View>
       {error ? (
         <Text style={styles.error}>{error}</Text>
       ) : helper ? (

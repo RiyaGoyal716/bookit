@@ -263,25 +263,24 @@ exports[`Input renders a labelled field with an error and matches snapshot 1`] =
     Mobile number
   </Text>
   <View
+    collapsable={false}
     style={
-      [
-        {
-          "alignItems": "center",
-          "backgroundColor": "#FFFFFF",
-          "borderColor": "#E6E8F0",
-          "borderRadius": 12,
-          "borderWidth": 1.5,
-          "flexDirection": "row",
-          "gap": 8,
-          "minHeight": 56,
-          "paddingHorizontal": 16,
-        },
-        undefined,
-        false,
-        {
-          "borderColor": "#DC2626",
-        },
-      ]
+      {
+        "alignItems": "center",
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#DC2626",
+        "borderRadius": 12,
+        "borderWidth": 1.5,
+        "flexDirection": "row",
+        "gap": 8,
+        "minHeight": 56,
+        "paddingHorizontal": 16,
+        "transform": [
+          {
+            "translateX": 0,
+          },
+        ],
+      }
     }
   >
     <TextInput

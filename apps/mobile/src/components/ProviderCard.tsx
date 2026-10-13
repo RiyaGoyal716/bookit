@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -107,11 +108,18 @@ export function ProviderCard({
             accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
             accessibilityState={{ selected: isFavourite }}
           >
-            <Ionicons
-              name={isFavourite ? 'heart' : 'heart-outline'}
-              size={20}
-              color={isFavourite ? c.status.danger : c.text.muted}
-            />
+            <MotiView
+              key={isFavourite ? 'fav-on' : 'fav-off'}
+              from={{ scale: isFavourite ? 0.6 : 1 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 8, stiffness: 240 }}
+            >
+              <Ionicons
+                name={isFavourite ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFavourite ? c.status.danger : c.text.muted}
+              />
+            </MotiView>
           </Pressable>
         ) : null}
         <View style={styles.priceCol}>

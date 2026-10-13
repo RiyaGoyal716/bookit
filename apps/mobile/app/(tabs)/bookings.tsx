@@ -27,6 +27,12 @@ export default function BookingsScreen() {
   const styles = useMemo(() => makeStyles(c), [c]);
   const bookings = useBookingsStore((s) => s.bookings);
   const [segment, setSegment] = useState<Segment>('upcoming');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 900);
+  };
 
   const filtered = useMemo(
     () =>
@@ -70,6 +76,8 @@ export default function BookingsScreen() {
         keyExtractor={(b: Booking) => b.id}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <EmptyState
