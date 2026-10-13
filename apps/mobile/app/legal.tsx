@@ -4,40 +4,17 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Accordion } from '../src/components';
 import { route } from '../src/lib/nav';
+import { LEGAL_INDEX } from '../src/content/legal';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 
-const GUIDELINES = [
-  {
-    question: 'Terms of Service',
-    answer:
-      'By using Bookit you agree to book services in good faith, provide accurate information, and treat providers with respect. Bookit connects you with independent providers and is not the provider of the services themselves.',
-  },
-  {
-    question: 'Privacy Policy',
-    answer:
-      'We collect only what we need to run your bookings — your name, contact details and address are shared with a provider after they accept. We never sell your data. You can request deletion at any time.',
-  },
-  {
-    question: 'Community guidelines',
-    answer:
-      'Be kind and punctual. Leave honest reviews. Harassment, discrimination or unsafe behaviour results in removal from the platform for customers and providers alike.',
-  },
-  {
-    question: 'Provider vetting',
-    answer:
-      'Every provider completes ID verification and a background check before going live. “Top rated” and “Insured” badges reflect verified status on their profile.',
-  },
-];
-
-const LINKS = [
-  {
-    icon: 'document-text-outline' as const,
-    label: 'Booking & cancellation policy',
-    href: '/policies',
-  },
-  { icon: 'help-circle-outline' as const, label: 'Help & support', href: '/help' },
+const TRUST_LINKS: { icon: keyof typeof Ionicons.glyphMap; label: string; href: string }[] = [
+  { icon: 'shield-outline', label: 'Safety centre', href: '/safety' },
+  { icon: 'flag-outline', label: 'Report a problem', href: '/report' },
+  { icon: 'pulse-outline', label: 'Account status', href: '/account-status' },
+  { icon: 'options-outline', label: 'Data & consent', href: '/consent' },
+  { icon: 'time-outline', label: 'Booking policies', href: '/policies' },
+  { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
 ];
 
 export default function LegalScreen() {
@@ -66,14 +43,35 @@ export default function LegalScreen() {
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Accordion items={GUIDELINES} />
-
-        <Text style={styles.sectionLabel}>More</Text>
+        <Text style={styles.sectionLabel}>Policies & documents</Text>
         <View style={styles.links}>
-          {LINKS.map((l, i) => (
+          {LEGAL_INDEX.map((l, i) => (
+            <Pressable
+              key={l.slug}
+              style={[styles.linkRow, i < LEGAL_INDEX.length - 1 && styles.linkDivider]}
+              onPress={() => router.push(route(`/legal/${l.slug}`))}
+              accessibilityRole="button"
+              accessibilityLabel={l.title}
+            >
+              <View style={styles.linkIcon}>
+                <Ionicons
+                  name={l.icon as keyof typeof Ionicons.glyphMap}
+                  size={18}
+                  color={c.brand.tint}
+                />
+              </View>
+              <Text style={styles.linkLabel}>{l.title}</Text>
+              <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.sectionLabel}>Trust & safety</Text>
+        <View style={styles.links}>
+          {TRUST_LINKS.map((l, i) => (
             <Pressable
               key={l.label}
-              style={[styles.linkRow, i < LINKS.length - 1 && styles.linkDivider]}
+              style={[styles.linkRow, i < TRUST_LINKS.length - 1 && styles.linkDivider]}
               onPress={() => router.push(route(l.href))}
               accessibilityRole="button"
               accessibilityLabel={l.label}
@@ -108,7 +106,7 @@ const makeStyles = (c: Palette) =>
     sectionLabel: {
       ...typography.scale.smallMedium,
       color: c.text.secondary,
-      marginTop: spacing.xl,
+      marginTop: spacing.lg,
       marginBottom: spacing.sm,
     },
     links: {
