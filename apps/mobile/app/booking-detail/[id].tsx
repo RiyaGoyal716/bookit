@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import {
   BOOKING_TIMELINE,
   nextStatus,
   useBookingsStore,
+  RECURRENCE_LABEL,
   type BookingStatus,
 } from '../../src/stores/bookingsStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
@@ -19,6 +20,15 @@ import { useMoney } from '../../src/i18n';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const TIME_SLOTS = ['09:00', '11:00', '13:00', '15:00', '17:00'];
+
+const CANCEL_REASONS = [
+  'Booked by mistake',
+  'Found a better price',
+  'Changed my plans',
+  'Provider unresponsive',
+  'Rescheduling to later',
+  'Other',
+];
 
 function nextSevenDays(): { key: string; label: string }[] {
   const out: { key: string; label: string }[] = [];
@@ -49,6 +59,8 @@ export default function BookingDetailScreen() {
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [draftDate, setDraftDate] = useState<string | null>(null);
   const [draftTime, setDraftTime] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string | null>(null);
 
   if (!booking) {
     return (
@@ -73,18 +85,18 @@ export default function BookingDetailScreen() {
   const currentIndex = BOOKING_TIMELINE.indexOf(booking.status);
   const next = nextStatus(booking.status);
 
-  const confirmCancel = () => {
-    Alert.alert('Cancel booking?', 'This will notify your provider. This cannot be undone.', [
-      { text: 'Keep booking', style: 'cancel' },
-      {
-        text: 'Cancel booking',
-        style: 'destructive',
-        onPress: () => {
-          cancelBooking(booking.id);
-          showToast('Booking cancelled');
-        },
-      },
-    ]);
+  const doCancel = () => {
+    cancelBooking(booking.id);
+    setCancelOpen(false);
+    showToast('Booking cancelled');
+  };
+
+  const rebook = () => {
+    router.push(route(`/provider/${booking.providerId}`));
+  };
+
+  const contactMessageFn = () => {
+    router.push(route(`/chat/${booking.providerId}`));
   };
 
   const openReschedule = () => {
@@ -102,10 +114,6 @@ export default function BookingDetailScreen() {
 
   const contactCall = () => {
     Linking.openURL('tel:+441130000000').catch(() => showToast('Calling is not available here'));
-  };
-
-  const contactMessage = () => {
-    showToast(`Message sent to ${booking.providerName} (demo)`);
   };
 
   const writeReview = () => {
@@ -163,10 +171,26 @@ export default function BookingDetailScreen() {
             label="Message"
             variant="secondary"
             icon="chatbubble-ellipses"
-            onPress={contactMessage}
+            onPress={contactMessageFn}
             style={styles.contactBtn}
           />
         </View>
+
+        {booking.status === 'Accepted' || booking.status === 'On the way' ? (
+          <Pressable
+            style={styles.trackCard}
+            onPress={() => router.push(route(`/tracking/${booking.id}`))}
+            accessibilityRole="button"
+            accessibilityLabel="Track your pro live"
+          >
+            <Ionicons name="navigate" size={20} color={c.text.inverse} />
+            <View style={styles.flex1}>
+              <Text style={styles.trackTitle}>Track your pro live</Text>
+              <Text style={styles.trackSub}>See their route and ETA</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={c.text.inverse} />
+          </Pressable>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Status</Text>
         {cancelled ? (
@@ -210,6 +234,45 @@ export default function BookingDetailScreen() {
             style={styles.demoBtn}
           />
         ) : null}
+
+        <Text style={styles.sectionTitle}>Details</Text>
+        <View style={styles.detailCard}>
+          {booking.address ? (
+            <DetailRow
+              icon="location-outline"
+              label="Address"
+              value={booking.address}
+              styles={styles}
+              c={c}
+            />
+          ) : null}
+          <DetailRow
+            icon="repeat"
+            label="Repeats"
+            value={RECURRENCE_LABEL[booking.recurrence ?? 'none']}
+            styles={styles}
+            c={c}
+          />
+          {booking.paymentLabel ? (
+            <DetailRow
+              icon="card-outline"
+              label="Payment"
+              value={booking.paymentLabel}
+              styles={styles}
+              c={c}
+            />
+          ) : null}
+          <Pressable
+            style={styles.invoiceRow}
+            onPress={() => router.push(route(`/invoice/${booking.id}`))}
+            accessibilityRole="button"
+            accessibilityLabel="View invoice"
+          >
+            <Ionicons name="document-text-outline" size={18} color={c.brand.tint} />
+            <Text style={styles.invoiceText}>View invoice (PDF)</Text>
+            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
+          </Pressable>
+        </View>
       </ScrollView>
 
       {!terminal ? (
@@ -225,20 +288,31 @@ export default function BookingDetailScreen() {
             label="Cancel"
             variant="secondary"
             icon="close"
-            onPress={confirmCancel}
+            onPress={() => setCancelOpen(true)}
             style={styles.footerBtn}
           />
         </View>
       ) : completed ? (
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
           <Button
+            label="Rebook"
+            variant="secondary"
+            icon="repeat"
+            onPress={rebook}
+            style={styles.footerBtn}
+          />
+          <Button
             label="Write a review"
             icon="star"
             onPress={writeReview}
-            style={styles.reviewBtn}
+            style={styles.footerBtn}
           />
         </View>
-      ) : null}
+      ) : (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+          <Button label="Rebook" icon="repeat" onPress={rebook} style={styles.reviewBtn} />
+        </View>
+      )}
 
       <BottomSheet
         visible={rescheduleOpen}
@@ -273,6 +347,59 @@ export default function BookingDetailScreen() {
           style={styles.sheetBtn}
         />
       </BottomSheet>
+
+      <BottomSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel booking">
+        <View style={styles.policyBox}>
+          <Ionicons name="shield-checkmark-outline" size={18} color={c.brand.tint} />
+          <Text style={styles.policyBoxText}>
+            Free cancellation up to 24 hours before your appointment. Later cancellations may incur
+            a fee.
+          </Text>
+        </View>
+        <Text style={[styles.sheetLabel, styles.sheetLabelSpaced]}>Why are you cancelling?</Text>
+        <View style={styles.reasonWrap}>
+          {CANCEL_REASONS.map((r) => (
+            <Chip
+              key={r}
+              label={r}
+              active={cancelReason === r}
+              onPress={() => setCancelReason(r)}
+            />
+          ))}
+        </View>
+        <Button
+          label="Cancel booking"
+          variant="secondary"
+          disabled={!cancelReason}
+          onPress={doCancel}
+          style={styles.sheetBtn}
+        />
+        <Button label="Keep booking" variant="ghost" onPress={() => setCancelOpen(false)} />
+      </BottomSheet>
+    </View>
+  );
+}
+
+function DetailRow({
+  icon,
+  label,
+  value,
+  styles,
+  c,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  styles: ReturnType<typeof makeStyles>;
+  c: Palette;
+}) {
+  return (
+    <View style={styles.detailRow}>
+      <Ionicons name={icon} size={16} color={c.text.muted} />
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue} numberOfLines={2}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -347,10 +474,60 @@ const makeStyles = (c: Palette) =>
       gap: spacing.md,
     },
     contactBtn: { flex: 1 },
+    flex1: { flex: 1 },
+    trackCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      backgroundColor: c.brand.primary,
+    },
+    trackTitle: {
+      ...typography.scale.bodyMedium,
+      color: c.text.inverse,
+      fontFamily: typography.font.bold,
+      fontWeight: '700',
+    },
+    trackSub: { ...typography.scale.caption, color: c.text.inverse, opacity: 0.85 },
     sectionTitle: {
       ...typography.scale.h2,
       color: c.text.primary,
     },
+    detailCard: {
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      gap: spacing.md,
+    },
+    detailRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    detailLabel: { ...typography.scale.small, color: c.text.secondary, width: 80 },
+    detailValue: {
+      flex: 1,
+      textAlign: 'right',
+      ...typography.scale.smallMedium,
+      color: c.text.primary,
+    },
+    invoiceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    invoiceText: { flex: 1, ...typography.scale.smallMedium, color: c.brand.tint },
+    policyBox: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: c.brand.primarySoft,
+    },
+    policyBoxText: { flex: 1, ...typography.scale.caption, color: c.text.secondary },
+    reasonWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     timeline: {
       paddingLeft: spacing.xs,
     },

@@ -10,8 +10,10 @@ export interface Review {
   text: string;
   /** Human-readable date, e.g. "3 Oct 2026". */
   date: string;
-  /** Optional photo attached to the review (remote URL). */
+  /** Optional photo attached to the review (remote or local URI). */
   photo?: string;
+  /** Optional quick-tags, e.g. "Punctual", "Professional". */
+  tags?: string[];
 }
 
 const seeded: Review[] = [

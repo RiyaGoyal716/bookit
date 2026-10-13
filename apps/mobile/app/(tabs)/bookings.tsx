@@ -11,7 +11,13 @@ import { useBookingsStore, type Booking } from '../../src/stores/bookingsStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
-type Segment = 'upcoming' | 'past';
+type Segment = 'upcoming' | 'completed' | 'cancelled';
+
+const SEGMENTS: { key: Segment; label: string }[] = [
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
+];
 
 export default function BookingsScreen() {
   const router = useRouter();
@@ -25,8 +31,9 @@ export default function BookingsScreen() {
   const filtered = useMemo(
     () =>
       bookings.filter((b) => {
-        const isPast = b.status === 'Completed' || b.status === 'Cancelled';
-        return segment === 'past' ? isPast : !isPast;
+        if (segment === 'completed') return b.status === 'Completed';
+        if (segment === 'cancelled') return b.status === 'Cancelled';
+        return b.status !== 'Completed' && b.status !== 'Cancelled';
       }),
     [bookings, segment],
   );
@@ -38,19 +45,19 @@ export default function BookingsScreen() {
         <Text style={styles.subtitle}>Track every job in one place</Text>
 
         <View style={styles.segment}>
-          {(['upcoming', 'past'] as Segment[]).map((s) => {
-            const active = segment === s;
+          {SEGMENTS.map((s) => {
+            const active = segment === s.key;
             return (
               <Pressable
-                key={s}
-                onPress={() => setSegment(s)}
+                key={s.key}
+                onPress={() => setSegment(s.key)}
                 style={[styles.segmentBtn, active && styles.segmentBtnActive]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
-                accessibilityLabel={s === 'upcoming' ? 'Upcoming bookings' : 'Past bookings'}
+                accessibilityLabel={`${s.label} bookings`}
               >
                 <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                  {s === 'upcoming' ? 'Upcoming' : 'Past'}
+                  {s.label}
                 </Text>
               </Pressable>
             );
@@ -66,11 +73,19 @@ export default function BookingsScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <EmptyState
-            title={segment === 'upcoming' ? 'No upcoming bookings' : 'No past bookings'}
+            title={
+              segment === 'upcoming'
+                ? 'No upcoming bookings'
+                : segment === 'completed'
+                  ? 'No completed bookings'
+                  : 'No cancelled bookings'
+            }
             message={
               segment === 'upcoming'
                 ? 'Book a provider and it’ll show up here.'
-                : 'Completed jobs will appear here.'
+                : segment === 'completed'
+                  ? 'Completed jobs will appear here.'
+                  : 'Cancelled bookings will appear here.'
             }
             actionLabel={segment === 'upcoming' ? 'Find a provider' : undefined}
             onAction={segment === 'upcoming' ? () => router.push('/(tabs)') : undefined}
@@ -102,7 +117,20 @@ export default function BookingsScreen() {
                   <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
                 </View>
               </View>
-              <Text style={styles.bookingId}>{item.id}</Text>
+              <View style={styles.cardFooter}>
+                <Text style={styles.bookingId}>{item.id}</Text>
+                {item.status === 'Accepted' || item.status === 'On the way' ? (
+                  <Pressable
+                    style={styles.trackPill}
+                    onPress={() => router.push(route(`/tracking/${item.id}`))}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Track ${item.providerName} live`}
+                  >
+                    <Ionicons name="navigate" size={13} color={c.text.inverse} />
+                    <Text style={styles.trackPillText}>Track live</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </Card>
           </Pressable>
         )}
@@ -202,10 +230,30 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.smallMedium,
       color: c.brand.tint,
     },
-    bookingId: {
+    cardFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       marginTop: spacing.xs,
+    },
+    bookingId: {
       ...typography.scale.caption,
       color: c.text.muted,
       letterSpacing: 0.5,
+    },
+    trackPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.pill,
+      backgroundColor: c.brand.primary,
+    },
+    trackPillText: {
+      ...typography.scale.caption,
+      color: c.text.inverse,
+      fontFamily: typography.font.bold,
+      fontWeight: '700',
     },
   });
