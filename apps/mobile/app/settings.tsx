@@ -4,11 +4,18 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { showToast } from '../src/stores/toastStore';
 import { useAuthStore } from '../src/stores/authStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
+import { useRegionStore } from '../src/stores/regionStore';
 import { useThemeStore, type ThemePreference } from '../src/stores/themeStore';
+import type { LocaleCode } from '../src/i18n';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+
+const LANGUAGE_OPTIONS: { key: LocaleCode; label: string }[] = [
+  { key: 'en', label: 'English' },
+  { key: 'hi', label: 'हिंदी' },
+  { key: 'ar', label: 'العربية' },
+];
 
 const THEME_OPTIONS: {
   key: ThemePreference;
@@ -30,7 +37,8 @@ export default function SettingsScreen() {
   const setPreference = useThemeStore((s) => s.setPreference);
   const notificationsEnabled = useSettingsStore((s) => s.notificationsEnabled);
   const setNotificationsEnabled = useSettingsStore((s) => s.setNotificationsEnabled);
-  const language = useSettingsStore((s) => s.language);
+  const language = useRegionStore((s) => s.language);
+  const setLanguage = useRegionStore((s) => s.setLanguage);
   const logout = useAuthStore((s) => s.logout);
 
   const deleteAccount = () => {
@@ -115,19 +123,31 @@ export default function SettingsScreen() {
 
           <View style={styles.divider} />
 
-          <Pressable
-            style={styles.row}
-            onPress={() => showToast('More languages coming soon')}
-            accessibilityRole="button"
-            accessibilityLabel={`Language, currently ${language}`}
-          >
+          <View style={styles.row}>
             <View style={styles.rowIcon}>
               <Ionicons name="language-outline" size={18} color={c.brand.tint} />
             </View>
             <Text style={styles.rowLabel}>Language</Text>
-            <Text style={styles.rowValue}>{language}</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
+          </View>
+          <View style={[styles.segment, styles.languageSegment]}>
+            {LANGUAGE_OPTIONS.map((opt) => {
+              const active = language === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => setLanguage(opt.key)}
+                  style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${opt.label} language`}
+                >
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         <Text style={styles.sectionLabel}>Account</Text>
@@ -227,9 +247,8 @@ const makeStyles = (c: Palette) =>
       ...typography.scale.bodyMedium,
       color: c.text.primary,
     },
-    rowValue: {
-      ...typography.scale.small,
-      color: c.text.muted,
+    languageSegment: {
+      marginTop: spacing.sm,
     },
     divider: {
       height: 1,

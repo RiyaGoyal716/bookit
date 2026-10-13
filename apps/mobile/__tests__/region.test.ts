@@ -35,29 +35,49 @@ describe('region store', () => {
   beforeEach(() => {
     useRegionStore.setState({ chosen: false });
     useRegionStore.getState().setRegion('GB');
+    useRegionStore.getState().setLanguage('en');
   });
 
   it('defaults to a known region', () => {
     expect(findRegion(useRegionStore.getState().regionCode)).toBeDefined();
   });
 
-  it('switching to UAE sets AED currency, Arabic locale and RTL direction', () => {
-    useRegionStore.getState().setRegion('AE');
-    const s = useRegionStore.getState();
-    expect(s.currency).toBe('AED');
-    expect(s.locale).toBe('ar');
-    expect(s.direction).toBe('rtl');
-    expect(s.dialCode).toBe('971');
-    expect(s.chosen).toBe(true);
-  });
-
-  it('switching to India sets INR currency and Hindi locale', () => {
+  it('switching region sets currency + dial code but keeps the language English', () => {
     useRegionStore.getState().setRegion('IN');
     const s = useRegionStore.getState();
     expect(s.currency).toBe('INR');
-    expect(s.locale).toBe('hi');
-    expect(s.direction).toBe('ltr');
     expect(s.dialCode).toBe('91');
+    // Language is independent of region — India still defaults to English.
+    expect(s.locale).toBe('en');
+    expect(s.direction).toBe('ltr');
+    expect(s.chosen).toBe(true);
+  });
+
+  it('UAE sets AED but does not force Arabic (language stays English/LTR)', () => {
+    useRegionStore.getState().setRegion('AE');
+    const s = useRegionStore.getState();
+    expect(s.currency).toBe('AED');
+    expect(s.dialCode).toBe('971');
+    expect(s.locale).toBe('en');
+    expect(s.direction).toBe('ltr');
+  });
+
+  it('setLanguage changes locale + direction independently of the region', () => {
+    useRegionStore.getState().setRegion('IN');
+    useRegionStore.getState().setLanguage('hi');
+    let s = useRegionStore.getState();
+    expect(s.locale).toBe('hi');
+    expect(s.currency).toBe('INR'); // region/currency unchanged by language
+
+    useRegionStore.getState().setLanguage('ar');
+    s = useRegionStore.getState();
+    expect(s.locale).toBe('ar');
+    expect(s.direction).toBe('rtl');
+
+    useRegionStore.getState().setLanguage('en');
+    s = useRegionStore.getState();
+    expect(s.locale).toBe('en');
+    expect(s.direction).toBe('ltr');
   });
 
   it('every region resolves a dial code', () => {
