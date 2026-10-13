@@ -3,7 +3,7 @@ import { Animated, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useNotificationsStore } from '../../src/stores/notificationsStore';
+import { useChatStore } from '../../src/stores/chatStore';
 import { useColors, typography } from '../../src/theme';
 
 /** Tab icon with a subtle scale/opacity pop when active. */
@@ -38,7 +38,7 @@ function TabIcon({
 
 export default function TabsLayout() {
   const c = useColors();
-  const unread = useNotificationsStore((s) => s.items.filter((n) => !n.read).length);
+  const unread = useChatStore((s) => s.conversations.reduce((n, conv) => n + conv.unread, 0));
 
   return (
     <Tabs

@@ -57,3 +57,5 @@ export { StatusTimeline } from './StatusTimeline';
 export type { StatusTimelineProps, TimelineStep } from './StatusTimeline';
 export { RouteMapTracker } from './RouteMapTracker';
 export type { RouteMapTrackerProps } from './RouteMapTracker';
+export { InlineBanner } from './InlineBanner';
+export type { InlineBannerProps, BannerTone } from './InlineBanner';
