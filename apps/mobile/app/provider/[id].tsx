@@ -24,11 +24,12 @@ import {
   RatingStars,
   Screen,
 } from '../../src/components';
-import { getProviderById } from '../../src/mocks';
+import { getProviderById, getProvidersByCategory } from '../../src/mocks';
 import type { Provider, ProviderBadge, Service } from '../../src/mocks/types';
 import { getSlotsForDay } from '../../src/mocks/availability';
 import { track } from '../../src/lib/analytics';
 import { route } from '../../src/lib/nav';
+import { useCompareStore, COMPARE_LIMIT } from '../../src/stores/compareStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useReviewsStore, type Review } from '../../src/stores/reviewsStore';
 import { useCartStore } from '../../src/stores/cartStore';
@@ -47,6 +48,7 @@ const BADGE_META: Record<ProviderBadge, { label: string; icon: keyof typeof Ioni
   'background-checked': { label: 'Background checked', icon: 'shield-checkmark' },
   'top-rated': { label: 'Top rated', icon: 'ribbon' },
   insured: { label: 'Insured', icon: 'umbrella' },
+  'fast-responder': { label: 'Fast responder', icon: 'flash' },
 };
 
 const FAQS = [
@@ -82,6 +84,8 @@ export default function ProviderProfileScreen() {
 
   const isFavourite = useFavouritesStore((s) => (id ? s.ids.includes(id) : false));
   const toggleFavourite = useFavouritesStore((s) => s.toggle);
+  const inCompare = useCompareStore((s) => (id ? s.ids.includes(id) : false));
+  const toggleCompare = useCompareStore((s) => s.toggle);
   const reviews = useReviewsStore((s) => s.reviews);
   const addItem = useCartStore((s) => s.addItem);
   const decrement = useCartStore((s) => s.decrement);
@@ -159,6 +163,20 @@ export default function ProviderProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     toggleFavourite(provider.id);
   };
+
+  const onToggleCompare = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    const ok = toggleCompare(provider.id);
+    if (!ok) {
+      showToast(`You can compare up to ${COMPARE_LIMIT} providers`);
+      return;
+    }
+    showToast(inCompare ? 'Removed from compare' : 'Added to compare');
+  };
+
+  const similar = getProvidersByCategory(provider.category)
+    .filter((p) => p.id !== provider.id)
+    .slice(0, 6);
 
   const qtyFor = (service: Service): number => {
     if (!sameProviderCart) return 0;
@@ -250,6 +268,20 @@ export default function ProviderProfileScreen() {
             <Ionicons name="chevron-back" size={24} color={c.text.primary} />
           </Pressable>
           <View style={[styles.topActions, { top: insets.top + spacing.sm }]}>
+            <Pressable
+              style={styles.roundBtn}
+              onPress={onToggleCompare}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={inCompare ? 'Remove from compare' : 'Add to compare'}
+              accessibilityState={{ selected: inCompare }}
+            >
+              <Ionicons
+                name="git-compare"
+                size={22}
+                color={inCompare ? c.brand.tint : c.text.primary}
+              />
+            </Pressable>
             <Pressable
               style={styles.roundBtn}
               onPress={onShare}
@@ -558,6 +590,46 @@ export default function ProviderProfileScreen() {
           {/* FAQ */}
           <SectionTitle title="FAQ" styles={styles} />
           <Accordion items={FAQS} />
+
+          {/* Pros like this */}
+          {similar.length > 0 ? (
+            <>
+              <SectionTitle title="Pros like this" styles={styles} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.photosRow}
+              >
+                {similar.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    style={styles.simCard}
+                    onPress={() => router.push(`/provider/${p.id}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${p.name}, rated ${p.rating.toFixed(1)}`}
+                  >
+                    <Image
+                      source={{ uri: p.photo }}
+                      style={styles.simPhoto}
+                      contentFit="cover"
+                      transition={200}
+                      cachePolicy="memory-disk"
+                    />
+                    <Text style={styles.simName} numberOfLines={1}>
+                      {p.name}
+                    </Text>
+                    <View style={styles.simMeta}>
+                      <Ionicons name="star" size={12} color={c.brand.star} />
+                      <Text style={styles.simRating}>{p.rating.toFixed(1)}</Text>
+                      <Text style={styles.simPrice}>
+                        · {t('money.from')} {money(p.priceFrom)}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -805,6 +877,17 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.md,
       backgroundColor: c.skeleton,
     },
+    simCard: { width: 140, gap: 4 },
+    simPhoto: {
+      width: 140,
+      height: 100,
+      borderRadius: radius.md,
+      backgroundColor: c.skeleton,
+    },
+    simName: { ...typography.scale.smallMedium, color: c.text.primary },
+    simMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    simRating: { ...typography.scale.caption, color: c.text.primary },
+    simPrice: { ...typography.scale.caption, color: c.text.muted },
     reviewsHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',

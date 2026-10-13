@@ -44,7 +44,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 941,
@@ -198,7 +199,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 944,
@@ -300,7 +302,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 423,
@@ -352,7 +355,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 945,
@@ -403,7 +407,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 946,
@@ -556,7 +561,8 @@
       "verified-id",
       "background-checked",
       "top-rated",
-      "insured"
+      "insured",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 424,
@@ -656,7 +662,8 @@
     "badges": [
       "verified-id",
       "background-checked",
-      "top-rated"
+      "top-rated",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 949,
@@ -706,7 +713,8 @@
     "badges": [
       "verified-id",
       "background-checked",
-      "top-rated"
+      "top-rated",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 419,
@@ -806,7 +814,8 @@
     "badges": [
       "verified-id",
       "background-checked",
-      "top-rated"
+      "top-rated",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 421,
@@ -857,7 +866,8 @@
     "badges": [
       "verified-id",
       "background-checked",
-      "top-rated"
+      "top-rated",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 426,
@@ -907,7 +917,8 @@
     "badges": [
       "verified-id",
       "background-checked",
-      "top-rated"
+      "top-rated",
+      "fast-responder"
     ],
     "stats": {
       "jobsDone": 427,

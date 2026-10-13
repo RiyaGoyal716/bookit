@@ -14,6 +14,20 @@ export interface SubService {
   popular?: boolean;
 }
 
+/** A bundled multi-service package shown on the category page. */
+export interface Package {
+  id: string;
+  name: string;
+  /** Bundle price in whole GBP. */
+  price: number;
+  /** Undiscounted value, for the strikethrough "save" badge. */
+  wasPrice: number;
+  durationMin: number;
+  /** What's included in the bundle. */
+  includes: string[];
+  popular?: boolean;
+}
+
 export interface Category {
   /** URL slug used by /category/[slug]. */
   slug: string;
@@ -28,6 +42,8 @@ export interface Category {
   tagline: string;
   /** Curated sub-services shown on the category page. */
   subServices: SubService[];
+  /** Bundled packages (live categories only). */
+  packages?: Package[];
 }
 
 /** The eight home-grid categories — three live, five coming soon. */
@@ -78,6 +94,25 @@ export const categories: Category[] = [
         description: 'Shampoo and refresh carpets or sofas',
       },
     ],
+    packages: [
+      {
+        id: 'move-in-bundle',
+        name: 'Move-in ready bundle',
+        price: 110,
+        wasPrice: 140,
+        durationMin: 300,
+        includes: ['Deep clean', 'Inside oven', 'Inside windows', 'Carpet refresh'],
+        popular: true,
+      },
+      {
+        id: 'spring-reset',
+        name: 'Spring reset',
+        price: 75,
+        wasPrice: 90,
+        durationMin: 210,
+        includes: ['Deep clean', 'Inside windows', 'Ironing (30 min)'],
+      },
+    ],
   },
   {
     slug: 'beauty',
@@ -125,6 +160,25 @@ export const categories: Category[] = [
         description: 'Smooth, salon-quality waxing',
       },
     ],
+    packages: [
+      {
+        id: 'glow-up',
+        name: 'Glow-up day',
+        price: 65,
+        wasPrice: 82,
+        durationMin: 150,
+        includes: ['Haircut & styling', 'Gel manicure', 'Express facial'],
+        popular: true,
+      },
+      {
+        id: 'event-ready',
+        name: 'Event ready',
+        price: 48,
+        wasPrice: 58,
+        durationMin: 105,
+        includes: ['Blow-dry', 'Lashes & brows'],
+      },
+    ],
   },
   {
     slug: 'tutoring',
@@ -170,6 +224,25 @@ export const categories: Category[] = [
         priceFrom: 24,
         durationMin: 30,
         description: 'Piano, guitar and theory',
+      },
+    ],
+    packages: [
+      {
+        id: 'exam-booster',
+        name: 'Exam booster (5 sessions)',
+        price: 125,
+        wasPrice: 150,
+        durationMin: 300,
+        includes: ['5× 1-hour sessions', 'Progress report', 'Past-paper pack'],
+        popular: true,
+      },
+      {
+        id: 'term-starter',
+        name: 'Term starter (3 sessions)',
+        price: 78,
+        wasPrice: 90,
+        durationMin: 180,
+        includes: ['3× 1-hour sessions', 'Study plan'],
       },
     ],
   },

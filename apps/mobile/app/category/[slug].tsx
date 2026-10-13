@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import {
   EmptyState,
+  MapPlaceholder,
   ProviderCard,
   SortFilterSheet,
   DEFAULT_SORT_FILTER,
@@ -19,6 +20,8 @@ import type { SubService } from '../../src/mocks/categories';
 import { getAvailability } from '../../src/mocks/availability';
 import { route } from '../../src/lib/nav';
 import { useCartStore } from '../../src/stores/cartStore';
+import { useCompareStore, COMPARE_LIMIT } from '../../src/stores/compareStore';
+import { showToast } from '../../src/stores/toastStore';
 import { useT, useMoney } from '../../src/i18n';
 import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 
@@ -55,9 +58,19 @@ export default function CategoryScreen() {
   const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
   const cartTotal = useCartStore((s) => s.breakdown().total);
 
+  const compareIds = useCompareStore((s) => s.ids);
+  const toggleCompare = useCompareStore((s) => s.toggle);
+
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const [sortFilter, setSortFilter] = useState<SortFilterValue>(DEFAULT_SORT_FILTER);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+
+  const onToggleCompare = (id: string) => {
+    const ok = toggleCompare(id);
+    if (!ok) showToast(`You can compare up to ${COMPARE_LIMIT} providers`);
+  };
 
   const providers = useMemo(() => {
     if (!category?.providerCategory) return [];
@@ -125,6 +138,34 @@ export default function CategoryScreen() {
           <Text style={styles.title}>{category.label}</Text>
           <Text style={styles.tagline}>{category.tagline}</Text>
         </View>
+        <Pressable
+          onPress={() => setCompareMode((v) => !v)}
+          style={[styles.headerBtn, compareMode && styles.headerBtnActive]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Toggle compare mode"
+          accessibilityState={{ selected: compareMode }}
+        >
+          <Ionicons
+            name="git-compare-outline"
+            size={22}
+            color={compareMode ? c.brand.tint : c.text.primary}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => setShowMap((v) => !v)}
+          style={[styles.headerBtn, showMap && styles.headerBtnActive]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={showMap ? 'Hide map' : 'Show map'}
+          accessibilityState={{ selected: showMap }}
+        >
+          <Ionicons
+            name={showMap ? 'list-outline' : 'map-outline'}
+            size={22}
+            color={showMap ? c.brand.tint : c.text.primary}
+          />
+        </Pressable>
       </View>
 
       <FlashList
@@ -138,6 +179,64 @@ export default function CategoryScreen() {
         ItemSeparatorComponent={() => <View style={styles.sep} />}
         ListHeaderComponent={
           <View>
+            {showMap ? (
+              <MapPlaceholder
+                height={200}
+                style={{ marginTop: spacing.lg }}
+                caption={`${results.length} providers near ${category.label.toLowerCase()} in your area`}
+                pins={results.slice(0, 6).map((p, i) => ({
+                  id: p.id,
+                  x: 0.15 + ((i * 0.37) % 0.7),
+                  y: 0.2 + ((i * 0.29) % 0.6),
+                  tone: getAvailability(p.id).availableToday ? 'brand' : 'muted',
+                }))}
+              />
+            ) : null}
+
+            {category.packages && category.packages.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>Bundles &amp; packages</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.pkgRow}
+                >
+                  {category.packages.map((pkg) => (
+                    <View key={pkg.id} style={styles.pkgCard}>
+                      <View style={styles.pkgTop}>
+                        <Text style={styles.pkgName} numberOfLines={1}>
+                          {pkg.name}
+                        </Text>
+                        {pkg.popular ? (
+                          <View style={styles.popularTag}>
+                            <Text style={styles.popularText}>Popular</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      {pkg.includes.map((inc) => (
+                        <View key={inc} style={styles.pkgIncRow}>
+                          <Ionicons name="checkmark" size={13} color={c.status.success} />
+                          <Text style={styles.pkgInc} numberOfLines={1}>
+                            {inc}
+                          </Text>
+                        </View>
+                      ))}
+                      <View style={styles.pkgPriceRow}>
+                        <Text style={styles.pkgPrice}>{money(pkg.price)}</Text>
+                        <Text style={styles.pkgWas}>{money(pkg.wasPrice)}</Text>
+                        <View style={styles.saveTag}>
+                          <Text style={styles.saveText}>
+                            Save {money(pkg.wasPrice - pkg.price)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.pkgDuration}>{pkg.durationMin} min total</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
+
             <Text style={styles.sectionLabel}>Popular services</Text>
             <View style={styles.subGrid}>
               {category.subServices.map((sub) => {
@@ -226,11 +325,31 @@ export default function CategoryScreen() {
           />
         }
         renderItem={({ item }: { item: Provider }) => (
-          <ProviderCard provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
+          <ProviderCard
+            provider={item}
+            onPress={() => router.push(`/provider/${item.id}`)}
+            onCompareToggle={compareMode ? () => onToggleCompare(item.id) : undefined}
+            compareSelected={compareIds.includes(item.id)}
+          />
         )}
       />
 
-      {cartCount > 0 ? (
+      {compareIds.length > 0 ? (
+        <Pressable
+          style={[styles.compareBar, { paddingBottom: insets.bottom + spacing.sm }]}
+          onPress={() => router.push(route('/compare'))}
+          accessibilityRole="button"
+          accessibilityLabel={`Compare ${compareIds.length} providers`}
+        >
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{compareIds.length}</Text>
+          </View>
+          <Text style={styles.cartBarText}>Compare providers</Text>
+          <Ionicons name="git-compare" size={18} color={c.text.inverse} />
+        </Pressable>
+      ) : null}
+
+      {cartCount > 0 && compareIds.length === 0 ? (
         <Pressable
           style={[styles.cartBar, { paddingBottom: insets.bottom + spacing.sm }]}
           onPress={() => router.push(route('/cart'))}
@@ -295,7 +414,56 @@ const makeStyles = (c: Palette) =>
     },
     back: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
     backPlain: { alignSelf: 'flex-start', marginBottom: spacing.lg, marginLeft: spacing.lg },
+    headerBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerBtnActive: { backgroundColor: c.brand.primarySoft },
     headerText: { flex: 1 },
+    pkgRow: { gap: spacing.md, paddingVertical: spacing.xs, paddingRight: spacing.lg },
+    pkgCard: {
+      width: 230,
+      padding: spacing.md,
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      gap: spacing.xs,
+      ...shadow.soft,
+    },
+    pkgTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    pkgName: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
+    pkgIncRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    pkgInc: { flex: 1, ...typography.scale.caption, color: c.text.secondary },
+    pkgPriceRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    pkgPrice: { ...typography.scale.h2, color: c.brand.tint },
+    pkgWas: {
+      ...typography.scale.small,
+      color: c.text.muted,
+      textDecorationLine: 'line-through',
+    },
+    saveTag: {
+      paddingVertical: 2,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radius.pill,
+      backgroundColor: c.status.successSoft,
+    },
+    saveText: {
+      ...typography.scale.caption,
+      fontSize: 10,
+      color: c.status.success,
+      fontFamily: typography.font.bold,
+      fontWeight: '700',
+    },
+    pkgDuration: { ...typography.scale.caption, color: c.text.muted },
     title: { ...typography.scale.h1, color: c.text.primary },
     tagline: { ...typography.scale.small, color: c.text.secondary },
     sep: { height: spacing.md },
@@ -396,6 +564,21 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       marginBottom: spacing.md,
       backgroundColor: c.brand.primary,
+      ...shadow.floating,
+    },
+    compareBar: {
+      position: 'absolute',
+      left: spacing.lg,
+      right: spacing.lg,
+      bottom: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      borderRadius: radius.lg,
+      marginBottom: spacing.md,
+      backgroundColor: c.brand.primaryDark,
       ...shadow.floating,
     },
     cartBadge: {

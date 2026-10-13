@@ -20,4 +20,5 @@ export {
   getCategoryForProvider,
   type Category,
   type SubService,
+  type Package,
 } from './categories';

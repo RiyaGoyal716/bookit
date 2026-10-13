@@ -17,7 +17,8 @@ export interface Service {
 }
 
 /** Provider trust / credential badges shown on the profile. */
-export type ProviderBadge = 'verified-id' | 'background-checked' | 'top-rated' | 'insured';
+export type ProviderBadge =
+  'verified-id' | 'background-checked' | 'top-rated' | 'insured' | 'fast-responder';
 
 export interface ProviderStats {
   /** Completed jobs on Bookit. */

@@ -21,10 +21,19 @@ export interface ProviderCardProps {
   onPress?: () => void;
   /** Show the favourite heart toggle. Default: true. */
   showFavourite?: boolean;
+  /** When set, shows a compare checkbox reflecting `compareSelected`. */
+  onCompareToggle?: () => void;
+  compareSelected?: boolean;
 }
 
 /** List card: photo, name, verified tick, rating, availability, price + heart. */
-export function ProviderCard({ provider, onPress, showFavourite = true }: ProviderCardProps) {
+export function ProviderCard({
+  provider,
+  onPress,
+  showFavourite = true,
+  onCompareToggle,
+  compareSelected = false,
+}: ProviderCardProps) {
   const c = useColors();
   const t = useT();
   const money = useMoney();
@@ -74,7 +83,22 @@ export function ProviderCard({ provider, onPress, showFavourite = true }: Provid
         )}
       </View>
       <View style={styles.rightCol}>
-        {showFavourite ? (
+        {onCompareToggle ? (
+          <Pressable
+            onPress={onCompareToggle}
+            hitSlop={8}
+            style={styles.heart}
+            accessibilityRole="checkbox"
+            accessibilityLabel={`Compare ${provider.name}`}
+            accessibilityState={{ checked: compareSelected }}
+          >
+            <Ionicons
+              name={compareSelected ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={compareSelected ? c.brand.tint : c.text.muted}
+            />
+          </Pressable>
+        ) : showFavourite ? (
           <Pressable
             onPress={onHeart}
             hitSlop={8}
