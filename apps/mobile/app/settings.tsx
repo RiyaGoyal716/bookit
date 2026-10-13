@@ -151,6 +151,47 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={styles.sectionLabel}>Account</Text>
+        <View style={styles.card}>
+          <Pressable
+            style={styles.linkRow}
+            onPress={() => router.push('/profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile"
+          >
+            <View style={styles.rowIcon}>
+              <Ionicons name="person-outline" size={18} color={c.brand.tint} />
+            </View>
+            <Text style={styles.rowLabel}>Edit profile</Text>
+            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable
+            style={styles.linkRow}
+            onPress={() => router.push('/security')}
+            accessibilityRole="button"
+            accessibilityLabel="Security"
+          >
+            <View style={styles.rowIcon}>
+              <Ionicons name="lock-closed-outline" size={18} color={c.brand.tint} />
+            </View>
+            <Text style={styles.rowLabel}>Security (PIN & biometrics)</Text>
+            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable
+            style={styles.linkRow}
+            onPress={() => router.push('/account-status')}
+            accessibilityRole="button"
+            accessibilityLabel="Account status"
+          >
+            <View style={styles.rowIcon}>
+              <Ionicons name="pulse-outline" size={18} color={c.brand.tint} />
+            </View>
+            <Text style={styles.rowLabel}>Account status</Text>
+            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
+          </Pressable>
+        </View>
+
         <Pressable
           style={styles.deleteRow}
           onPress={deleteAccount}
@@ -275,10 +316,17 @@ const makeStyles = (c: Palette) =>
     knobOn: {
       alignSelf: 'flex-end',
     },
+    linkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minHeight: 52,
+    },
     deleteRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
+      marginTop: spacing.md,
       minHeight: 56,
       paddingHorizontal: spacing.lg,
       borderRadius: radius.lg,

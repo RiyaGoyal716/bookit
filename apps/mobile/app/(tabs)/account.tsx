@@ -13,16 +13,21 @@ import type { Provider } from '../../src/mocks/types';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
+import { useWalletStore } from '../../src/stores/walletStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 type RowIcon = keyof typeof Ionicons.glyphMap;
 
 const MENU: { icon: RowIcon; label: string; href: string }[] = [
+  { icon: 'wallet-outline', label: 'Wallet & transactions', href: '/wallet' },
   { icon: 'card-outline', label: 'Payment methods', href: '/payments' },
   { icon: 'location-outline', label: 'Saved addresses', href: '/addresses' },
+  { icon: 'star-outline', label: 'Bookit Plus', href: '/plus' },
+  { icon: 'briefcase-outline', label: 'Become a pro', href: '/pro' },
   { icon: 'gift-outline', label: 'Refer & earn', href: '/referrals' },
   { icon: 'notifications-outline', label: 'Notifications', href: '/notifications' },
+  { icon: 'shield-outline', label: 'Safety centre', href: '/safety' },
   { icon: 'document-text-outline', label: 'Booking & cancellation policy', href: '/policies' },
   { icon: 'settings-outline', label: 'Settings', href: '/settings' },
   { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
@@ -39,6 +44,7 @@ export default function AccountScreen() {
   const logout = useAuthStore((s) => s.logout);
   const favouriteIds = useFavouritesStore((s) => s.ids);
   const bookingCount = useBookingsStore((s) => s.bookings.length);
+  const walletBalance = useWalletStore((s) => s.balance());
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -77,9 +83,9 @@ export default function AccountScreen() {
       >
         <Pressable
           style={styles.userCard}
-          onPress={() => setDrawerOpen(true)}
+          onPress={() => router.push(route('/profile'))}
           accessibilityRole="button"
-          accessibilityLabel="Open menu"
+          accessibilityLabel="Edit profile"
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initial}</Text>
@@ -96,7 +102,10 @@ export default function AccountScreen() {
           <View style={styles.statDivider} />
           <Stat value={`${favourites.length}`} label="Favourites" styles={styles} />
           <View style={styles.statDivider} />
-          <Stat value="£10" label="Referral credit" styles={styles} />
+          <Pressable style={styles.stat} onPress={() => router.push(route('/wallet'))}>
+            <Text style={styles.statValue}>{money(walletBalance)}</Text>
+            <Text style={styles.statLabel}>Wallet</Text>
+          </Pressable>
         </View>
 
         <View style={styles.favHeader}>

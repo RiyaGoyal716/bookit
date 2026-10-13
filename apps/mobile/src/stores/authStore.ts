@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface AuthUser {
   name: string;
   phone: string;
+  email?: string;
 }
 
 interface AuthState {
@@ -10,6 +11,8 @@ interface AuthState {
   isAuthenticated: boolean;
   /** Mock login — stores the E.164 phone plus a demo name. */
   login: (phone: string) => void;
+  /** Patch the signed-in user's profile fields. */
+  updateProfile: (patch: Partial<AuthUser>) => void;
   logout: () => void;
 }
 
@@ -21,8 +24,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   login: (phone: string) =>
     set({
-      user: { name: 'Alex', phone },
+      user: { name: 'Alex', phone, email: 'alex@example.com' },
       isAuthenticated: true,
     }),
+  updateProfile: (patch) => set((s) => (s.user ? { user: { ...s.user, ...patch } } : {})),
   logout: () => set({ user: null, isAuthenticated: false }),
 }));
