@@ -112,6 +112,63 @@ features. All are mock-backed and run in Expo Go.
 14. **Offline banner** — connectivity banner via expo-network.
 15. **Error boundary** — app-wide boundary with a friendly retry screen.
 
+## Aurora full-app features (2026-10-13)
+
+The Aurora redesign extends the app to 40+ screens across both the customer and a
+full provider ("pro") side, plus trust & safety. Everything is mock-backed and
+Expo Go compatible (no new native deps).
+
+### Discovery & provider
+- Category page with sub-services, **bundles/packages**, filters/sort sheet and a
+  **map-toggle placeholder** (styled SVG panel).
+- Richer provider profile: gallery + full-screen viewer, stats, trust badges
+  (Verified ID, Background checked, Insured, Top rated, **Fast responder**),
+  reviews with filters + photos, availability, policies, FAQ and **Pros like this**.
+- **Compare providers** — select up to 3 and view side-by-side.
+
+### Booking & payments
+- Cart with add-ons, tips, promo and currency-aware breakdown.
+- Slot picker, address book (map placeholder + instructions), **recurring**
+  (weekly/fortnightly), payment methods (cards, Apple/Google Pay, **wallet**,
+  pay-after-service — all mock), review → confetti success → add-to-calendar + share.
+
+### Bookings & live tracking
+- Upcoming/Completed/Cancelled segments.
+- **Live tracking**: an animated pro marker eased along an SVG route
+  (`RouteMapTracker`), ETA card and a status timeline.
+- Chat, call, **mock invoice (PDF)**, reschedule, cancel with policy + reasons,
+  rebook, and rate with tags/photos/tip.
+
+### Inbox & notifications
+- Chats with pros and a **mock support bot** (bubbles, images, quick replies,
+  typing indicator); notification centre grouped by day; in-app toast + banner
+  system; notification preferences.
+
+### Account
+- Profile, addresses, payments, **wallet & transactions**, favourites, referrals,
+  **Bookit Plus** (benefits, mock subscribe, billing), language & region, dark
+  mode, **security (mock PIN + biometric)**, delete account.
+
+### Provider mode (`app/pro/*`)
+- Onboarding (document + selfie upload, bank details) and verification status.
+- Dashboard (today's jobs, earnings, rating, acceptance rate, **weekly SVG chart**),
+  job requests with **countdown accept/decline**, quote on posted tasks, job detail
+  with status buttons, availability editor, earnings & payouts, pro standards +
+  performance warnings.
+
+### Trust, safety & policy
+- Real-content legal pages (Terms, Privacy, Cancellation & Refund, Community,
+  Safety, Pro Standards, Cookie), report-a-problem with ticket tracking, account
+  status (Active/Under review/Restricted) + appeal, safety centre (emergency,
+  share live booking, trusted contacts), violation notices, maintenance/app-update
+  and data & consent screens.
+
+### How the Expo Go-safe pieces are built
+- **Maps**: `MapPlaceholder` (SVG street grid + pins) and `RouteMapTracker`
+  (reanimated marker interpolated along an SVG polyline). No `react-native-maps`.
+- **Charts**: `BarChart` drawn with `react-native-svg` and the Aurora gradient.
+- **Motion**: `moti` for shimmer, heart pop, reveals and typing dots.
+
 ## Out of scope for v1
 
 The following are explicitly **not** in v1:

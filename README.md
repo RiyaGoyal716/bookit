@@ -11,9 +11,28 @@ fee** on each booking.
 
 ## Screenshots
 
-_Screenshots coming soon._
+The **Aurora** redesign spans 40+ screens across the customer app, a full
+provider ("pro") side, and trust & safety — all Expo Go compatible with light,
+dark and RTL support. Drop image files into `docs/screenshots/` and uncomment
+the rows below.
 
-<!-- ![Bookit home screen](docs/screenshots/home.png) -->
+| Area | Screens |
+| ---- | ------- |
+| Discovery & provider | Home, category (packages + map toggle), provider profile, compare |
+| Booking & payments | Cart, checkout (slot/address/recurring/payment), confetti success |
+| Bookings | Upcoming/Completed/Cancelled, live tracking, invoice, rate |
+| Inbox | Conversations, chat with pro, support bot, notifications |
+| Account | Wallet, Bookit Plus, security (PIN), profile, settings |
+| Provider mode | Onboarding, dashboard, job requests, earnings, availability |
+| Trust & safety | Safety centre, account status, report/tickets, legal docs |
+
+<!--
+![Home](docs/screenshots/home.png)
+![Live tracking](docs/screenshots/tracking.png)
+![Pro dashboard](docs/screenshots/pro-dashboard.png)
+![Wallet](docs/screenshots/wallet.png)
+![Safety centre](docs/screenshots/safety.png)
+-->
 
 ## Documentation
 
