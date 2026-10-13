@@ -5,13 +5,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Chip, EmptyState, Input } from '../src/components';
+import { Button, Chip, EmptyState, Input, MapPlaceholder } from '../src/components';
 import { route } from '../src/lib/nav';
 import { track } from '../src/lib/analytics';
 import { getSlotsForDay } from '../src/mocks/availability';
-import { generateBookingId, useBookingsStore } from '../src/stores/bookingsStore';
+import {
+  generateBookingId,
+  useBookingsStore,
+  RECURRENCE_LABEL,
+  type Recurrence,
+} from '../src/stores/bookingsStore';
 import { useAddressStore, type Address } from '../src/stores/addressStore';
 import { computeCart, useCartStore } from '../src/stores/cartStore';
+import { useWalletStore } from '../src/stores/walletStore';
 import { showToast } from '../src/stores/toastStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
 import { useMoney } from '../src/i18n';
@@ -42,6 +48,12 @@ const PAYMENTS: PaymentMethod[] = [
   { id: 'after', label: 'Pay after service', sub: 'Cash or card on the day', icon: 'cash-outline' },
 ];
 
+const RECURRENCE_OPTIONS: { value: Recurrence; label: string; sub: string }[] = [
+  { value: 'none', label: 'One-off', sub: 'Just this once' },
+  { value: 'weekly', label: 'Weekly', sub: 'Every week, save 10%' },
+  { value: 'fortnightly', label: 'Fortnightly', sub: 'Every 2 weeks, save 5%' },
+];
+
 function dayFullLabel(offset: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
@@ -70,10 +82,13 @@ export default function CheckoutScreen() {
   const addresses = useAddressStore((s) => s.addresses);
   const addAddress = useAddressStore((s) => s.add);
   const addBooking = useBookingsStore((s) => s.addBooking);
+  const walletBalance = useWalletStore((s) => s.balance());
+  const debitWallet = useWalletStore((s) => s.debit);
 
   const [step, setStep] = useState(0);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [recurrence, setRecurrence] = useState<Recurrence>('none');
   const [addressId, setAddressId] = useState<string | null>(addresses[0]?.id ?? null);
   const [adding, setAdding] = useState(false);
   const [pinArea, setPinArea] = useState<string | null>(null);
@@ -82,13 +97,26 @@ export default function CheckoutScreen() {
   const [paymentId, setPaymentId] = useState('visa');
   const [confirming, setConfirming] = useState(false);
 
+  const WALLET_PAYMENTS: PaymentMethod[] = useMemo(
+    () => [
+      ...PAYMENTS,
+      {
+        id: 'wallet',
+        label: 'Bookit wallet',
+        sub: `Balance ${money(walletBalance)}`,
+        icon: 'wallet-outline',
+      },
+    ],
+    [money, walletBalance],
+  );
+
   useEffect(() => {
     if (items.length > 0) track('start_checkout', { providerId, items: items.length });
   }, [items.length, providerId, items]);
 
   const slots = selectedDay !== null ? getSlotsForDay(providerId ?? 'x', selectedDay) : [];
   const selectedAddress = addresses.find((a) => a.id === addressId);
-  const payment = PAYMENTS.find((p) => p.id === paymentId);
+  const payment = WALLET_PAYMENTS.find((p) => p.id === paymentId);
 
   if (items.length === 0) {
     return (
@@ -151,6 +179,9 @@ export default function CheckoutScreen() {
       items: items.length,
       payment: paymentId,
     });
+    if (paymentId === 'wallet') {
+      debitWallet(serviceName, breakdown.total);
+    }
     setTimeout(() => {
       addBooking({
         id,
@@ -163,6 +194,9 @@ export default function CheckoutScreen() {
         fee: breakdown.fee,
         total: breakdown.total,
         status: 'Requested',
+        address: selectedAddress.line,
+        paymentLabel: `${payment?.label ?? ''}`.trim(),
+        recurrence,
       });
       clearCart();
       router.replace({ pathname: '/success', params: { bookingId: id } });
@@ -282,6 +316,36 @@ export default function CheckoutScreen() {
                   ))}
                 </View>
                 <Text style={styles.hint}>Greyed times are already booked.</Text>
+
+                <Text style={[styles.label, styles.labelSpaced]}>Repeat</Text>
+                {RECURRENCE_OPTIONS.map((r) => {
+                  const selected = recurrence === r.value;
+                  return (
+                    <Pressable
+                      key={r.value}
+                      onPress={() => setRecurrence(r.value)}
+                      style={[styles.selectRow, selected && styles.selectRowActive]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`${r.label}, ${r.sub}`}
+                    >
+                      <Ionicons
+                        name={r.value === 'none' ? 'calendar-clear-outline' : 'repeat'}
+                        size={20}
+                        color={selected ? c.brand.tint : c.text.muted}
+                      />
+                      <View style={styles.selectInfo}>
+                        <Text style={styles.selectLabel}>{r.label}</Text>
+                        <Text style={styles.selectSub}>{r.sub}</Text>
+                      </View>
+                      <Ionicons
+                        name={selected ? 'radio-button-on' : 'radio-button-off'}
+                        size={20}
+                        color={selected ? c.brand.tint : c.text.muted}
+                      />
+                    </Pressable>
+                  );
+                })}
               </>
             ) : null}
           </View>
@@ -290,6 +354,11 @@ export default function CheckoutScreen() {
         {step === 1 ? (
           <View style={styles.block}>
             <Text style={styles.stepTitle}>Where?</Text>
+            <MapPlaceholder
+              height={140}
+              style={{ marginBottom: spacing.lg }}
+              caption={selectedAddress?.line ?? 'Select or add an address'}
+            />
             <Text style={styles.label}>Saved addresses</Text>
             {addresses.map((a: Address) => {
               const selected = addressId === a.id;
@@ -327,9 +396,7 @@ export default function CheckoutScreen() {
 
             {adding ? (
               <View style={styles.newAddress}>
-                <Text style={[styles.label, styles.labelSpaced]}>
-                  Pick an area (map not available)
-                </Text>
+                <Text style={[styles.label, styles.labelSpaced]}>Pin your area</Text>
                 <View style={styles.pinWrap}>
                   {PIN_AREAS.map((area) => (
                     <Chip
@@ -393,15 +460,21 @@ export default function CheckoutScreen() {
         {step === 2 ? (
           <View style={styles.block}>
             <Text style={styles.stepTitle}>Payment</Text>
-            {PAYMENTS.map((p) => {
+            {WALLET_PAYMENTS.map((p) => {
               const selected = paymentId === p.id;
+              const walletLow = p.id === 'wallet' && walletBalance < breakdown.total;
               return (
                 <Pressable
                   key={p.id}
+                  disabled={walletLow}
                   onPress={() => setPaymentId(p.id)}
-                  style={[styles.selectRow, selected && styles.selectRowActive]}
+                  style={[
+                    styles.selectRow,
+                    selected && styles.selectRowActive,
+                    walletLow && styles.selectRowDisabled,
+                  ]}
                   accessibilityRole="button"
-                  accessibilityState={{ selected }}
+                  accessibilityState={{ selected, disabled: walletLow }}
                   accessibilityLabel={`${p.label}, ${p.sub}`}
                 >
                   <Ionicons
@@ -411,7 +484,9 @@ export default function CheckoutScreen() {
                   />
                   <View style={styles.selectInfo}>
                     <Text style={styles.selectLabel}>{p.label}</Text>
-                    <Text style={styles.selectSub}>{p.sub}</Text>
+                    <Text style={styles.selectSub}>
+                      {walletLow ? 'Balance too low for this total' : p.sub}
+                    </Text>
                   </View>
                   <Ionicons
                     name={selected ? 'radio-button-on' : 'radio-button-off'}
@@ -449,6 +524,9 @@ export default function CheckoutScreen() {
                 value={`${dayFullLabel(selectedDay ?? 0)} · ${selectedTime ?? ''}`}
                 styles={styles}
               />
+              {recurrence !== 'none' ? (
+                <ReviewRow label="Repeats" value={RECURRENCE_LABEL[recurrence]} styles={styles} />
+              ) : null}
               <ReviewRow label="Address" value={selectedAddress?.line ?? '—'} styles={styles} />
               {instructions.trim() ? (
                 <ReviewRow label="Instructions" value={instructions.trim()} styles={styles} />
@@ -611,6 +689,7 @@ const makeStyles = (c: Palette) =>
       marginBottom: spacing.sm,
     },
     selectRowActive: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
+    selectRowDisabled: { opacity: 0.5 },
     selectInfo: { flex: 1, gap: 2 },
     selectLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
     selectSub: { ...typography.scale.caption, color: c.text.muted },

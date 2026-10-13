@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Input } from '../src/components';
+import { Button, Input, MapPlaceholder } from '../src/components';
 import { showToast } from '../src/stores/toastStore';
 import { useAddressStore, type Address } from '../src/stores/addressStore';
 import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
@@ -21,14 +21,16 @@ export default function AddressesScreen() {
 
   const [label, setLabel] = useState('');
   const [line, setLine] = useState('');
+  const [instructions, setInstructions] = useState('');
 
   const canSave = label.trim().length > 0 && line.trim().length >= 4;
 
   const save = () => {
     if (!canSave) return;
-    add({ label: label.trim(), line: line.trim() });
+    add({ label: label.trim(), line: line.trim(), instructions: instructions.trim() || undefined });
     setLabel('');
     setLine('');
+    setInstructions('');
     showToast('Address saved');
   };
 
@@ -69,6 +71,11 @@ export default function AddressesScreen() {
                 <Text style={styles.addressLine} numberOfLines={2}>
                   {a.line}
                 </Text>
+                {a.instructions ? (
+                  <Text style={styles.addressNote} numberOfLines={1}>
+                    <Ionicons name="information-circle-outline" size={12} /> {a.instructions}
+                  </Text>
+                ) : null}
               </View>
               <Pressable
                 onPress={() => {
@@ -86,6 +93,11 @@ export default function AddressesScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Add a new address</Text>
+        <MapPlaceholder
+          height={140}
+          style={{ marginBottom: spacing.lg }}
+          caption={line.trim() ? line.trim() : 'Drop a pin to set your address'}
+        />
         <View style={styles.form}>
           <Input
             label="Label"
@@ -98,6 +110,13 @@ export default function AddressesScreen() {
             value={line}
             onChangeText={setLine}
             placeholder="e.g. 5 Otley Road, Headingley, LS6 3AA"
+            multiline
+          />
+          <Input
+            label="Access instructions (optional)"
+            value={instructions}
+            onChangeText={setInstructions}
+            placeholder="e.g. buzzer 4, side gate code 1980"
             multiline
           />
           <Button label="Save address" icon="add" disabled={!canSave} onPress={save} />
@@ -154,6 +173,10 @@ const makeStyles = (c: Palette) =>
     addressLine: {
       ...typography.scale.small,
       color: c.text.secondary,
+    },
+    addressNote: {
+      ...typography.scale.caption,
+      color: c.text.muted,
     },
     sectionTitle: {
       ...typography.scale.h2,

@@ -4,6 +4,15 @@ import { track } from '../lib/analytics';
 
 export type BookingStatus = 'Requested' | 'Accepted' | 'On the way' | 'Completed' | 'Cancelled';
 
+/** Booking recurrence cadence. */
+export type Recurrence = 'none' | 'weekly' | 'fortnightly';
+
+export const RECURRENCE_LABEL: Record<Recurrence, string> = {
+  none: 'One-off',
+  weekly: 'Weekly',
+  fortnightly: 'Fortnightly',
+};
+
 /** Ordered lifecycle used for the status timeline and "advance" action. */
 export const BOOKING_TIMELINE: readonly BookingStatus[] = [
   'Requested',
@@ -35,6 +44,12 @@ export interface Booking {
   /** price + fee, in GBP. */
   total: number;
   status: BookingStatus;
+  /** Booking address line (optional for seeded records). */
+  address?: string;
+  /** Payment method label used at checkout. */
+  paymentLabel?: string;
+  /** Recurrence cadence; defaults to one-off. */
+  recurrence?: Recurrence;
 }
 
 /** Platform fee rate applied to every booking. */

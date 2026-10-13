@@ -8,6 +8,8 @@ export interface Address {
   line: string;
   /** True for an address captured from the device's current location. */
   fromLocation?: boolean;
+  /** Optional access/entry instructions. */
+  instructions?: string;
 }
 
 const seeded: Address[] = [

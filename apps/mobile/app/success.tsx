@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -85,16 +85,35 @@ export default function SuccessScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Button
-          label="Add to calendar"
-          variant="secondary"
-          icon="calendar-outline"
-          onPress={() => showToast('Added to your calendar')}
-        />
+        <View style={styles.footerRow}>
+          <Button
+            label="Add to calendar"
+            variant="secondary"
+            icon="calendar-outline"
+            style={styles.flex1}
+            onPress={() => showToast('Added to your calendar')}
+          />
+          <Button
+            label="Share"
+            variant="secondary"
+            icon="share-outline"
+            style={styles.flex1}
+            onPress={() => {
+              const when = booking ? `${booking.date} at ${booking.time}` : 'soon';
+              Share.share({
+                message: `I just booked ${booking?.providerName ?? 'a Bookit pro'} for ${when}. Ref ${bookingId ?? ''}`,
+              }).catch(() => {});
+            }}
+          />
+        </View>
         <Button
           label="View booking"
           icon="receipt-outline"
-          onPress={() => router.replace('/(tabs)/bookings')}
+          onPress={() =>
+            bookingId
+              ? router.replace({ pathname: '/booking-detail/[id]', params: { id: bookingId } })
+              : router.replace('/(tabs)/bookings')
+          }
         />
         <Button label="Back to home" variant="ghost" onPress={() => router.replace('/(tabs)')} />
       </View>
@@ -173,4 +192,6 @@ const makeStyles = (c: Palette) =>
     idLabel: { ...typography.scale.caption, color: c.text.secondary },
     idValue: { ...typography.scale.h2, color: c.brand.tint, letterSpacing: 1 },
     footer: { gap: spacing.sm },
+    footerRow: { flexDirection: 'row', gap: spacing.sm },
+    flex1: { flex: 1 },
   });
