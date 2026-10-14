@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
+import { MotiView } from 'moti';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   Button,
   EmptyState,
+  PressableScale,
+  Reveal,
   RouteMapTracker,
   StatusTimeline,
   type TimelineStep,
@@ -100,6 +103,7 @@ export default function TrackingScreen() {
   const currentIndex = Math.max(0, BOOKING_TIMELINE.indexOf(booking.status));
   const progress = statusProgress(booking.status);
   const next = nextStatus(booking.status);
+  const isLive = booking.status === 'Accepted' || booking.status === 'On the way';
   const steps: TimelineStep[] = BOOKING_TIMELINE.map((s) => ({
     key: s,
     label: STEP_META[s].label,
@@ -115,30 +119,45 @@ export default function TrackingScreen() {
       >
         <View style={styles.mapWrap}>
           <RouteMapTracker progress={progress} height={300} />
-          <Pressable
+          <PressableScale
+            haptic="none"
             style={[styles.back, styles.backFloat, { top: insets.top + spacing.sm }]}
             onPress={() => router.back()}
-            hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="chevron-back" size={24} color={c.text.primary} />
-          </Pressable>
+          </PressableScale>
         </View>
 
         <View style={styles.body}>
-          <View style={styles.etaCard}>
+          <Reveal index={0} style={styles.etaCard}>
             <View style={styles.etaIcon}>
               <Ionicons name="time-outline" size={22} color={c.brand.tint} />
             </View>
             <View style={styles.flex1}>
-              <Text style={styles.etaLabel}>{booking.status}</Text>
+              <View style={styles.etaStatusRow}>
+                {isLive ? (
+                  <MotiView
+                    style={styles.liveDot}
+                    from={{ opacity: 0.4, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      type: 'timing',
+                      duration: 700,
+                      loop: true,
+                      repeatReverse: true,
+                    }}
+                  />
+                ) : null}
+                <Text style={styles.etaLabel}>{booking.status}</Text>
+              </View>
               <Text style={styles.etaValue}>{etaFor(booking.status)}</Text>
             </View>
-          </View>
+          </Reveal>
 
           {provider ? (
-            <View style={styles.proRow}>
+            <Reveal index={1} style={styles.proRow}>
               <Image
                 source={{ uri: provider.photo }}
                 style={styles.proAvatar}
@@ -150,7 +169,7 @@ export default function TrackingScreen() {
                 <Text style={styles.proName}>{provider.name}</Text>
                 <Text style={styles.proService}>{booking.serviceName}</Text>
               </View>
-              <Pressable
+              <PressableScale
                 style={styles.circleBtn}
                 onPress={() =>
                   Linking.openURL('tel:+441130000000').catch(() => showToast('Calling unavailable'))
@@ -159,20 +178,22 @@ export default function TrackingScreen() {
                 accessibilityLabel={`Call ${provider.name}`}
               >
                 <Ionicons name="call" size={20} color={c.brand.tint} />
-              </Pressable>
-              <Pressable
+              </PressableScale>
+              <PressableScale
                 style={styles.circleBtn}
                 onPress={() => router.push(route(`/chat/${provider.id}`))}
                 accessibilityRole="button"
                 accessibilityLabel={`Message ${provider.name}`}
               >
                 <Ionicons name="chatbubble-ellipses" size={20} color={c.brand.tint} />
-              </Pressable>
-            </View>
+              </PressableScale>
+            </Reveal>
           ) : null}
 
-          <Text style={styles.sectionTitle}>Status timeline</Text>
-          <StatusTimeline steps={steps} currentIndex={currentIndex} />
+          <Reveal index={2}>
+            <Text style={styles.sectionTitle}>Status timeline</Text>
+            <StatusTimeline steps={steps} currentIndex={currentIndex} />
+          </Reveal>
 
           {next ? (
             <Button
@@ -219,6 +240,8 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    etaStatusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.status.success },
     etaLabel: { ...typography.scale.caption, color: c.text.secondary },
     etaValue: { ...typography.scale.h2, color: c.text.primary },
     proRow: {

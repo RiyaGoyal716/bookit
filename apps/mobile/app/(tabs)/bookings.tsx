@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, type LayoutChangeEvent } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { Swipeable } from 'react-native-gesture-handler';
+import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Badge, Card, EmptyState } from '../../src/components';
+import { Badge, Card, EmptyState, PressableScale, Reveal } from '../../src/components';
 import { route } from '../../src/lib/nav';
+import { showToast } from '../../src/stores/toastStore';
 import { useBookingsStore, type Booking } from '../../src/stores/bookingsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 type Segment = 'upcoming' | 'completed' | 'cancelled';
@@ -26,13 +30,20 @@ export default function BookingsScreen() {
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const bookings = useBookingsStore((s) => s.bookings);
+  const cancelBooking = useBookingsStore((s) => s.cancelBooking);
   const [segment, setSegment] = useState<Segment>('upcoming');
   const [refreshing, setRefreshing] = useState(false);
+  const [segW, setSegW] = useState(0);
+
+  const activeIndex = SEGMENTS.findIndex((s) => s.key === segment);
+  const slotW = segW > 0 ? (segW - 8) / SEGMENTS.length : 0;
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 900);
   };
+
+  const onSegLayout = (e: LayoutChangeEvent) => setSegW(e.nativeEvent.layout.width);
 
   const filtered = useMemo(
     () =>
@@ -50,14 +61,21 @@ export default function BookingsScreen() {
         <Text style={styles.heading}>Your bookings</Text>
         <Text style={styles.subtitle}>Track every job in one place</Text>
 
-        <View style={styles.segment}>
+        <View style={styles.segment} onLayout={onSegLayout}>
+          {slotW > 0 ? (
+            <MotiView
+              style={[styles.segmentIndicator, { width: slotW }]}
+              animate={{ translateX: activeIndex * slotW }}
+              transition={{ type: 'spring', damping: 18, stiffness: 220 }}
+            />
+          ) : null}
           {SEGMENTS.map((s) => {
             const active = segment === s.key;
             return (
               <Pressable
                 key={s.key}
                 onPress={() => setSegment(s.key)}
-                style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                style={styles.segmentBtn}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={`${s.label} bookings`}
@@ -99,49 +117,94 @@ export default function BookingsScreen() {
             onAction={segment === 'upcoming' ? () => router.push('/(tabs)') : undefined}
           />
         }
-        renderItem={({ item }: { item: Booking }) => (
-          <Pressable
-            onPress={() => router.push(route(`/booking-detail/${item.id}`))}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.providerName}, ${item.serviceName}, ${item.status}`}
-            style={({ pressed }) => pressed && styles.cardPressed}
-          >
-            <Card style={styles.card}>
-              <View style={styles.rowTop}>
-                <Text style={styles.provider} numberOfLines={1}>
-                  {item.providerName}
-                </Text>
-                <Badge status={item.status} />
-              </View>
-              <Text style={styles.service}>{item.serviceName}</Text>
-              <View style={styles.metaRow}>
-                <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
-                <Text style={styles.meta}>
-                  {item.date} · {item.time}
-                </Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.price}>{money(item.total)}</Text>
-                <View style={styles.chevronWrap}>
-                  <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
+        renderItem={({ item, index }: { item: Booking; index: number }) => {
+          const canManage = item.status !== 'Completed' && item.status !== 'Cancelled';
+          const onCancel = () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+            cancelBooking(item.id);
+            showToast('Booking cancelled');
+          };
+          const card = (
+            <PressableScale
+              haptic="none"
+              onPress={() => router.push(route(`/booking-detail/${item.id}`))}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.providerName}, ${item.serviceName}, ${item.status}`}
+            >
+              <Card style={styles.card}>
+                <View style={styles.rowTop}>
+                  <Text style={styles.provider} numberOfLines={1}>
+                    {item.providerName}
+                  </Text>
+                  <Badge status={item.status} />
                 </View>
-              </View>
-              <View style={styles.cardFooter}>
-                <Text style={styles.bookingId}>{item.id}</Text>
-                {item.status === 'Accepted' || item.status === 'On the way' ? (
-                  <Pressable
-                    style={styles.trackPill}
-                    onPress={() => router.push(route(`/tracking/${item.id}`))}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Track ${item.providerName} live`}
-                  >
-                    <Ionicons name="navigate" size={13} color={c.text.inverse} />
-                    <Text style={styles.trackPillText}>Track live</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </Card>
-          </Pressable>
-        )}
+                <Text style={styles.service}>{item.serviceName}</Text>
+                <View style={styles.metaRow}>
+                  <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
+                  <Text style={styles.meta}>
+                    {item.date} · {item.time}
+                  </Text>
+                  <Text style={styles.dot}>·</Text>
+                  <Text style={styles.price}>{money(item.total)}</Text>
+                  <View style={styles.chevronWrap}>
+                    <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
+                  </View>
+                </View>
+                <View style={styles.cardFooter}>
+                  <Text style={styles.bookingId}>{item.id}</Text>
+                  {item.status === 'Accepted' || item.status === 'On the way' ? (
+                    <PressableScale
+                      style={styles.trackPill}
+                      onPress={() => router.push(route(`/tracking/${item.id}`))}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Track ${item.providerName} live`}
+                    >
+                      <Ionicons name="navigate" size={13} color={c.text.inverse} />
+                      <Text style={styles.trackPillText}>Track live</Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
+              </Card>
+            </PressableScale>
+          );
+          return (
+            <Reveal index={Math.min(index, 8)}>
+              {canManage ? (
+                <Swipeable
+                  friction={1.6}
+                  rightThreshold={40}
+                  overshootRight={false}
+                  renderRightActions={() => (
+                    <View style={styles.swipeActions}>
+                      <Pressable
+                        style={[styles.swipeAction, styles.swipeReschedule]}
+                        onPress={() => router.push(route(`/booking-detail/${item.id}`))}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Reschedule ${item.providerName}`}
+                      >
+                        <Ionicons name="calendar" size={18} color={c.text.inverse} />
+                        <Text style={styles.swipeActionText}>Reschedule</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.swipeAction, styles.swipeCancel]}
+                        onPress={onCancel}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Cancel ${item.providerName}`}
+                      >
+                        <Ionicons name="close-circle" size={18} color={c.text.inverse} />
+                        <Text style={styles.swipeActionText}>Cancel</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                >
+                  {card}
+                </Swipeable>
+              ) : (
+                card
+              )}
+            </Reveal>
+          );
+        }}
       />
     </View>
   );
@@ -172,7 +235,15 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.muted,
       borderRadius: radius.pill,
       padding: 4,
-      gap: 4,
+    },
+    segmentIndicator: {
+      position: 'absolute',
+      top: 4,
+      bottom: 4,
+      left: 4,
+      borderRadius: radius.pill,
+      backgroundColor: c.background.surface,
+      ...shadow.soft,
     },
     segmentBtn: {
       flex: 1,
@@ -180,9 +251,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: radius.pill,
-    },
-    segmentBtnActive: {
-      backgroundColor: c.background.surface,
     },
     segmentText: {
       ...typography.scale.smallMedium,
@@ -197,7 +265,27 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.xl,
     },
     separator: { height: spacing.md },
-    cardPressed: { opacity: 0.85 },
+    swipeActions: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      marginLeft: spacing.sm,
+      gap: spacing.sm,
+    },
+    swipeAction: {
+      width: 92,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+    },
+    swipeReschedule: { backgroundColor: c.brand.primary },
+    swipeCancel: { backgroundColor: c.status.danger },
+    swipeActionText: {
+      ...typography.scale.caption,
+      color: c.text.inverse,
+      fontFamily: typography.font.bold,
+      fontWeight: '700',
+    },
     card: {
       gap: spacing.xs,
     },
