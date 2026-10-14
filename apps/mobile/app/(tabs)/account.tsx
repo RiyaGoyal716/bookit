@@ -6,7 +6,15 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { AppDrawer, Button, ConfirmModal, EmptyState } from '../../src/components';
+import {
+  AnimatedCounter,
+  AppDrawer,
+  Button,
+  ConfirmModal,
+  EmptyState,
+  PressableScale,
+  Reveal,
+} from '../../src/components';
 import { route } from '../../src/lib/nav';
 import { getProviderById } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
@@ -81,34 +89,53 @@ export default function AccountScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          style={styles.userCard}
-          onPress={() => router.push(route('/profile'))}
-          accessibilityRole="button"
-          accessibilityLabel="Edit profile"
-        >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
-            <Text style={styles.phone}>{user?.phone ?? '—'}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={c.brand.tint} />
-        </Pressable>
+        <Reveal index={0}>
+          <PressableScale
+            haptic="none"
+            style={styles.userCard}
+            onPress={() => router.push(route('/profile'))}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile"
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initial}</Text>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
+              <Text style={styles.phone}>{user?.phone ?? '—'}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={c.brand.tint} />
+          </PressableScale>
+        </Reveal>
 
-        <View style={styles.statsRow}>
-          <Stat value={`${bookingCount}`} label="Bookings" styles={styles} />
+        <Reveal index={1} style={styles.statsRow}>
+          <View style={styles.stat}>
+            <AnimatedCounter value={bookingCount} style={styles.statValue} />
+            <Text style={styles.statLabel}>Bookings</Text>
+          </View>
           <View style={styles.statDivider} />
-          <Stat value={`${favourites.length}`} label="Favourites" styles={styles} />
+          <View style={styles.stat}>
+            <AnimatedCounter value={favourites.length} style={styles.statValue} />
+            <Text style={styles.statLabel}>Favourites</Text>
+          </View>
           <View style={styles.statDivider} />
-          <Pressable style={styles.stat} onPress={() => router.push(route('/wallet'))}>
-            <Text style={styles.statValue}>{money(walletBalance)}</Text>
+          <PressableScale
+            haptic="none"
+            style={styles.stat}
+            onPress={() => router.push(route('/wallet'))}
+            accessibilityRole="button"
+            accessibilityLabel={`Wallet balance ${money(walletBalance)}`}
+          >
+            <AnimatedCounter
+              value={walletBalance}
+              format={(v) => money(v)}
+              style={styles.statValue}
+            />
             <Text style={styles.statLabel}>Wallet</Text>
-          </Pressable>
-        </View>
+          </PressableScale>
+        </Reveal>
 
-        <View style={styles.favHeader}>
+        <Reveal index={2} style={styles.favHeader}>
           <Text style={styles.sectionTitle}>Favourites</Text>
           {favourites.length > 0 ? (
             <Pressable
@@ -120,7 +147,7 @@ export default function AccountScreen() {
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
           ) : null}
-        </View>
+        </Reveal>
         {favourites.length === 0 ? (
           <View style={styles.favEmpty}>
             <EmptyState
@@ -138,7 +165,8 @@ export default function AccountScreen() {
               showsHorizontalScrollIndicator={false}
               ItemSeparatorComponent={() => <View style={styles.favSeparator} />}
               renderItem={({ item }: { item: Provider }) => (
-                <Pressable
+                <PressableScale
+                  scaleTo={0.97}
                   style={styles.favCard}
                   onPress={() => router.push(`/provider/${item.id}`)}
                   accessibilityRole="button"
@@ -159,41 +187,41 @@ export default function AccountScreen() {
                     <Text style={styles.favRating}>{item.rating.toFixed(1)}</Text>
                     <Text style={styles.favPrice}>· from {money(item.priceFrom)}</Text>
                   </View>
-                </Pressable>
+                </PressableScale>
               )}
             />
           </View>
         )}
 
-        <View style={styles.menu}>
+        <Reveal index={3} style={styles.menu}>
           {MENU.map((item, i) => (
-            <Pressable
+            <PressableScale
               key={item.label}
+              haptic="none"
+              scaleTo={0.99}
               onPress={() => router.push(route(item.href))}
               accessibilityRole="button"
               accessibilityLabel={item.label}
-              style={({ pressed }) => [
-                styles.menuRow,
-                i < MENU.length - 1 && styles.menuDivider,
-                pressed && styles.menuPressed,
-              ]}
+              style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
             >
               <View style={styles.menuIcon}>
                 <Ionicons name={item.icon} size={18} color={c.brand.tint} />
               </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </Pressable>
+            </PressableScale>
           ))}
-        </View>
+        </Reveal>
 
-        <Button
-          label="Log out"
-          variant="secondary"
-          icon="log-out-outline"
-          onPress={() => setLogoutOpen(true)}
-          style={styles.logout}
-        />
+        <Reveal index={4}>
+          <Button
+            label="Log out"
+            variant="secondary"
+            icon="log-out-outline"
+            onPress={() => setLogoutOpen(true)}
+            style={styles.logout}
+          />
+        </Reveal>
       </ScrollView>
 
       <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -207,23 +235,6 @@ export default function AccountScreen() {
         onConfirm={handleLogout}
         onCancel={() => setLogoutOpen(false)}
       />
-    </View>
-  );
-}
-
-function Stat({
-  value,
-  label,
-  styles,
-}: {
-  value: string;
-  label: string;
-  styles: ReturnType<typeof makeStyles>;
-}) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
@@ -321,7 +332,6 @@ const makeStyles = (c: Palette) =>
       minHeight: 56,
       paddingHorizontal: spacing.lg,
     },
-    menuPressed: { backgroundColor: c.background.muted },
     menuDivider: { borderBottomWidth: 1, borderBottomColor: c.border },
     menuIcon: {
       width: 34,
