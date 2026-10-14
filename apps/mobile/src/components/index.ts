@@ -59,3 +59,7 @@ export { RouteMapTracker } from './RouteMapTracker';
 export type { RouteMapTrackerProps } from './RouteMapTracker';
 export { InlineBanner } from './InlineBanner';
 export type { InlineBannerProps, BannerTone } from './InlineBanner';
+export { PressableScale, AnimatedCounter, Reveal, useReducedMotion } from './motion';
+export type { PressableScaleProps, AnimatedCounterProps, RevealProps } from './motion';
+export { BookitRefresh } from './BookitRefresh';
+export type { BookitRefreshProps } from './BookitRefresh';

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { Pressable, Text, StyleSheet, ActivityIndicator, View, type ViewStyle } from 'react-native';
+import { Text, StyleSheet, ActivityIndicator, View, type ViewStyle } from 'react-native';
+import { MotiPressable } from 'moti/interactions';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useColors, radius, spacing, typography, type Palette } from '../theme';
+import { useReducedMotion } from './motion';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
@@ -34,9 +36,19 @@ export function Button({
 }: ButtonProps) {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
+  const reduced = useReducedMotion();
   const isPrimary = variant === 'primary';
   const isDisabled = disabled || loading;
   const fg = isPrimary ? c.text.inverse : c.brand.tint;
+
+  const animate = useMemo(
+    () =>
+      ({ pressed }: { pressed: boolean }) => {
+        'worklet';
+        return { scale: pressed && !reduced && !isDisabled ? 0.97 : 1 };
+      },
+    [reduced, isDisabled],
+  );
 
   const handlePress = () => {
     if (isDisabled) return;
@@ -47,18 +59,19 @@ export function Button({
   };
 
   return (
-    <Pressable
+    <MotiPressable
       onPress={handlePress}
       disabled={isDisabled}
+      animate={animate}
+      transition={{ type: 'spring', damping: 15, stiffness: 280, mass: 0.5 }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
+      style={[
         styles.base,
         variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,
         variant === 'ghost' && styles.ghost,
-        pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         style,
       ]}
@@ -71,7 +84,7 @@ export function Button({
           <Text style={[styles.label, { color: fg }]}>{label}</Text>
         </View>
       )}
-    </Pressable>
+    </MotiPressable>
   );
 }
 
@@ -94,10 +107,6 @@ const makeStyles = (c: Palette) =>
     },
     ghost: {
       backgroundColor: 'transparent',
-    },
-    pressed: {
-      opacity: 0.85,
-      transform: [{ scale: 0.98 }],
     },
     disabled: {
       opacity: 0.5,

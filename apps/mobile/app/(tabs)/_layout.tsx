@@ -1,12 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Animated, type ColorValue } from 'react-native';
+import { useEffect } from 'react';
+import { type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useChatStore } from '../../src/stores/chatStore';
+import { useReducedMotion } from '../../src/components/motion';
 import { useColors, typography } from '../../src/theme';
 
-/** Tab icon with a subtle scale/opacity pop when active. */
+/** Tab icon with a spring lift + pop when it becomes active. */
 function TabIcon({
   name,
   color,
@@ -18,19 +26,34 @@ function TabIcon({
   size: number;
   focused: boolean;
 }) {
-  const [scale] = useState(() => new Animated.Value(focused ? 1 : 0.9));
+  const reduced = useReducedMotion();
+  const scale = useSharedValue(focused ? 1 : 0.88);
+  const lift = useSharedValue(focused ? -2 : 0);
 
   useEffect(() => {
-    Animated.spring(scale, {
-      toValue: focused ? 1 : 0.9,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 140,
-    }).start();
-  }, [focused, scale]);
+    if (reduced) {
+      scale.value = focused ? 1 : 0.88;
+      lift.value = focused ? -2 : 0;
+      return;
+    }
+    lift.value = withSpring(focused ? -3 : 0, { damping: 12, stiffness: 240 });
+    if (focused) {
+      // Pop up past 1 then settle for a tactile switch.
+      scale.value = withSequence(
+        withTiming(1.18, { duration: 130 }),
+        withSpring(1, { damping: 10, stiffness: 240 }),
+      );
+    } else {
+      scale.value = withSpring(0.88, { damping: 14, stiffness: 240 });
+    }
+  }, [focused, reduced, scale, lift]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: lift.value }],
+  }));
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={animStyle}>
       <Ionicons name={name} size={size} color={color} />
     </Animated.View>
   );

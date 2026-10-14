@@ -203,7 +203,6 @@ exports[`Button renders a primary button and matches snapshot 1`] = `
       false,
       false,
       false,
-      false,
       undefined,
     ]
   }

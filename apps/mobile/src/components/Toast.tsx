@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useToastStore } from '../stores/toastStore';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../theme';
+import {
+  useColorSchemeName,
+  useColors,
+  radius,
+  shadow,
+  spacing,
+  typography,
+  type Palette,
+} from '../theme';
 
 /**
  * Global toast host. Mount once near the app root. Listens to the toast store
@@ -12,12 +21,14 @@ import { useColors, radius, shadow, spacing, typography, type Palette } from '..
  */
 export function ToastHost() {
   const c = useColors();
+  const scheme = useColorSchemeName();
   const styles = useMemo(() => makeStyles(c), [c]);
   const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(false);
   const [shown, setShown] = useState<string | null>(null);
   const [opacity] = useState(() => new Animated.Value(0));
   const [translate] = useState(() => new Animated.Value(20));
+  const [scale] = useState(() => new Animated.Value(0.92));
 
   // Subscribe imperatively: reacting to an external store change (not a
   // synchronous effect body) is the recommended place to call setState.
@@ -37,15 +48,17 @@ export function ToastHost() {
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
       Animated.spring(translate, { toValue: 0, useNativeDriver: true, friction: 7 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 6, tension: 160 }),
     ]).start();
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
         Animated.timing(translate, { toValue: 20, duration: 180, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 0.95, duration: 180, useNativeDriver: true }),
       ]).start(() => setVisible(false));
     }, 2400);
     return () => clearTimeout(timer);
-  }, [visible, opacity, translate]);
+  }, [visible, opacity, translate, scale]);
 
   if (!visible || !shown) return null;
 
@@ -54,15 +67,27 @@ export function ToastHost() {
       pointerEvents="none"
       style={[
         styles.wrap,
-        { bottom: insets.bottom + spacing.xl, opacity, transform: [{ translateY: translate }] },
+        {
+          bottom: insets.bottom + spacing.xl,
+          opacity,
+          transform: [{ translateY: translate }, { scale }],
+        },
       ]}
     >
-      <View style={styles.toast} accessibilityLiveRegion="polite" accessibilityRole="alert">
-        <Ionicons name="checkmark-circle" size={18} color={c.brand.tint} />
+      <BlurView
+        intensity={40}
+        tint={scheme === 'dark' ? 'dark' : 'light'}
+        style={styles.toast}
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
+      >
+        <View style={styles.iconDot}>
+          <Ionicons name="checkmark-circle" size={18} color={c.brand.tint} />
+        </View>
         <Text style={styles.text} numberOfLines={2}>
           {shown}
         </Text>
-      </View>
+      </BlurView>
     </Animated.View>
   );
 }
@@ -83,10 +108,15 @@ const makeStyles = (c: Palette) =>
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.lg,
       borderRadius: radius.pill,
-      backgroundColor: c.background.surface,
+      backgroundColor: c.glass,
       borderWidth: 1,
       borderColor: c.border,
+      overflow: 'hidden',
       ...shadow.floating,
+    },
+    iconDot: {
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     text: {
       flexShrink: 1,

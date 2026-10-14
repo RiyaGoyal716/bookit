@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { MotiView } from 'moti';
+import { MotiPressable } from 'moti/interactions';
 
 import { useColors, radius, spacing, typography, type Palette } from '../theme';
+import { useReducedMotion } from './motion';
 
 export interface ChipProps {
   label: string;
@@ -13,22 +16,39 @@ export interface ChipProps {
 export function Chip({ label, active = false, onPress }: ChipProps) {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
+  const reduced = useReducedMotion();
+
+  const animate = useMemo(
+    () =>
+      ({ pressed }: { pressed: boolean }) => {
+        'worklet';
+        return { scale: pressed && !reduced ? 0.95 : 1 };
+      },
+    [reduced],
+  );
+
   return (
-    <Pressable
+    <MotiPressable
       onPress={onPress}
+      animate={animate}
+      transition={{ type: 'spring', damping: 15, stiffness: 280, mass: 0.5 }}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
-      style={({ pressed }) => [
-        styles.chip,
-        active ? styles.chipActive : styles.chipInactive,
-        pressed && styles.pressed,
-      ]}
+      style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
     >
-      <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>
-        {label}
-      </Text>
-    </Pressable>
+      {/* Keyed remount gives a subtle pop when the chip becomes active. */}
+      <MotiView
+        key={active ? 'on' : 'off'}
+        from={{ scale: active && !reduced ? 1.12 : 1 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', damping: 12, stiffness: 260 }}
+      >
+        <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>
+          {label}
+        </Text>
+      </MotiView>
+    </MotiPressable>
   );
 }
 
@@ -49,10 +69,6 @@ const makeStyles = (c: Palette) =>
     chipInactive: {
       backgroundColor: c.background.surface,
       borderColor: c.border,
-    },
-    pressed: {
-      opacity: 0.8,
-      transform: [{ scale: 0.97 }],
     },
     label: {
       ...typography.scale.smallMedium,
