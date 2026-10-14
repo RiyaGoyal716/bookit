@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, EmptyState, Input } from '../src/components';
+import { AnimatedCounter, Button, EmptyState, Input, PressableScale } from '../src/components';
 import { getProviderById } from '../src/mocks';
 import { route } from '../src/lib/nav';
 import { ADD_ONS, computeCart, useCartStore } from '../src/stores/cartStore';
@@ -124,7 +125,7 @@ export default function CartScreen() {
                 </Text>
               </View>
               <View style={styles.stepper}>
-                <Pressable
+                <PressableScale
                   style={styles.stepBtn}
                   onPress={() => decrement(item.key)}
                   hitSlop={6}
@@ -136,9 +137,9 @@ export default function CartScreen() {
                     size={16}
                     color={c.brand.tint}
                   />
-                </Pressable>
-                <Text style={styles.stepQty}>{item.quantity}</Text>
-                <Pressable
+                </PressableScale>
+                <AnimatedCounter value={item.quantity} style={styles.stepQty} />
+                <PressableScale
                   style={styles.stepBtn}
                   onPress={() => increment(item.key)}
                   hitSlop={6}
@@ -146,7 +147,7 @@ export default function CartScreen() {
                   accessibilityLabel={`Increase ${item.name}`}
                 >
                   <Ionicons name="add" size={16} color={c.brand.tint} />
-                </Pressable>
+                </PressableScale>
               </View>
               <Pressable
                 onPress={() => removeItem(item.key)}
@@ -176,10 +177,9 @@ export default function CartScreen() {
                     {s.name}
                   </Text>
                   <Text style={styles.suggestPrice}>{money(s.price)}</Text>
-                  <Pressable
+                  <PressableScale
                     style={styles.suggestAdd}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
                       addItem({
                         key: s.id ?? s.name,
                         providerId: provider!.id,
@@ -194,7 +194,7 @@ export default function CartScreen() {
                   >
                     <Ionicons name="add" size={16} color={c.brand.tint} />
                     <Text style={styles.suggestAddText}>Add</Text>
-                  </Pressable>
+                  </PressableScale>
                 </View>
               ))}
             </ScrollView>
@@ -207,8 +207,10 @@ export default function CartScreen() {
           {ADD_ONS.map((a, i) => {
             const selected = addOnIds.includes(a.id);
             return (
-              <Pressable
+              <PressableScale
                 key={a.id}
+                haptic="selection"
+                scaleTo={0.99}
                 style={[styles.addOnRow, i < ADD_ONS.length - 1 && styles.itemDivider]}
                 onPress={() => toggleAddOn(a.id)}
                 accessibilityRole="checkbox"
@@ -220,7 +222,7 @@ export default function CartScreen() {
                 </View>
                 <Text style={styles.addOnName}>{a.name}</Text>
                 <Text style={styles.addOnPrice}>+{money(a.price)}</Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -231,8 +233,9 @@ export default function CartScreen() {
           {tipOptions.map((t) => {
             const active = tip === t.value;
             return (
-              <Pressable
+              <PressableScale
                 key={t.label}
+                haptic="selection"
                 style={[styles.tipChip, active && styles.tipChipActive]}
                 onPress={() => setTip(t.value)}
                 accessibilityRole="button"
@@ -240,7 +243,7 @@ export default function CartScreen() {
                 accessibilityLabel={`Tip ${t.label}`}
               >
                 <Text style={[styles.tipText, active && styles.tipTextActive]}>{t.label}</Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -277,17 +280,26 @@ export default function CartScreen() {
             <Row label="Tip" value={money(breakdown.tip)} styles={styles} />
           ) : null}
           {breakdown.discount > 0 ? (
-            <Row
-              label="Promo discount"
-              value={`-${money(breakdown.discount)}`}
-              styles={styles}
-              discount
-            />
+            <MotiView
+              from={{ opacity: 0, translateY: -6 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'spring', damping: 16, stiffness: 220 }}
+              style={styles.row}
+            >
+              <Text style={[styles.rowLabel, styles.rowDiscount]}>Promo discount</Text>
+              <Text style={[styles.rowValue, styles.rowDiscount]}>
+                -{money(breakdown.discount)}
+              </Text>
+            </MotiView>
           ) : null}
           <View style={styles.divider} />
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{money(breakdown.total)}</Text>
+            <AnimatedCounter
+              value={breakdown.total}
+              format={(v) => money(v)}
+              style={styles.totalValue}
+            />
           </View>
         </View>
       </ScrollView>
@@ -295,7 +307,11 @@ export default function CartScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.footerPrice}>
           <Text style={styles.footerLabel}>Total</Text>
-          <Text style={styles.footerTotal}>{money(breakdown.total)}</Text>
+          <AnimatedCounter
+            value={breakdown.total}
+            format={(v) => money(v)}
+            style={styles.footerTotal}
+          />
         </View>
         <Button
           label="Proceed to checkout"

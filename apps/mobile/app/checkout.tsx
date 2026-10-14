@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Chip, EmptyState, Input, MapPlaceholder } from '../src/components';
+import {
+  AnimatedCounter,
+  Button,
+  Chip,
+  EmptyState,
+  Input,
+  MapPlaceholder,
+  PressableScale,
+  Reveal,
+} from '../src/components';
 import { route } from '../src/lib/nav';
 import { track } from '../src/lib/analytics';
 import { getSlotsForDay } from '../src/mocks/availability';
@@ -215,25 +225,34 @@ export default function CheckoutScreen() {
         >
           <Ionicons name="chevron-back" size={26} color={c.text.primary} />
         </Pressable>
+        <View style={styles.progressTrack}>
+          <MotiView
+            style={styles.progressFill}
+            animate={{ scaleX: step / (STEPS.length - 1) }}
+            transition={{ type: 'spring', damping: 18, stiffness: 160 }}
+          />
+        </View>
         <View style={styles.stepper}>
           {STEPS.map((label, i) => {
             const done = i < step;
             const current = i === step;
             return (
               <View key={label} style={styles.stepItem}>
-                <View
-                  style={[
-                    styles.stepDot,
-                    (done || current) && styles.stepDotActive,
-                    done && styles.stepDotDone,
-                  ]}
+                <MotiView
+                  style={styles.stepDot}
+                  animate={{
+                    scale: current ? 1.12 : 1,
+                    backgroundColor: done ? c.brand.primary : c.background.muted,
+                    borderColor: done || current ? c.brand.primary : c.border,
+                  }}
+                  transition={{ type: 'spring', damping: 14, stiffness: 220 }}
                 >
                   {done ? (
                     <Ionicons name="checkmark" size={14} color={c.text.inverse} />
                   ) : (
                     <Text style={[styles.stepNum, current && styles.stepNumActive]}>{i + 1}</Text>
                   )}
-                </View>
+                </MotiView>
                 <Text style={[styles.stepLabel, current && styles.stepLabelActive]}>{label}</Text>
               </View>
             );
@@ -246,174 +265,210 @@ export default function CheckoutScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {step === 0 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Pick a slot</Text>
-            <Text style={styles.label}>Date</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.dayRow}
-            >
-              {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-                const active = selectedDay === d;
-                const dd = new Date();
-                dd.setDate(dd.getDate() + d);
-                return (
-                  <Pressable
-                    key={d}
-                    style={[styles.dayChip, active && styles.dayChipActive]}
-                    onPress={() => {
-                      setSelectedDay(d);
-                      setSelectedTime(null);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={dayFullLabel(d)}
-                  >
-                    <Text style={[styles.dayWeekday, active && styles.dayTextActive]}>
-                      {d === 0 ? 'Today' : WEEKDAYS[dd.getDay()]}
-                    </Text>
-                    <Text style={[styles.dayNum, active && styles.dayTextActive]}>
-                      {dd.getDate()}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {selectedDay !== null ? (
-              <>
-                <Text style={[styles.label, styles.labelSpaced]}>Time</Text>
-                <View style={styles.timeGrid}>
-                  {slots.map((slot) => (
-                    <Pressable
-                      key={slot.time}
-                      disabled={!slot.available}
-                      onPress={() => setSelectedTime(slot.time)}
-                      style={[
-                        styles.timeSlot,
-                        selectedTime === slot.time && styles.timeSlotActive,
-                        !slot.available && styles.timeSlotOff,
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityState={{
-                        selected: selectedTime === slot.time,
-                        disabled: !slot.available,
-                      }}
-                      accessibilityLabel={`${slot.time}${slot.available ? '' : ', unavailable'}`}
-                    >
-                      <Text
-                        style={[
-                          styles.timeText,
-                          selectedTime === slot.time && styles.timeTextActive,
-                          !slot.available && styles.timeTextOff,
-                        ]}
-                      >
-                        {slot.time}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Text style={styles.hint}>Greyed times are already booked.</Text>
-
-                <Text style={[styles.label, styles.labelSpaced]}>Repeat</Text>
-                {RECURRENCE_OPTIONS.map((r) => {
-                  const selected = recurrence === r.value;
+        <Reveal key={step} offsetY={16}>
+          {step === 0 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Pick a slot</Text>
+              <Text style={styles.label}>Date</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dayRow}
+              >
+                {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                  const active = selectedDay === d;
+                  const dd = new Date();
+                  dd.setDate(dd.getDate() + d);
                   return (
-                    <Pressable
-                      key={r.value}
-                      onPress={() => setRecurrence(r.value)}
-                      style={[styles.selectRow, selected && styles.selectRowActive]}
+                    <PressableScale
+                      key={d}
+                      haptic="selection"
+                      style={[styles.dayChip, active && styles.dayChipActive]}
+                      onPress={() => {
+                        setSelectedDay(d);
+                        setSelectedTime(null);
+                      }}
                       accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={`${r.label}, ${r.sub}`}
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={dayFullLabel(d)}
                     >
-                      <Ionicons
-                        name={r.value === 'none' ? 'calendar-clear-outline' : 'repeat'}
-                        size={20}
-                        color={selected ? c.brand.tint : c.text.muted}
-                      />
-                      <View style={styles.selectInfo}>
-                        <Text style={styles.selectLabel}>{r.label}</Text>
-                        <Text style={styles.selectSub}>{r.sub}</Text>
-                      </View>
-                      <Ionicons
-                        name={selected ? 'radio-button-on' : 'radio-button-off'}
-                        size={20}
-                        color={selected ? c.brand.tint : c.text.muted}
-                      />
-                    </Pressable>
+                      <Text style={[styles.dayWeekday, active && styles.dayTextActive]}>
+                        {d === 0 ? 'Today' : WEEKDAYS[dd.getDay()]}
+                      </Text>
+                      <Text style={[styles.dayNum, active && styles.dayTextActive]}>
+                        {dd.getDate()}
+                      </Text>
+                    </PressableScale>
                   );
                 })}
-              </>
-            ) : null}
-          </View>
-        ) : null}
+              </ScrollView>
 
-        {step === 1 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Where?</Text>
-            <MapPlaceholder
-              height={140}
-              style={{ marginBottom: spacing.lg }}
-              caption={selectedAddress?.line ?? 'Select or add an address'}
-            />
-            <Text style={styles.label}>Saved addresses</Text>
-            {addresses.map((a: Address) => {
-              const selected = addressId === a.id;
-              return (
-                <Pressable
-                  key={a.id}
-                  onPress={() => {
-                    setAddressId(a.id);
-                    setAdding(false);
-                  }}
-                  style={[styles.selectRow, selected && styles.selectRowActive]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${a.label}: ${a.line}`}
-                >
-                  <Ionicons
-                    name={a.fromLocation ? 'navigate' : a.label === 'Work' ? 'briefcase' : 'home'}
-                    size={18}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                  <View style={styles.selectInfo}>
-                    <Text style={styles.selectLabel}>{a.label}</Text>
-                    <Text style={styles.selectSub} numberOfLines={1}>
-                      {a.line}
-                    </Text>
+              {selectedDay !== null ? (
+                <>
+                  <Text style={[styles.label, styles.labelSpaced]}>Time</Text>
+                  <View style={styles.timeGrid}>
+                    {slots.map((slot) => (
+                      <PressableScale
+                        key={slot.time}
+                        haptic="selection"
+                        disabled={!slot.available}
+                        onPress={() => setSelectedTime(slot.time)}
+                        style={[
+                          styles.timeSlot,
+                          selectedTime === slot.time && styles.timeSlotActive,
+                          !slot.available && styles.timeSlotOff,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityState={{
+                          selected: selectedTime === slot.time,
+                          disabled: !slot.available,
+                        }}
+                        accessibilityLabel={`${slot.time}${slot.available ? '' : ', unavailable'}`}
+                      >
+                        <Text
+                          style={[
+                            styles.timeText,
+                            selectedTime === slot.time && styles.timeTextActive,
+                            !slot.available && styles.timeTextOff,
+                          ]}
+                        >
+                          {slot.time}
+                        </Text>
+                      </PressableScale>
+                    ))}
                   </View>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                </Pressable>
-              );
-            })}
+                  <Text style={styles.hint}>Greyed times are already booked.</Text>
 
-            {adding ? (
-              <View style={styles.newAddress}>
-                <Text style={[styles.label, styles.labelSpaced]}>Pin your area</Text>
-                <View style={styles.pinWrap}>
-                  {PIN_AREAS.map((area) => (
-                    <Chip
-                      key={area}
-                      label={area}
-                      active={pinArea === area}
-                      onPress={() => setPinArea(pinArea === area ? null : area)}
+                  <Text style={[styles.label, styles.labelSpaced]}>Repeat</Text>
+                  {RECURRENCE_OPTIONS.map((r) => {
+                    const selected = recurrence === r.value;
+                    return (
+                      <PressableScale
+                        key={r.value}
+                        haptic="selection"
+                        onPress={() => setRecurrence(r.value)}
+                        style={[styles.selectRow, selected && styles.selectRowActive]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={`${r.label}, ${r.sub}`}
+                      >
+                        <Ionicons
+                          name={r.value === 'none' ? 'calendar-clear-outline' : 'repeat'}
+                          size={20}
+                          color={selected ? c.brand.tint : c.text.muted}
+                        />
+                        <View style={styles.selectInfo}>
+                          <Text style={styles.selectLabel}>{r.label}</Text>
+                          <Text style={styles.selectSub}>{r.sub}</Text>
+                        </View>
+                        <Ionicons
+                          name={selected ? 'radio-button-on' : 'radio-button-off'}
+                          size={20}
+                          color={selected ? c.brand.tint : c.text.muted}
+                        />
+                      </PressableScale>
+                    );
+                  })}
+                </>
+              ) : null}
+            </View>
+          ) : null}
+
+          {step === 1 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Where?</Text>
+              <MapPlaceholder
+                height={140}
+                style={{ marginBottom: spacing.lg }}
+                caption={selectedAddress?.line ?? 'Select or add an address'}
+              />
+              <Text style={styles.label}>Saved addresses</Text>
+              {addresses.map((a: Address) => {
+                const selected = addressId === a.id;
+                return (
+                  <PressableScale
+                    key={a.id}
+                    haptic="selection"
+                    onPress={() => {
+                      setAddressId(a.id);
+                      setAdding(false);
+                    }}
+                    style={[styles.selectRow, selected && styles.selectRowActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${a.label}: ${a.line}`}
+                  >
+                    <Ionicons
+                      name={a.fromLocation ? 'navigate' : a.label === 'Work' ? 'briefcase' : 'home'}
+                      size={18}
+                      color={selected ? c.brand.tint : c.text.muted}
                     />
-                  ))}
+                    <View style={styles.selectInfo}>
+                      <Text style={styles.selectLabel}>{a.label}</Text>
+                      <Text style={styles.selectSub} numberOfLines={1}>
+                        {a.line}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                  </PressableScale>
+                );
+              })}
+
+              {adding ? (
+                <View style={styles.newAddress}>
+                  <Text style={[styles.label, styles.labelSpaced]}>Pin your area</Text>
+                  <View style={styles.pinWrap}>
+                    {PIN_AREAS.map((area) => (
+                      <Chip
+                        key={area}
+                        label={area}
+                        active={pinArea === area}
+                        onPress={() => setPinArea(pinArea === area ? null : area)}
+                      />
+                    ))}
+                  </View>
+                  <Input
+                    containerStyle={styles.spaced}
+                    label="Street address"
+                    value={newLine}
+                    onChangeText={setNewLine}
+                    placeholder="e.g. 12 Cardigan Road"
+                  />
+                  <Input
+                    containerStyle={styles.spaced}
+                    label="Access instructions (optional)"
+                    value={instructions}
+                    onChangeText={setInstructions}
+                    placeholder="e.g. buzzer 4, leave with neighbour"
+                    multiline
+                  />
+                  <View style={styles.newActions}>
+                    <Button
+                      label="Cancel"
+                      variant="secondary"
+                      onPress={() => setAdding(false)}
+                      style={styles.flex1}
+                    />
+                    <Button label="Save address" onPress={saveNewAddress} style={styles.flex1} />
+                  </View>
                 </View>
-                <Input
-                  containerStyle={styles.spaced}
-                  label="Street address"
-                  value={newLine}
-                  onChangeText={setNewLine}
-                  placeholder="e.g. 12 Cardigan Road"
-                />
+              ) : (
+                <PressableScale
+                  style={styles.addNew}
+                  onPress={() => setAdding(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add a new address"
+                >
+                  <Ionicons name="add-circle-outline" size={20} color={c.brand.tint} />
+                  <Text style={styles.addNewText}>Add a new address</Text>
+                </PressableScale>
+              )}
+
+              {!adding ? (
                 <Input
                   containerStyle={styles.spaced}
                   label="Access instructions (optional)"
@@ -422,161 +477,144 @@ export default function CheckoutScreen() {
                   placeholder="e.g. buzzer 4, leave with neighbour"
                   multiline
                 />
-                <View style={styles.newActions}>
-                  <Button
-                    label="Cancel"
-                    variant="secondary"
-                    onPress={() => setAdding(false)}
-                    style={styles.flex1}
+              ) : null}
+            </View>
+          ) : null}
+
+          {step === 2 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Payment</Text>
+              {WALLET_PAYMENTS.map((p) => {
+                const selected = paymentId === p.id;
+                const walletLow = p.id === 'wallet' && walletBalance < breakdown.total;
+                return (
+                  <PressableScale
+                    key={p.id}
+                    haptic="selection"
+                    disabled={walletLow}
+                    onPress={() => setPaymentId(p.id)}
+                    style={[
+                      styles.selectRow,
+                      selected && styles.selectRowActive,
+                      walletLow && styles.selectRowDisabled,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected, disabled: walletLow }}
+                    accessibilityLabel={`${p.label}, ${p.sub}`}
+                  >
+                    <Ionicons
+                      name={p.icon}
+                      size={20}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                    <View style={styles.selectInfo}>
+                      <Text style={styles.selectLabel}>{p.label}</Text>
+                      <Text style={styles.selectSub}>
+                        {walletLow ? 'Balance too low for this total' : p.sub}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                  </PressableScale>
+                );
+              })}
+              <View style={styles.secureNote}>
+                <Ionicons name="lock-closed" size={14} color={c.text.muted} />
+                <Text style={styles.secureText}>
+                  Payments are secured and only charged after the job.
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          {step === 3 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Review & confirm</Text>
+              <View style={styles.reviewCard}>
+                <ReviewRow label="Provider" value={providerName ?? '—'} styles={styles} />
+                {items.map((it) => (
+                  <ReviewRow
+                    key={it.key}
+                    label={`${it.name} × ${it.quantity}`}
+                    value={money(it.price * it.quantity)}
+                    styles={styles}
                   />
-                  <Button label="Save address" onPress={saveNewAddress} style={styles.flex1} />
+                ))}
+                <View style={styles.divider} />
+                <ReviewRow
+                  label="When"
+                  value={`${dayFullLabel(selectedDay ?? 0)} · ${selectedTime ?? ''}`}
+                  styles={styles}
+                />
+                {recurrence !== 'none' ? (
+                  <ReviewRow label="Repeats" value={RECURRENCE_LABEL[recurrence]} styles={styles} />
+                ) : null}
+                <ReviewRow label="Address" value={selectedAddress?.line ?? '—'} styles={styles} />
+                {instructions.trim() ? (
+                  <ReviewRow label="Instructions" value={instructions.trim()} styles={styles} />
+                ) : null}
+                <ReviewRow
+                  label="Payment"
+                  value={`${payment?.label ?? ''} ${payment?.sub ?? ''}`}
+                  styles={styles}
+                />
+                <View style={styles.divider} />
+                <ReviewRow
+                  label="Services & add-ons"
+                  value={money(breakdown.subtotal)}
+                  styles={styles}
+                />
+                <ReviewRow
+                  label="Platform fee (12%)"
+                  value={money(breakdown.fee)}
+                  styles={styles}
+                />
+                {breakdown.tip > 0 ? (
+                  <ReviewRow label="Tip" value={money(breakdown.tip)} styles={styles} />
+                ) : null}
+                {breakdown.discount > 0 ? (
+                  <ReviewRow
+                    label="Promo discount"
+                    value={`-${money(breakdown.discount)}`}
+                    styles={styles}
+                  />
+                ) : null}
+                <View style={styles.divider} />
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <AnimatedCounter
+                    value={breakdown.total}
+                    format={(v) => money(v)}
+                    style={styles.totalValue}
+                  />
                 </View>
               </View>
-            ) : (
               <Pressable
-                style={styles.addNew}
-                onPress={() => setAdding(true)}
+                style={styles.policyLink}
+                onPress={() => router.push(route('/policies'))}
                 accessibilityRole="button"
-                accessibilityLabel="Add a new address"
+                accessibilityLabel="Read booking and cancellation policy"
               >
-                <Ionicons name="add-circle-outline" size={20} color={c.brand.tint} />
-                <Text style={styles.addNewText}>Add a new address</Text>
+                <Ionicons name="shield-checkmark-outline" size={16} color={c.brand.tint} />
+                <Text style={styles.policyLinkText}>Booking & cancellation policy</Text>
               </Pressable>
-            )}
-
-            {!adding ? (
-              <Input
-                containerStyle={styles.spaced}
-                label="Access instructions (optional)"
-                value={instructions}
-                onChangeText={setInstructions}
-                placeholder="e.g. buzzer 4, leave with neighbour"
-                multiline
-              />
-            ) : null}
-          </View>
-        ) : null}
-
-        {step === 2 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Payment</Text>
-            {WALLET_PAYMENTS.map((p) => {
-              const selected = paymentId === p.id;
-              const walletLow = p.id === 'wallet' && walletBalance < breakdown.total;
-              return (
-                <Pressable
-                  key={p.id}
-                  disabled={walletLow}
-                  onPress={() => setPaymentId(p.id)}
-                  style={[
-                    styles.selectRow,
-                    selected && styles.selectRowActive,
-                    walletLow && styles.selectRowDisabled,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected, disabled: walletLow }}
-                  accessibilityLabel={`${p.label}, ${p.sub}`}
-                >
-                  <Ionicons
-                    name={p.icon}
-                    size={20}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                  <View style={styles.selectInfo}>
-                    <Text style={styles.selectLabel}>{p.label}</Text>
-                    <Text style={styles.selectSub}>
-                      {walletLow ? 'Balance too low for this total' : p.sub}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                </Pressable>
-              );
-            })}
-            <View style={styles.secureNote}>
-              <Ionicons name="lock-closed" size={14} color={c.text.muted} />
-              <Text style={styles.secureText}>
-                Payments are secured and only charged after the job.
-              </Text>
             </View>
-          </View>
-        ) : null}
-
-        {step === 3 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Review & confirm</Text>
-            <View style={styles.reviewCard}>
-              <ReviewRow label="Provider" value={providerName ?? '—'} styles={styles} />
-              {items.map((it) => (
-                <ReviewRow
-                  key={it.key}
-                  label={`${it.name} × ${it.quantity}`}
-                  value={money(it.price * it.quantity)}
-                  styles={styles}
-                />
-              ))}
-              <View style={styles.divider} />
-              <ReviewRow
-                label="When"
-                value={`${dayFullLabel(selectedDay ?? 0)} · ${selectedTime ?? ''}`}
-                styles={styles}
-              />
-              {recurrence !== 'none' ? (
-                <ReviewRow label="Repeats" value={RECURRENCE_LABEL[recurrence]} styles={styles} />
-              ) : null}
-              <ReviewRow label="Address" value={selectedAddress?.line ?? '—'} styles={styles} />
-              {instructions.trim() ? (
-                <ReviewRow label="Instructions" value={instructions.trim()} styles={styles} />
-              ) : null}
-              <ReviewRow
-                label="Payment"
-                value={`${payment?.label ?? ''} ${payment?.sub ?? ''}`}
-                styles={styles}
-              />
-              <View style={styles.divider} />
-              <ReviewRow
-                label="Services & add-ons"
-                value={money(breakdown.subtotal)}
-                styles={styles}
-              />
-              <ReviewRow label="Platform fee (12%)" value={money(breakdown.fee)} styles={styles} />
-              {breakdown.tip > 0 ? (
-                <ReviewRow label="Tip" value={money(breakdown.tip)} styles={styles} />
-              ) : null}
-              {breakdown.discount > 0 ? (
-                <ReviewRow
-                  label="Promo discount"
-                  value={`-${money(breakdown.discount)}`}
-                  styles={styles}
-                />
-              ) : null}
-              <View style={styles.divider} />
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{money(breakdown.total)}</Text>
-              </View>
-            </View>
-            <Pressable
-              style={styles.policyLink}
-              onPress={() => router.push(route('/policies'))}
-              accessibilityRole="button"
-              accessibilityLabel="Read booking and cancellation policy"
-            >
-              <Ionicons name="shield-checkmark-outline" size={16} color={c.brand.tint} />
-              <Text style={styles.policyLinkText}>Booking & cancellation policy</Text>
-            </Pressable>
-          </View>
-        ) : null}
+          ) : null}
+        </Reveal>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {step < 3 ? (
           <View style={styles.footerTotalRow}>
             <Text style={styles.footerLabel}>Total</Text>
-            <Text style={styles.footerTotal}>{money(breakdown.total)}</Text>
+            <AnimatedCounter
+              value={breakdown.total}
+              format={(v) => money(v)}
+              style={styles.footerTotal}
+            />
           </View>
         ) : null}
         <Button
@@ -615,6 +653,20 @@ const makeStyles = (c: Palette) =>
     container: { flex: 1, backgroundColor: c.background.base },
     header: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
     back: { marginBottom: spacing.md, alignSelf: 'flex-start' },
+    progressTrack: {
+      height: 4,
+      borderRadius: radius.pill,
+      backgroundColor: c.background.muted,
+      overflow: 'hidden',
+      marginBottom: spacing.md,
+    },
+    progressFill: {
+      height: 4,
+      width: '100%',
+      borderRadius: radius.pill,
+      backgroundColor: c.brand.primary,
+      transformOrigin: 'left',
+    },
     stepper: { flexDirection: 'row', justifyContent: 'space-between' },
     stepItem: { flex: 1, alignItems: 'center', gap: spacing.xs },
     stepDot: {
@@ -623,12 +675,8 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: c.background.muted,
       borderWidth: 1.5,
-      borderColor: c.border,
     },
-    stepDotActive: { borderColor: c.brand.primary },
-    stepDotDone: { backgroundColor: c.brand.primary, borderColor: c.brand.primary },
     stepNum: {
       ...typography.scale.caption,
       fontFamily: typography.font.bold,
