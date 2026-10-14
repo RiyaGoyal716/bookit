@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { MotiView } from 'moti';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 
-import { Button, Chip, EmptyState, Input, Screen } from '../../src/components';
+import {
+  AnimatedCounter,
+  Button,
+  Chip,
+  EmptyState,
+  Input,
+  PressableScale,
+  Reveal,
+  Screen,
+} from '../../src/components';
 import { getProviderById } from '../../src/mocks';
 import { track } from '../../src/lib/analytics';
 import { computeFees, generateBookingId, useBookingsStore } from '../../src/stores/bookingsStore';
@@ -180,25 +190,34 @@ export default function BookingFlowScreen() {
           <Ionicons name="chevron-back" size={26} color={c.text.primary} />
         </Pressable>
 
+        <View style={styles.progressTrack}>
+          <MotiView
+            style={styles.progressFill}
+            animate={{ scaleX: step / (STEPS.length - 1) }}
+            transition={{ type: 'spring', damping: 18, stiffness: 160 }}
+          />
+        </View>
         <View style={styles.stepper}>
           {STEPS.map((label, i) => {
             const done = i < step;
             const current = i === step;
             return (
               <View key={label} style={styles.stepItem}>
-                <View
-                  style={[
-                    styles.stepDot,
-                    (done || current) && styles.stepDotActive,
-                    done && styles.stepDotDone,
-                  ]}
+                <MotiView
+                  style={styles.stepDot}
+                  animate={{
+                    scale: current ? 1.12 : 1,
+                    backgroundColor: done ? c.brand.primary : c.background.muted,
+                    borderColor: done || current ? c.brand.primary : c.border,
+                  }}
+                  transition={{ type: 'spring', damping: 14, stiffness: 220 }}
                 >
                   {done ? (
                     <Ionicons name="checkmark" size={14} color={c.text.inverse} />
                   ) : (
                     <Text style={[styles.stepNum, current && styles.stepNumActive]}>{i + 1}</Text>
                   )}
-                </View>
+                </MotiView>
                 <Text style={[styles.stepLabel, current && styles.stepLabelActive]}>{label}</Text>
               </View>
             );
@@ -213,173 +232,186 @@ export default function BookingFlowScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {step === 0 ? (
-          <View style={styles.list}>
-            <Text style={styles.stepTitle}>Choose a service</Text>
-            {provider.services.map((s, i) => {
-              const selected = serviceIndex === i;
-              return (
-                <Pressable
-                  key={s.name}
-                  onPress={() => setServiceIndex(i)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  style={[styles.selectRow, selected && styles.selectRowActive]}
-                >
-                  <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceName}>{s.name}</Text>
-                    <Text style={styles.serviceMeta}>{s.durationMin} min</Text>
-                  </View>
-                  <Text style={styles.servicePrice}>{money(s.price)}</Text>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={22}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
-        {step === 1 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Pick a date & time</Text>
-            <Text style={styles.label}>Date</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsRow}
-            >
-              {days.map((d) => (
-                <Chip
-                  key={d.key}
-                  label={d.label}
-                  active={date === d.key}
-                  onPress={() => setDate(d.key)}
-                />
-              ))}
-            </ScrollView>
-
-            <Text style={[styles.label, styles.labelSpaced]}>Time</Text>
-            <View style={styles.timeGrid}>
-              {TIME_SLOTS.map((t) => (
-                <Chip key={t} label={t} active={time === t} onPress={() => setTime(t)} />
-              ))}
+        <Reveal key={step} offsetY={16}>
+          {step === 0 ? (
+            <View style={styles.list}>
+              <Text style={styles.stepTitle}>Choose a service</Text>
+              {provider.services.map((s, i) => {
+                const selected = serviceIndex === i;
+                return (
+                  <PressableScale
+                    key={s.name}
+                    haptic="selection"
+                    onPress={() => setServiceIndex(i)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    style={[styles.selectRow, selected && styles.selectRowActive]}
+                  >
+                    <View style={styles.serviceInfo}>
+                      <Text style={styles.serviceName}>{s.name}</Text>
+                      <Text style={styles.serviceMeta}>{s.durationMin} min</Text>
+                    </View>
+                    <Text style={styles.servicePrice}>{money(s.price)}</Text>
+                    <Ionicons
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={22}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                  </PressableScale>
+                );
+              })}
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {step === 2 ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Where?</Text>
-
-            <Button
-              label={locating ? 'Getting location…' : 'Use current location'}
-              variant="secondary"
-              icon="navigate"
-              loading={locating}
-              onPress={useCurrentLocation}
-              style={styles.locBtn}
-            />
-
-            <Text style={styles.label}>Saved addresses</Text>
-            {addresses.map((a: Address) => {
-              const selected = addressId === a.id;
-              return (
-                <Pressable
-                  key={a.id}
-                  onPress={() => {
-                    setAddressId(a.id);
-                    setCustomAddress('');
-                  }}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${a.label}: ${a.line}`}
-                  style={[styles.addressRow, selected && styles.addressRowActive]}
-                >
-                  <Ionicons
-                    name={a.fromLocation ? 'navigate' : a.label === 'Work' ? 'briefcase' : 'home'}
-                    size={18}
-                    color={selected ? c.brand.tint : c.text.muted}
+          {step === 1 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Pick a date & time</Text>
+              <Text style={styles.label}>Date</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipsRow}
+              >
+                {days.map((d) => (
+                  <Chip
+                    key={d.key}
+                    label={d.label}
+                    active={date === d.key}
+                    onPress={() => setDate(d.key)}
                   />
-                  <View style={styles.addressInfo}>
-                    <Text style={styles.addressLabel}>{a.label}</Text>
-                    <Text style={styles.addressLine} numberOfLines={1}>
-                      {a.line}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                </Pressable>
-              );
-            })}
+                ))}
+              </ScrollView>
 
-            <Text style={[styles.label, styles.labelSpaced]}>Or enter a new address</Text>
-            <Input
-              value={customAddress}
-              onChangeText={(t) => {
-                setCustomAddress(t);
-                if (t.length > 0) setAddressId(null);
-              }}
-              placeholder="e.g. 12 Cardigan Road, Headingley, LS6 1LJ"
-              multiline
-              helper="We only share this with your provider once the booking is accepted."
-            />
-          </View>
-        ) : null}
-
-        {step === 3 && service && fees ? (
-          <View style={styles.block}>
-            <Text style={styles.stepTitle}>Review & confirm</Text>
-            <View style={styles.reviewCard}>
-              <ReviewRow label="Provider" value={provider.name} styles={styles} />
-              <ReviewRow label="Service" value={service.name} styles={styles} />
-              <ReviewRow label="When" value={`${date} · ${time}`} styles={styles} />
-              <ReviewRow label="Address" value={address} styles={styles} />
-              <View style={styles.divider} />
-              <ReviewRow label="Service price" value={money(service.price)} styles={styles} />
-              <ReviewRow label="Platform fee (12%)" value={money(fees.fee)} styles={styles} />
-              {promoApplied ? (
-                <View style={styles.reviewRow}>
-                  <Text style={styles.discountLabel}>Promo {PROMO_CODE} (10% off)</Text>
-                  <Text style={styles.discountValue}>-{money(discount)}</Text>
-                </View>
-              ) : null}
-              <View style={styles.divider} />
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{money(finalTotal)}</Text>
+              <Text style={[styles.label, styles.labelSpaced]}>Time</Text>
+              <View style={styles.timeGrid}>
+                {TIME_SLOTS.map((t) => (
+                  <Chip key={t} label={t} active={time === t} onPress={() => setTime(t)} />
+                ))}
               </View>
             </View>
+          ) : null}
 
-            <Text style={[styles.label, styles.labelSpaced]}>Promo code</Text>
-            <View style={styles.promoRow}>
-              <Input
-                containerStyle={styles.promoInput}
-                value={promo}
-                onChangeText={(t) => {
-                  setPromo(t);
-                  if (promoApplied) setPromoApplied(false);
-                }}
-                placeholder="Try BOOKIT10"
-                autoCapitalize="characters"
-                autoCorrect={false}
-                editable={!promoApplied}
-              />
+          {step === 2 ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Where?</Text>
+
               <Button
-                label={promoApplied ? 'Applied' : 'Apply'}
+                label={locating ? 'Getting location…' : 'Use current location'}
                 variant="secondary"
-                disabled={promoApplied || promo.trim().length === 0}
-                onPress={applyPromo}
-                style={styles.promoBtn}
+                icon="navigate"
+                loading={locating}
+                onPress={useCurrentLocation}
+                style={styles.locBtn}
+              />
+
+              <Text style={styles.label}>Saved addresses</Text>
+              {addresses.map((a: Address) => {
+                const selected = addressId === a.id;
+                return (
+                  <PressableScale
+                    key={a.id}
+                    haptic="selection"
+                    onPress={() => {
+                      setAddressId(a.id);
+                      setCustomAddress('');
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${a.label}: ${a.line}`}
+                    style={[styles.addressRow, selected && styles.addressRowActive]}
+                  >
+                    <Ionicons
+                      name={a.fromLocation ? 'navigate' : a.label === 'Work' ? 'briefcase' : 'home'}
+                      size={18}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                    <View style={styles.addressInfo}>
+                      <Text style={styles.addressLabel}>{a.label}</Text>
+                      <Text style={styles.addressLine} numberOfLines={1}>
+                        {a.line}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={selected ? c.brand.tint : c.text.muted}
+                    />
+                  </PressableScale>
+                );
+              })}
+
+              <Text style={[styles.label, styles.labelSpaced]}>Or enter a new address</Text>
+              <Input
+                value={customAddress}
+                onChangeText={(t) => {
+                  setCustomAddress(t);
+                  if (t.length > 0) setAddressId(null);
+                }}
+                placeholder="e.g. 12 Cardigan Road, Headingley, LS6 1LJ"
+                multiline
+                helper="We only share this with your provider once the booking is accepted."
               />
             </View>
-          </View>
-        ) : null}
+          ) : null}
+
+          {step === 3 && service && fees ? (
+            <View style={styles.block}>
+              <Text style={styles.stepTitle}>Review & confirm</Text>
+              <View style={styles.reviewCard}>
+                <ReviewRow label="Provider" value={provider.name} styles={styles} />
+                <ReviewRow label="Service" value={service.name} styles={styles} />
+                <ReviewRow label="When" value={`${date} · ${time}`} styles={styles} />
+                <ReviewRow label="Address" value={address} styles={styles} />
+                <View style={styles.divider} />
+                <ReviewRow label="Service price" value={money(service.price)} styles={styles} />
+                <ReviewRow label="Platform fee (12%)" value={money(fees.fee)} styles={styles} />
+                {promoApplied ? (
+                  <MotiView
+                    from={{ opacity: 0, translateY: -6 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    transition={{ type: 'spring', damping: 16, stiffness: 220 }}
+                    style={styles.reviewRow}
+                  >
+                    <Text style={styles.discountLabel}>Promo {PROMO_CODE} (10% off)</Text>
+                    <Text style={styles.discountValue}>-{money(discount)}</Text>
+                  </MotiView>
+                ) : null}
+                <View style={styles.divider} />
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <AnimatedCounter
+                    value={finalTotal}
+                    format={(v) => money(v)}
+                    style={styles.totalValue}
+                  />
+                </View>
+              </View>
+
+              <Text style={[styles.label, styles.labelSpaced]}>Promo code</Text>
+              <View style={styles.promoRow}>
+                <Input
+                  containerStyle={styles.promoInput}
+                  value={promo}
+                  onChangeText={(t) => {
+                    setPromo(t);
+                    if (promoApplied) setPromoApplied(false);
+                  }}
+                  placeholder="Try BOOKIT10"
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!promoApplied}
+                />
+                <Button
+                  label={promoApplied ? 'Applied' : 'Apply'}
+                  variant="secondary"
+                  disabled={promoApplied || promo.trim().length === 0}
+                  onPress={applyPromo}
+                  style={styles.promoBtn}
+                />
+              </View>
+            </View>
+          ) : null}
+        </Reveal>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -423,6 +455,20 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginBottom: spacing.md, alignSelf: 'flex-start' },
+    progressTrack: {
+      height: 4,
+      borderRadius: radius.pill,
+      backgroundColor: c.background.muted,
+      overflow: 'hidden',
+      marginBottom: spacing.md,
+    },
+    progressFill: {
+      height: 4,
+      width: '100%',
+      borderRadius: radius.pill,
+      backgroundColor: c.brand.primary,
+      transformOrigin: 'left',
+    },
     stepper: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -439,16 +485,7 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: c.background.muted,
       borderWidth: 1.5,
-      borderColor: c.border,
-    },
-    stepDotActive: {
-      borderColor: c.brand.primary,
-    },
-    stepDotDone: {
-      backgroundColor: c.brand.primary,
-      borderColor: c.brand.primary,
     },
     stepNum: {
       ...typography.scale.caption,
