@@ -11,17 +11,29 @@ import {
   type NativeScrollEvent,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import {
   Accordion,
+  AnimatedCounter,
   Button,
   EmptyState,
   ImageGalleryViewer,
+  PressableScale,
   RatingStars,
+  Reveal,
   Screen,
 } from '../../src/components';
 import { getProviderById, getProvidersByCategory } from '../../src/mocks';
@@ -35,7 +47,15 @@ import { useReviewsStore, type Review } from '../../src/stores/reviewsStore';
 import { useCartStore } from '../../src/stores/cartStore';
 import { showToast } from '../../src/stores/toastStore';
 import { useT, useMoney } from '../../src/i18n';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
+import {
+  useColors,
+  useColorSchemeName,
+  radius,
+  shadow,
+  spacing,
+  typography,
+  type Palette,
+} from '../../src/theme';
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
   cleaning: 'Cleaning',
@@ -74,6 +94,7 @@ type ReviewFilter = 'all' | 'five' | 'photos';
 export default function ProviderProfileScreen() {
   const router = useRouter();
   const c = useColors();
+  const scheme = useColorSchemeName();
   const t = useT();
   const money = useMoney();
   const insets = useSafeAreaInsets();
@@ -81,6 +102,29 @@ export default function ProviderProfileScreen() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const provider = getProviderById(id);
+
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+
+  // Parallax hero: stretch + zoom on pull-down, lag behind the feed on scroll.
+  const heroStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: interpolate(scrollY.value, [-150, 0, 300], [-50, 0, 110], Extrapolation.CLAMP),
+      },
+      { scale: interpolate(scrollY.value, [-150, 0], [1.35, 1], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  // Frosted title bar fades in once the hero scrolls away.
+  const headerBarStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [190, 270], [0, 1], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(scrollY.value, [190, 270], [-8, 0], Extrapolation.CLAMP) },
+    ],
+  }));
 
   const isFavourite = useFavouritesStore((s) => (id ? s.ids.includes(id) : false));
   const toggleFavourite = useFavouritesStore((s) => s.toggle);
@@ -228,50 +272,54 @@ export default function ProviderProfileScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[]}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* Gallery */}
         <View style={styles.galleryWrap}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onGalleryScroll}
-          >
-            {gallery.map((uri, i) => (
-              <Pressable
-                key={`${uri}-${i}`}
-                onPress={() => openViewer(i)}
-                accessibilityLabel={`Photo ${i + 1}`}
-              >
-                <Image
-                  source={{ uri }}
-                  style={{ width, height: 300 }}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              </Pressable>
-            ))}
-          </ScrollView>
+          <Animated.View style={heroStyle}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onGalleryScroll}
+            >
+              {gallery.map((uri, i) => (
+                <Pressable
+                  key={`${uri}-${i}`}
+                  onPress={() => openViewer(i)}
+                  accessibilityLabel={`Photo ${i + 1}`}
+                >
+                  <Image
+                    source={{ uri }}
+                    style={{ width, height: 300 }}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Animated.View>
+          {/* Legibility scrim so the floating controls read over any photo. */}
+          <View pointerEvents="none" style={styles.heroScrim} />
 
-          <Pressable
+          <PressableScale
+            haptic="none"
             style={[styles.back, { top: insets.top + spacing.sm }]}
             onPress={() => router.back()}
-            hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="chevron-back" size={24} color={c.text.primary} />
-          </Pressable>
+          </PressableScale>
           <View style={[styles.topActions, { top: insets.top + spacing.sm }]}>
-            <Pressable
+            <PressableScale
               style={styles.roundBtn}
               onPress={onToggleCompare}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={inCompare ? 'Remove from compare' : 'Add to compare'}
               accessibilityState={{ selected: inCompare }}
@@ -281,30 +329,36 @@ export default function ProviderProfileScreen() {
                 size={22}
                 color={inCompare ? c.brand.tint : c.text.primary}
               />
-            </Pressable>
-            <Pressable
+            </PressableScale>
+            <PressableScale
+              haptic="none"
               style={styles.roundBtn}
               onPress={onShare}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={`Share ${provider.name}`}
             >
               <Ionicons name="share-outline" size={22} color={c.text.primary} />
-            </Pressable>
-            <Pressable
+            </PressableScale>
+            <PressableScale
               style={styles.roundBtn}
               onPress={onToggleFavourite}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
               accessibilityState={{ selected: isFavourite }}
             >
-              <Ionicons
-                name={isFavourite ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavourite ? c.status.danger : c.text.primary}
-              />
-            </Pressable>
+              <MotiView
+                key={isFavourite ? 'fav-on' : 'fav-off'}
+                from={{ scale: isFavourite ? 0.5 : 1 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 8, stiffness: 240 }}
+              >
+                <Ionicons
+                  name={isFavourite ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={isFavourite ? c.status.danger : c.text.primary}
+                />
+              </MotiView>
+            </PressableScale>
           </View>
           {gallery.length > 1 ? (
             <View style={styles.galleryDots}>
@@ -319,15 +373,17 @@ export default function ProviderProfileScreen() {
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.name}>{provider.name}</Text>
-          <Text style={styles.category}>
-            {CATEGORY_LABEL[provider.category]}
-            {provider.area ? ` · ${provider.area}` : ''}
-          </Text>
-          {provider.tagline ? <Text style={styles.tagline}>{provider.tagline}</Text> : null}
+          <Reveal index={0}>
+            <Text style={styles.name}>{provider.name}</Text>
+            <Text style={styles.category}>
+              {CATEGORY_LABEL[provider.category]}
+              {provider.area ? ` · ${provider.area}` : ''}
+            </Text>
+            {provider.tagline ? <Text style={styles.tagline}>{provider.tagline}</Text> : null}
+          </Reveal>
 
           {/* Stats row */}
-          <View style={styles.statsRow}>
+          <Reveal index={1} style={styles.statsRow}>
             <Stat
               value={provider.rating.toFixed(1)}
               label={`${provider.reviewCount} reviews`}
@@ -363,18 +419,18 @@ export default function ProviderProfileScreen() {
                 />
               </>
             ) : null}
-          </View>
+          </Reveal>
 
           {/* Badges */}
           {badges.length > 0 ? (
-            <View style={styles.badges}>
+            <Reveal index={2} style={styles.badges}>
               {badges.map((b) => (
                 <View key={b} style={styles.badge}>
                   <Ionicons name={BADGE_META[b].icon} size={14} color={c.brand.tint} />
                   <Text style={styles.badgeText}>{BADGE_META[b].label}</Text>
                 </View>
               ))}
-            </View>
+            </Reveal>
           ) : null}
 
           {/* About */}
@@ -412,7 +468,7 @@ export default function ProviderProfileScreen() {
                   </View>
                   {qty > 0 ? (
                     <View style={styles.stepper}>
-                      <Pressable
+                      <PressableScale
                         style={styles.stepBtn}
                         onPress={() => decrement(s.id ?? s.name)}
                         hitSlop={6}
@@ -420,9 +476,9 @@ export default function ProviderProfileScreen() {
                         accessibilityLabel={`Remove one ${s.name}`}
                       >
                         <Ionicons name="remove" size={18} color={c.brand.tint} />
-                      </Pressable>
-                      <Text style={styles.stepQty}>{qty}</Text>
-                      <Pressable
+                      </PressableScale>
+                      <AnimatedCounter value={qty} style={styles.stepQty} />
+                      <PressableScale
                         style={styles.stepBtn}
                         onPress={() => addService(s)}
                         hitSlop={6}
@@ -430,10 +486,10 @@ export default function ProviderProfileScreen() {
                         accessibilityLabel={`Add one ${s.name}`}
                       >
                         <Ionicons name="add" size={18} color={c.brand.tint} />
-                      </Pressable>
+                      </PressableScale>
                     </View>
                   ) : (
-                    <Pressable
+                    <PressableScale
                       style={styles.addBtn}
                       onPress={() => addService(s)}
                       accessibilityRole="button"
@@ -441,7 +497,7 @@ export default function ProviderProfileScreen() {
                     >
                       <Ionicons name="add" size={16} color={c.brand.tint} />
                       <Text style={styles.addBtnText}>Add</Text>
-                    </Pressable>
+                    </PressableScale>
                   )}
                 </View>
               );
@@ -631,14 +687,58 @@ export default function ProviderProfileScreen() {
             </>
           ) : null}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Frosted collapsing title bar, revealed once the hero scrolls away. */}
+      <Animated.View
+        style={[styles.headerBar, { height: insets.top + 56 }, headerBarStyle]}
+        pointerEvents="box-none"
+      >
+        <BlurView
+          intensity={70}
+          tint={scheme === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.headerBarRow, { paddingTop: insets.top }]}>
+          <PressableScale
+            haptic="none"
+            style={styles.headerBarBtn}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={24} color={c.text.primary} />
+          </PressableScale>
+          <Text style={styles.headerBarTitle} numberOfLines={1}>
+            {provider.name}
+          </Text>
+          <PressableScale
+            style={styles.headerBarBtn}
+            onPress={onToggleFavourite}
+            accessibilityRole="button"
+            accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            accessibilityState={{ selected: isFavourite }}
+          >
+            <Ionicons
+              name={isFavourite ? 'heart' : 'heart-outline'}
+              size={22}
+              color={isFavourite ? c.status.danger : c.text.primary}
+            />
+          </PressableScale>
+        </View>
+        <View style={styles.headerBarBorder} />
+      </Animated.View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.priceBlock}>
           {cartCount > 0 && sameProviderCart ? (
             <>
               <Text style={styles.priceLabel}>{cartCount} in cart</Text>
-              <Text style={styles.priceValue}>{money(cartTotal)}</Text>
+              <AnimatedCounter
+                value={cartTotal}
+                format={(v) => money(v)}
+                style={styles.priceValue}
+              />
             </>
           ) : (
             <>
@@ -714,7 +814,49 @@ const makeStyles = (c: Palette) =>
     root: { flex: 1, backgroundColor: c.background.base },
     scroll: { paddingBottom: spacing.xl },
     backPlain: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
-    galleryWrap: { height: 300, backgroundColor: c.skeleton },
+    galleryWrap: { height: 300, backgroundColor: c.skeleton, overflow: 'hidden' },
+    heroScrim: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 96,
+      backgroundColor: 'rgba(0,0,0,0.12)',
+    },
+    headerBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      overflow: 'hidden',
+    },
+    headerBarRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    headerBarBtn: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerBarTitle: {
+      flex: 1,
+      ...typography.scale.h2,
+      color: c.text.primary,
+      textAlign: 'center',
+    },
+    headerBarBorder: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 1,
+      backgroundColor: c.border,
+    },
     back: {
       position: 'absolute',
       left: spacing.lg,
