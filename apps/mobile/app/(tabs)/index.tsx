@@ -3,16 +3,24 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
-  RefreshControl,
   useWindowDimensions,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -41,7 +49,14 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 
-import { BottomSheet, Skeleton, GradientButton } from '../../src/components';
+import {
+  BottomSheet,
+  Skeleton,
+  GradientButton,
+  Reveal,
+  PressableScale,
+  BookitRefresh,
+} from '../../src/components';
 import { AppDrawer } from '../../src/components/AppDrawer';
 import { IllustrationSpot } from '../../src/assets/illustrations';
 import { providers as allProviders, categories } from '../../src/mocks';
@@ -53,7 +68,15 @@ import { useT, useMoney, useDirectionalStyles } from '../../src/i18n';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
 import { showToast } from '../../src/stores/toastStore';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
+import {
+  useColors,
+  useColorSchemeName,
+  radius,
+  shadow,
+  spacing,
+  typography,
+  type Palette,
+} from '../../src/theme';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   cleaning: Sparkles,
@@ -85,6 +108,7 @@ function greetingKey(): 'home.greetingMorning' | 'home.greetingAfternoon' | 'hom
 export default function HomeScreen() {
   const router = useRouter();
   const c = useColors();
+  const scheme = useColorSchemeName();
   const t = useT();
   const money = useMoney();
   const dir = useDirectionalStyles();
@@ -102,15 +126,46 @@ export default function HomeScreen() {
   const [preview, setPreview] = useState<Category | null>(null);
   const [estimate, setEstimate] = useState<{ uri: string; low: number; high: number } | null>(null);
 
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+
+  // Parallax hero: the gradient panel stretches + scales when you overscroll
+  // (pull down) and lifts away slightly as you scroll into the feed.
+  const headerBgStyle = useAnimatedStyle(() => {
+    const y = scrollY.value;
+    return {
+      transform: [
+        { translateY: interpolate(y, [-150, 0], [-75, 0], Extrapolation.CLAMP) },
+        { scale: interpolate(y, [-200, 0], [1.35, 1], Extrapolation.CLAMP) },
+      ],
+    };
+  });
+
+  // Frosted sticky bar fades in once the greeting scrolls under the header.
+  const stickyBarStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [60, 130], [0, 1], Extrapolation.CLAMP),
+  }));
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
 
   const onRefresh = useCallback(() => {
+    if (refreshing) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 700);
-  }, []);
+    setTimeout(() => setRefreshing(false), 900);
+  }, [refreshing]);
+
+  const onScrollEndDrag = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (e.nativeEvent.contentOffset.y <= -72) onRefresh();
+    },
+    [onRefresh],
+  );
 
   const topRated = useMemo(
     () => [...allProviders].sort((a, b) => b.rating - a.rating).slice(0, 8),
@@ -169,12 +224,30 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[c.brand.gradient[0], c.brand.primaryDark]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.headerBg, { height: insets.top + 150 }]}
-      />
+      <Animated.View style={[styles.headerBg, { height: insets.top + 150 }, headerBgStyle]}>
+        <LinearGradient
+          colors={[c.brand.gradient[0], c.brand.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+      {/* Frosted glass bar that fades in as you scroll into the feed. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.stickyBar, { height: insets.top + 60 }, stickyBarStyle]}
+      >
+        <BlurView
+          intensity={60}
+          tint={scheme === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.stickyBarBorder, { top: insets.top + 60 - 1 }]} />
+      </Animated.View>
+      {/* Custom Bookit pull-to-refresh indicator. */}
+      <View style={[styles.refreshWrap, { top: insets.top + 56 }]} pointerEvents="none">
+        <BookitRefresh active={refreshing} />
+      </View>
       <View style={[styles.header, dir.row, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable
           style={[styles.location, dir.row]}
@@ -217,17 +290,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={c.text.onBrand}
-            colors={[c.brand.primary]}
-          />
-        }
+        onScroll={scrollHandler}
+        onScrollEndDrag={onScrollEndDrag}
+        scrollEventThrottle={16}
       >
         <View style={styles.greetBlock}>
           <Text style={[styles.greeting, dir.textAlign]}>
@@ -236,7 +304,7 @@ export default function HomeScreen() {
         </View>
 
         {/* AI concierge bar */}
-        <Pressable
+        <PressableScale
           style={[styles.concierge, dir.row]}
           onPress={() => router.push(route('/concierge'))}
           accessibilityRole="button"
@@ -249,9 +317,10 @@ export default function HomeScreen() {
             {t('home.conciergePlaceholder')}
           </Text>
           <Mic size={20} color={c.brand.primary} />
-        </Pressable>
+        </PressableScale>
 
-        <Pressable
+        <PressableScale
+          haptic="none"
           style={[styles.searchBar, dir.row]}
           onPress={() => router.push(route('/search'))}
           accessibilityRole="search"
@@ -259,50 +328,52 @@ export default function HomeScreen() {
         >
           <Search size={18} color={c.text.muted} />
           <Text style={styles.searchPlaceholder}>Search cleaners, barbers, tutors…</Text>
-        </Pressable>
+        </PressableScale>
 
         {loading ? (
           <HomeSkeleton styles={styles} />
         ) : (
           <>
-            <SectionHeader title={t('home.categories')} styles={styles} />
-            <View style={styles.grid}>
-              {categories.map((cat) => {
-                const Icon = CATEGORY_ICONS[cat.slug] ?? Sparkles;
-                return (
-                  <Pressable
-                    key={cat.slug}
-                    style={[styles.tile, { width: tileWidth }]}
-                    onPress={() => openCategory(cat)}
-                    onLongPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-                      setPreview(cat);
-                    }}
-                    delayLongPress={220}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${cat.label}${cat.live ? '' : ', coming soon'}`}
-                  >
-                    <LinearGradient
-                      colors={
-                        cat.live
-                          ? [c.brand.gradient[0], c.brand.gradient[1]]
-                          : [c.background.muted, c.background.muted]
-                      }
-                      style={styles.tileIcon}
+            <Reveal index={0}>
+              <SectionHeader title={t('home.categories')} styles={styles} />
+              <View style={styles.grid}>
+                {categories.map((cat) => {
+                  const Icon = CATEGORY_ICONS[cat.slug] ?? Sparkles;
+                  return (
+                    <PressableScale
+                      key={cat.slug}
+                      haptic="selection"
+                      style={[styles.tile, { width: tileWidth }]}
+                      onPress={() => openCategory(cat)}
+                      onLongPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                        setPreview(cat);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${cat.label}${cat.live ? '' : ', coming soon'}`}
                     >
-                      <Icon size={24} color={cat.live ? c.text.onBrand : c.text.muted} />
-                    </LinearGradient>
-                    <Text style={styles.tileLabel} numberOfLines={1}>
-                      {cat.label}
-                    </Text>
-                    {!cat.live ? <Text style={styles.soonText}>Soon</Text> : null}
-                  </Pressable>
-                );
-              })}
-            </View>
+                      <LinearGradient
+                        colors={
+                          cat.live
+                            ? [c.brand.gradient[0], c.brand.gradient[1]]
+                            : [c.background.muted, c.background.muted]
+                        }
+                        style={styles.tileIcon}
+                      >
+                        <Icon size={24} color={cat.live ? c.text.onBrand : c.text.muted} />
+                      </LinearGradient>
+                      <Text style={styles.tileLabel} numberOfLines={1}>
+                        {cat.label}
+                      </Text>
+                      {!cat.live ? <Text style={styles.soonText}>Soon</Text> : null}
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </Reveal>
 
             {/* Instant estimate */}
-            <View style={styles.estimate}>
+            <Reveal index={1} style={styles.estimate}>
               <View style={styles.estimateTop}>
                 <View style={styles.estimateIcon}>
                   <Camera size={22} color={c.brand.primary} />
@@ -343,109 +414,121 @@ export default function HomeScreen() {
                   <Text style={styles.estimateBtnText}>{t('home.pickPhoto')}</Text>
                 </Pressable>
               )}
-            </View>
+            </Reveal>
 
-            <ProviderRail
-              title={t('home.topRated')}
-              data={topRated}
-              onProvider={openProvider}
-              styles={styles}
-              c={c}
-              money={money}
-            />
-            <ProviderRail
-              title={t('home.availableNow')}
-              data={availableNow}
-              onProvider={openProvider}
-              styles={styles}
-              c={c}
-              money={money}
-              showLive
-            />
-            <ProviderRail
-              title={t('home.newPros')}
-              data={newPros}
-              onProvider={openProvider}
-              styles={styles}
-              c={c}
-              money={money}
-            />
+            <Reveal index={2}>
+              <ProviderRail
+                title={t('home.topRated')}
+                data={topRated}
+                onProvider={openProvider}
+                styles={styles}
+                c={c}
+                money={money}
+              />
+            </Reveal>
+            <Reveal index={3}>
+              <ProviderRail
+                title={t('home.availableNow')}
+                data={availableNow}
+                onProvider={openProvider}
+                styles={styles}
+                c={c}
+                money={money}
+                showLive
+              />
+            </Reveal>
+            <Reveal index={4}>
+              <ProviderRail
+                title={t('home.newPros')}
+                data={newPros}
+                onProvider={openProvider}
+                styles={styles}
+                c={c}
+                money={money}
+              />
+            </Reveal>
 
             {/* Deals ending soon with live countdown */}
-            <SectionHeader title={t('home.dealsEnding')} styles={styles} />
-            <FlashList
-              data={deals}
-              horizontal
-              keyExtractor={(d: Deal) => d.provider.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.railContent}
-              ItemSeparatorComponent={() => <View style={styles.railGap} />}
-              renderItem={({ item }: { item: Deal }) => (
-                <DealCard
-                  deal={item}
-                  onPress={() => openProvider(item.provider)}
-                  styles={styles}
-                  c={c}
-                  money={money}
-                />
-              )}
-            />
+            <Reveal index={5}>
+              <SectionHeader title={t('home.dealsEnding')} styles={styles} />
+              <FlashList
+                data={deals}
+                horizontal
+                keyExtractor={(d: Deal) => d.provider.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.railContent}
+                ItemSeparatorComponent={() => <View style={styles.railGap} />}
+                renderItem={({ item }: { item: Deal }) => (
+                  <DealCard
+                    deal={item}
+                    onPress={() => openProvider(item.provider)}
+                    styles={styles}
+                    c={c}
+                    money={money}
+                  />
+                )}
+              />
+            </Reveal>
 
             {/* Bookit Plus */}
-            <LinearGradient
-              colors={[c.brand.primaryDark, c.brand.gradient[0], c.brand.gradient[1]]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.plus}
-            >
-              <View style={[styles.plusHead, dir.row]}>
-                <Crown size={22} color={c.text.onBrand} />
-                <Text style={styles.plusTitle}>{t('home.plusTitle')}</Text>
-              </View>
-              <Text style={styles.plusBody}>{t('home.plusBody')}</Text>
-              <Pressable
-                style={styles.plusCta}
-                onPress={() => showToast(t('home.plusCta'))}
-                accessibilityRole="button"
+            <Reveal index={6}>
+              <LinearGradient
+                colors={[c.brand.primaryDark, c.brand.gradient[0], c.brand.gradient[1]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.plus}
               >
-                <Text style={styles.plusCtaText}>{t('home.plusCta')}</Text>
-              </Pressable>
-            </LinearGradient>
+                <View style={[styles.plusHead, dir.row]}>
+                  <Crown size={22} color={c.text.onBrand} />
+                  <Text style={styles.plusTitle}>{t('home.plusTitle')}</Text>
+                </View>
+                <Text style={styles.plusBody}>{t('home.plusBody')}</Text>
+                <Pressable
+                  style={styles.plusCta}
+                  onPress={() => showToast(t('home.plusCta'))}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.plusCtaText}>{t('home.plusCta')}</Text>
+                </Pressable>
+              </LinearGradient>
+            </Reveal>
 
             {/* Trust strip */}
-            <View style={[styles.trustStrip, dir.row]}>
+            <Reveal index={7} style={[styles.trustStrip, dir.row]}>
               <TrustItem Icon={ShieldCheck} label={t('home.trustVerified')} styles={styles} c={c} />
               <TrustItem Icon={Lock} label={t('home.trustSecure')} styles={styles} c={c} />
               <TrustItem Icon={BadgeCheck} label={t('home.trustRated')} styles={styles} c={c} />
-            </View>
+            </Reveal>
 
             {/* Referral */}
-            <Pressable
-              style={[styles.referral, dir.row]}
-              onPress={() => router.push(route('/referrals'))}
-              accessibilityRole="button"
-              accessibilityLabel={t('home.referralTitle')}
-            >
-              <View style={styles.referralIcon}>
-                <Gift size={24} color={c.brand.accent} />
-              </View>
-              <View style={styles.referralBody}>
-                <Text style={[styles.referralTitle, dir.textAlign]}>{t('home.referralTitle')}</Text>
-                <Text style={[styles.referralText, dir.textAlign]}>{t('home.referralBody')}</Text>
-              </View>
-              <ChevronRight size={20} color={c.text.muted} />
-            </Pressable>
+            <Reveal index={8}>
+              <PressableScale
+                style={[styles.referral, dir.row]}
+                onPress={() => router.push(route('/referrals'))}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.referralTitle')}
+              >
+                <View style={styles.referralIcon}>
+                  <Gift size={24} color={c.brand.accent} />
+                </View>
+                <View style={styles.referralBody}>
+                  <Text style={[styles.referralTitle, dir.textAlign]}>
+                    {t('home.referralTitle')}
+                  </Text>
+                  <Text style={[styles.referralText, dir.textAlign]}>{t('home.referralBody')}</Text>
+                </View>
+                <ChevronRight size={20} color={c.text.muted} />
+              </PressableScale>
+            </Reveal>
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Floating post-a-job */}
-      <Pressable
+      <PressableScale
+        haptic="medium"
         style={[styles.fab, dir.row, { bottom: insets.bottom + spacing.lg }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-          router.push(route('/post-job'));
-        }}
+        onPress={() => router.push(route('/post-job'))}
         accessibilityRole="button"
         accessibilityLabel={t('home.postJob')}
       >
@@ -458,7 +541,7 @@ export default function HomeScreen() {
           <Plus size={20} color={c.text.onBrand} />
           <Text style={styles.fabText}>{t('home.postJob')}</Text>
         </LinearGradient>
-      </Pressable>
+      </PressableScale>
 
       <BottomSheet
         visible={locationOpen}
@@ -592,7 +675,8 @@ function ProviderRail({
         contentContainerStyle={styles.railContent}
         ItemSeparatorComponent={() => <View style={styles.railGap} />}
         renderItem={({ item }: { item: Provider }) => (
-          <Pressable
+          <PressableScale
+            scaleTo={0.97}
             style={styles.railCard}
             onPress={() => onProvider(item)}
             accessibilityRole="button"
@@ -627,7 +711,7 @@ function ProviderRail({
               </View>
               <Text style={styles.railPrice}>{money(item.priceFrom)}</Text>
             </View>
-          </Pressable>
+          </PressableScale>
         )}
       />
     </View>
@@ -665,7 +749,8 @@ function DealCard({
   }, [deal.durationMs]);
 
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.97}
       style={styles.dealCard}
       onPress={onPress}
       accessibilityRole="button"
@@ -689,7 +774,7 @@ function DealCard({
           <Text style={styles.dealTimerText}>{formatRemaining(remaining)}</Text>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -723,6 +808,28 @@ const makeStyles = (c: Palette) =>
       right: 0,
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
+      overflow: 'hidden',
+    },
+    stickyBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      overflow: 'hidden',
+    },
+    stickyBarBorder: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: 1,
+      backgroundColor: c.border,
+    },
+    refreshWrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 2,
     },
     header: {
       alignItems: 'center',
