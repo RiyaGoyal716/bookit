@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState } from '../../src/components';
+import { EmptyState, PressableScale, Reveal } from '../../src/components';
 import { route } from '../../src/lib/nav';
 import { useChatStore, type Conversation } from '../../src/stores/chatStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
@@ -40,10 +40,10 @@ export default function InboxScreen() {
           <Text style={styles.heading}>Inbox</Text>
           <Text style={styles.subtitle}>Chats with your pros and support</Text>
         </View>
-        <Pressable
+        <PressableScale
+          haptic="none"
           style={styles.bell}
           onPress={() => router.push(route('/notifications'))}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Notifications${notifUnread > 0 ? `, ${notifUnread} unread` : ''}`}
         >
@@ -53,7 +53,7 @@ export default function InboxScreen() {
               <Text style={styles.bellBadgeText}>{notifUnread}</Text>
             </View>
           ) : null}
-        </Pressable>
+        </PressableScale>
       </View>
 
       <FlashList
@@ -71,49 +71,52 @@ export default function InboxScreen() {
             onAction={() => router.push('/(tabs)')}
           />
         }
-        renderItem={({ item }: { item: Conversation }) => (
-          <Pressable
-            onPress={() => router.push(route(`/chat/${item.id}`))}
-            accessibilityRole="button"
-            accessibilityLabel={`Chat with ${item.name}`}
-            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-          >
-            {item.kind === 'support' ? (
-              <View style={styles.supportAvatar}>
-                <Ionicons name="sparkles" size={20} color={c.text.inverse} />
-              </View>
-            ) : item.avatar ? (
-              <Image
-                source={{ uri: item.avatar }}
-                style={styles.avatar}
-                contentFit="cover"
-                transition={150}
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Ionicons name="person" size={20} color={c.text.muted} />
-              </View>
-            )}
-            <View style={styles.body}>
-              <View style={styles.titleRow}>
-                <Text style={styles.name} numberOfLines={1}>
-                  {item.name}
+        renderItem={({ item, index }: { item: Conversation; index: number }) => (
+          <Reveal index={Math.min(index, 8)}>
+            <PressableScale
+              haptic="none"
+              onPress={() => router.push(route(`/chat/${item.id}`))}
+              accessibilityRole="button"
+              accessibilityLabel={`Chat with ${item.name}`}
+              style={styles.row}
+            >
+              {item.kind === 'support' ? (
+                <View style={styles.supportAvatar}>
+                  <Ionicons name="sparkles" size={20} color={c.text.inverse} />
+                </View>
+              ) : item.avatar ? (
+                <Image
+                  source={{ uri: item.avatar }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                  transition={150}
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Ionicons name="person" size={20} color={c.text.muted} />
+                </View>
+              )}
+              <View style={styles.body}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.name} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  {item.messages.length > 0 ? (
+                    <Text style={styles.time}>{item.messages[item.messages.length - 1].time}</Text>
+                  ) : null}
+                </View>
+                <Text style={[styles.last, item.unread > 0 && styles.lastUnread]} numberOfLines={1}>
+                  {lastOf(item)}
                 </Text>
-                {item.messages.length > 0 ? (
-                  <Text style={styles.time}>{item.messages[item.messages.length - 1].time}</Text>
-                ) : null}
               </View>
-              <Text style={[styles.last, item.unread > 0 && styles.lastUnread]} numberOfLines={1}>
-                {lastOf(item)}
-              </Text>
-            </View>
-            {item.unread > 0 ? (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadText}>{item.unread}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+              {item.unread > 0 ? (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>{item.unread}</Text>
+                </View>
+              ) : null}
+            </PressableScale>
+          </Reveal>
         )}
       />
     </View>
@@ -174,7 +177,6 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
-    rowPressed: { opacity: 0.85 },
     avatar: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: c.skeleton },
     avatarFallback: {
       width: 52,

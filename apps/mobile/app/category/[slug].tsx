@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { MotiView } from 'moti';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import {
+  AnimatedCounter,
   EmptyState,
   MapPlaceholder,
+  PressableScale,
   ProviderCard,
   SortFilterSheet,
   DEFAULT_SORT_FILTER,
@@ -138,10 +141,10 @@ export default function CategoryScreen() {
           <Text style={styles.title}>{category.label}</Text>
           <Text style={styles.tagline}>{category.tagline}</Text>
         </View>
-        <Pressable
+        <PressableScale
+          haptic="selection"
           onPress={() => setCompareMode((v) => !v)}
           style={[styles.headerBtn, compareMode && styles.headerBtnActive]}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Toggle compare mode"
           accessibilityState={{ selected: compareMode }}
@@ -151,11 +154,11 @@ export default function CategoryScreen() {
             size={22}
             color={compareMode ? c.brand.tint : c.text.primary}
           />
-        </Pressable>
-        <Pressable
+        </PressableScale>
+        <PressableScale
+          haptic="selection"
           onPress={() => setShowMap((v) => !v)}
           style={[styles.headerBtn, showMap && styles.headerBtnActive]}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={showMap ? 'Hide map' : 'Show map'}
           accessibilityState={{ selected: showMap }}
@@ -165,7 +168,7 @@ export default function CategoryScreen() {
             size={22}
             color={showMap ? c.brand.tint : c.text.primary}
           />
-        </Pressable>
+        </PressableScale>
       </View>
 
       <FlashList
@@ -242,8 +245,10 @@ export default function CategoryScreen() {
               {category.subServices.map((sub) => {
                 const selected = activeSub === sub.id;
                 return (
-                  <Pressable
+                  <PressableScale
                     key={sub.id}
+                    haptic="selection"
+                    scaleTo={0.97}
                     style={[styles.subCard, selected && styles.subCardActive]}
                     onPress={() => setActiveSub(selected ? null : sub.id)}
                     accessibilityRole="button"
@@ -265,7 +270,7 @@ export default function CategoryScreen() {
                       </Text>
                       <Text style={styles.subDuration}>· {sub.durationMin} min</Text>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </View>
@@ -292,7 +297,7 @@ export default function CategoryScreen() {
                   />
                 ))}
               </ScrollView>
-              <Pressable
+              <PressableScale
                 style={styles.sortBtn}
                 onPress={() => setSheetOpen(true)}
                 accessibilityRole="button"
@@ -304,7 +309,7 @@ export default function CategoryScreen() {
                     <Text style={styles.sortBadgeText}>{filterCount}</Text>
                   </View>
                 ) : null}
-              </Pressable>
+              </PressableScale>
             </View>
 
             <Text style={styles.sectionLabel}>
@@ -335,34 +340,54 @@ export default function CategoryScreen() {
       />
 
       {compareIds.length > 0 ? (
-        <Pressable
-          style={[styles.compareBar, { paddingBottom: insets.bottom + spacing.sm }]}
-          onPress={() => router.push(route('/compare'))}
-          accessibilityRole="button"
-          accessibilityLabel={`Compare ${compareIds.length} providers`}
+        <MotiView
+          from={{ opacity: 0, translateY: 60 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'spring', damping: 18, stiffness: 200 }}
+          style={styles.barWrap}
         >
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{compareIds.length}</Text>
-          </View>
-          <Text style={styles.cartBarText}>Compare providers</Text>
-          <Ionicons name="git-compare" size={18} color={c.text.inverse} />
-        </Pressable>
+          <PressableScale
+            haptic="medium"
+            style={[styles.compareBar, { paddingBottom: insets.bottom + spacing.sm }]}
+            onPress={() => router.push(route('/compare'))}
+            accessibilityRole="button"
+            accessibilityLabel={`Compare ${compareIds.length} providers`}
+          >
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{compareIds.length}</Text>
+            </View>
+            <Text style={styles.cartBarText}>Compare providers</Text>
+            <Ionicons name="git-compare" size={18} color={c.text.inverse} />
+          </PressableScale>
+        </MotiView>
       ) : null}
 
       {cartCount > 0 && compareIds.length === 0 ? (
-        <Pressable
-          style={[styles.cartBar, { paddingBottom: insets.bottom + spacing.sm }]}
-          onPress={() => router.push(route('/cart'))}
-          accessibilityRole="button"
-          accessibilityLabel={`View cart, ${cartCount} items, ${money(cartTotal)}`}
+        <MotiView
+          from={{ opacity: 0, translateY: 60 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'spring', damping: 18, stiffness: 200 }}
+          style={styles.barWrap}
         >
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{cartCount}</Text>
-          </View>
-          <Text style={styles.cartBarText}>View cart</Text>
-          <Text style={styles.cartBarTotal}>{money(cartTotal)}</Text>
-          <Ionicons name="arrow-forward" size={18} color={c.text.inverse} />
-        </Pressable>
+          <PressableScale
+            haptic="medium"
+            style={[styles.cartBar, { paddingBottom: insets.bottom + spacing.sm }]}
+            onPress={() => router.push(route('/cart'))}
+            accessibilityRole="button"
+            accessibilityLabel={`View cart, ${cartCount} items, ${money(cartTotal)}`}
+          >
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+            <Text style={styles.cartBarText}>View cart</Text>
+            <AnimatedCounter
+              value={cartTotal}
+              format={(v) => money(v)}
+              style={styles.cartBarTotal}
+            />
+            <Ionicons name="arrow-forward" size={18} color={c.text.inverse} />
+          </PressableScale>
+        </MotiView>
       ) : null}
 
       <SortFilterSheet
@@ -390,7 +415,8 @@ function FilterChip({
   styles: ReturnType<typeof makeStyles>;
 }) {
   return (
-    <Pressable
+    <PressableScale
+      haptic="selection"
       style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
       onPress={onPress}
       accessibilityRole="button"
@@ -398,7 +424,7 @@ function FilterChip({
       accessibilityLabel={label}
     >
       <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -551,11 +577,13 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     sortBadgeText: { ...typography.scale.caption, fontSize: 10, color: c.text.inverse },
-    cartBar: {
+    barWrap: {
       position: 'absolute',
       left: spacing.lg,
       right: spacing.lg,
       bottom: 0,
+    },
+    cartBar: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
@@ -567,10 +595,6 @@ const makeStyles = (c: Palette) =>
       ...shadow.floating,
     },
     compareBar: {
-      position: 'absolute',
-      left: spacing.lg,
-      right: spacing.lg,
-      bottom: 0,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,

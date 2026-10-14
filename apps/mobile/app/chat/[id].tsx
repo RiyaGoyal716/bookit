@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 
-import { EmptyState } from '../../src/components';
+import { EmptyState, PressableScale } from '../../src/components';
 import { showToast } from '../../src/stores/toastStore';
 import { useChatStore, QUICK_REPLIES, type ChatMessage } from '../../src/stores/chatStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
@@ -162,7 +162,7 @@ export default function ChatScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {QUICK_REPLIES.map((q) => (
-          <Pressable
+          <PressableScale
             key={q}
             style={styles.quickChip}
             onPress={() => doSend(q)}
@@ -170,20 +170,20 @@ export default function ChatScreen() {
             accessibilityLabel={`Send quick reply: ${q}`}
           >
             <Text style={styles.quickText}>{q}</Text>
-          </Pressable>
+          </PressableScale>
         ))}
       </ScrollView>
 
       <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <Pressable
+        <PressableScale
+          haptic="none"
           style={styles.attach}
           onPress={attachImage}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Attach a photo"
         >
           <Ionicons name="image-outline" size={22} color={c.brand.tint} />
-        </Pressable>
+        </PressableScale>
         <TextInput
           style={styles.input}
           value={draft}
@@ -193,7 +193,8 @@ export default function ChatScreen() {
           multiline
           accessibilityLabel="Message input"
         />
-        <Pressable
+        <PressableScale
+          haptic="none"
           style={[styles.sendBtn, !draft.trim() && styles.sendBtnOff]}
           onPress={() => doSend()}
           disabled={!draft.trim()}
@@ -201,7 +202,7 @@ export default function ChatScreen() {
           accessibilityLabel="Send message"
         >
           <Ionicons name="arrow-up" size={20} color={c.text.inverse} />
-        </Pressable>
+        </PressableScale>
       </View>
     </KeyboardAvoidingView>
   );
@@ -217,9 +218,9 @@ function Bubble({
   const mine = message.from === 'me';
   return (
     <MotiView
-      from={{ opacity: 0, translateY: 6 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 220 }}
+      from={{ opacity: 0, translateY: 8, translateX: mine ? 24 : -24 }}
+      animate={{ opacity: 1, translateY: 0, translateX: 0 }}
+      transition={{ type: 'spring', damping: 18, stiffness: 220 }}
       style={[styles.bubbleRow, mine ? styles.bubbleRowMine : styles.bubbleRowThem]}
     >
       <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleThem]}>
