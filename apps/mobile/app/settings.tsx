@@ -37,6 +37,8 @@ export default function SettingsScreen() {
   const setPreference = useThemeStore((s) => s.setPreference);
   const notificationsEnabled = useSettingsStore((s) => s.notificationsEnabled);
   const setNotificationsEnabled = useSettingsStore((s) => s.setNotificationsEnabled);
+  const hapticsEnabled = useSettingsStore((s) => s.hapticsEnabled);
+  const setHapticsEnabled = useSettingsStore((s) => s.setHapticsEnabled);
   const language = useRegionStore((s) => s.language);
   const setLanguage = useRegionStore((s) => s.setLanguage);
   const logout = useAuthStore((s) => s.logout);
@@ -123,6 +125,24 @@ export default function SettingsScreen() {
 
           <View style={styles.divider} />
 
+          <Pressable
+            style={styles.row}
+            onPress={() => setHapticsEnabled(!hapticsEnabled)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: hapticsEnabled }}
+            accessibilityLabel="Haptic feedback"
+          >
+            <View style={styles.rowIcon}>
+              <Ionicons name="phone-portrait-outline" size={18} color={c.brand.tint} />
+            </View>
+            <Text style={styles.rowLabel}>Haptic feedback</Text>
+            <View style={[styles.switch, hapticsEnabled && styles.switchOn]}>
+              <View style={[styles.knob, hapticsEnabled && styles.knobOn]} />
+            </View>
+          </Pressable>
+
+          <View style={styles.divider} />
+
           <View style={styles.row}>
             <View style={styles.rowIcon}>
               <Ionicons name="language-outline" size={18} color={c.brand.tint} />
@@ -200,6 +220,16 @@ export default function SettingsScreen() {
         >
           <Ionicons name="trash-outline" size={18} color={c.status.danger} />
           <Text style={styles.deleteText}>Delete account</Text>
+        </Pressable>
+
+        <Pressable
+          onLongPress={() => router.push('/dev/design-system')}
+          delayLongPress={600}
+          accessibilityRole="text"
+          accessibilityLabel="App version 1.0.0"
+          style={{ alignItems: 'center', paddingVertical: spacing.xl }}
+        >
+          <Text style={{ ...typography.scale.caption, color: c.text.muted }}>Bookit · v1.0.0</Text>
         </Pressable>
       </ScrollView>
     </View>
