@@ -14,8 +14,9 @@
     "android": {
       "package": "com.bookit.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0F766E",
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "backgroundColor": "#6D5BFF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -28,9 +29,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F766E",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/splash-icon.png",
-          "imageWidth": 200
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#09090B",
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 160
+          }
         }
       ],
       "expo-notifications",

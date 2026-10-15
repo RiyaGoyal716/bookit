@@ -1,192 +1,251 @@
-import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop, Ellipse } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect, Line } from 'react-native-svg';
 
-import { useColors } from '../../theme';
+import { useTokens } from '../../theme';
 
 export interface IllustrationProps {
-  /** Rendered square size in px. Default 220. */
+  /** Rendered square size in px. Default 200. */
   size?: number;
 }
 
 /**
- * Bookit Aurora illustrations — themed react-native-svg compositions sharing
- * the signature indigo→cyan gradient. Each reads the active palette so it
- * works in light and dark.
+ * NOVA illustrations — minimal single-weight line art. Neutral ink lines, a
+ * soft accent wash and one accent highlight. No gradients. Each reads the
+ * active tokens so it works in light and dark.
  */
-
 function useArt() {
-  const c = useColors();
+  const t = useTokens();
   return {
-    g1: c.brand.gradient[0],
-    g2: c.brand.gradient[1],
-    ink: c.text.primary,
-    paper: c.background.surface,
-    accent: c.brand.accent,
-    soft: c.brand.primarySoft,
-    star: c.brand.star,
-    muted: c.background.muted,
-    success: c.status.success,
+    ink: t.text,
+    line: t.textSubtle,
+    accent: t.accent,
+    accentSoft: t.accentSoft,
+    success: t.success,
+    danger: t.danger,
   };
 }
 
-/** "Find trusted pros" — a search lens over a verified pro card. */
-export function IllustrationFindPros({ size = 220 }: IllustrationProps) {
-  const a = useArt();
+const SW = 4;
+
+function Frame({ size, children }: { size: number; children: React.ReactNode }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="fp" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Circle cx={120} cy={120} r={96} fill={a.soft} />
-      <Rect x={58} y={66} width={108} height={120} rx={20} fill={a.paper} />
-      <Circle cx={112} cy={104} r={22} fill="url(#fp)" />
-      <Rect x={84} y={138} width={80} height={10} rx={5} fill={a.muted} />
-      <Rect x={84} y={156} width={56} height={10} rx={5} fill={a.muted} />
-      <G>
-        <Circle cx={158} cy={158} r={34} fill="none" stroke="url(#fp)" strokeWidth={10} />
-        <Path d="M182 182 L206 206" stroke="url(#fp)" strokeWidth={12} strokeLinecap="round" />
-      </G>
-      <Path
-        d="M150 150 l6 6 l12 -14"
-        fill="none"
-        stroke={a.success}
-        strokeWidth={6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {children}
     </Svg>
   );
 }
 
-/** "Book in seconds" — a calendar with a lightning check. */
-export function IllustrationBook({ size = 220 }: IllustrationProps) {
+/** "Find trusted pros" — card with a search lens. */
+export function IllustrationFindPros({ size = 200 }: IllustrationProps) {
   const a = useArt();
   return (
-    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="bk" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Circle cx={120} cy={120} r={96} fill={a.soft} />
-      <Rect x={62} y={70} width={116} height={104} rx={18} fill={a.paper} />
-      <Rect x={62} y={70} width={116} height={28} rx={14} fill="url(#bk)" />
-      <Rect x={84} y={60} width={10} height={24} rx={5} fill={a.ink} opacity={0.7} />
-      <Rect x={146} y={60} width={10} height={24} rx={5} fill={a.ink} opacity={0.7} />
-      <Path
-        d="M104 134 l12 12 l26 -30"
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={96} fill={a.accentSoft} />
+      <Rect
+        x={64}
+        y={70}
+        width={100}
+        height={116}
+        rx={18}
         fill="none"
-        stroke="url(#bk)"
-        strokeWidth={10}
+        stroke={a.ink}
+        strokeWidth={SW}
+      />
+      <Circle cx={100} cy={104} r={16} fill="none" stroke={a.line} strokeWidth={SW} />
+      <Line
+        x1={84}
+        y1={140}
+        x2={144}
+        y2={140}
+        stroke={a.line}
+        strokeWidth={SW}
         strokeLinecap="round"
-        strokeLinejoin="round"
+      />
+      <Line
+        x1={84}
+        y1={158}
+        x2={124}
+        y2={158}
+        stroke={a.line}
+        strokeWidth={SW}
+        strokeLinecap="round"
+      />
+      <G stroke={a.accent} strokeWidth={SW + 1} fill="none" strokeLinecap="round">
+        <Circle cx={158} cy={158} r={26} />
+        <Line x1={178} y1={178} x2={198} y2={198} />
+      </G>
+    </Frame>
+  );
+}
+
+/** "Book in seconds" — calendar with a check. */
+export function IllustrationBook({ size = 200 }: IllustrationProps) {
+  const a = useArt();
+  return (
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={96} fill={a.accentSoft} />
+      <Rect
+        x={62}
+        y={74}
+        width={116}
+        height={100}
+        rx={16}
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+      />
+      <Line x1={62} y1={100} x2={178} y2={100} stroke={a.ink} strokeWidth={SW} />
+      <Line
+        x1={88}
+        y1={64}
+        x2={88}
+        y2={84}
+        stroke={a.line}
+        strokeWidth={SW}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={152}
+        y1={64}
+        x2={152}
+        y2={84}
+        stroke={a.line}
+        strokeWidth={SW}
+        strokeLinecap="round"
       />
       <Path
-        d="M150 112 l-16 22 h12 l-10 20"
+        d="M100 136 l14 14 l28 -30"
         fill="none"
         stroke={a.accent}
-        strokeWidth={6}
+        strokeWidth={SW + 1}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </Svg>
+    </Frame>
   );
 }
 
-/** "Pay securely, relax" — a shield with a card and lock. */
-export function IllustrationPaySecure({ size = 220 }: IllustrationProps) {
+/** "Pay securely" — shield with a tick. */
+export function IllustrationPaySecure({ size = 200 }: IllustrationProps) {
   const a = useArt();
   return (
-    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="ps" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Circle cx={120} cy={120} r={96} fill={a.soft} />
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={96} fill={a.accentSoft} />
       <Path
-        d="M120 58 l50 20 v44 c0 36 -26 58 -50 70 c-24 -12 -50 -34 -50 -70 V78 Z"
-        fill="url(#ps)"
+        d="M120 62 l46 18 v42 c0 34 -24 54 -46 66 c-22 -12 -46 -32 -46 -66 V80 Z"
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+        strokeLinejoin="round"
       />
-      <Rect x={92} y={108} width={56} height={40} rx={8} fill={a.paper} />
-      <Rect x={92} y={118} width={56} height={8} fill={a.ink} opacity={0.25} />
-      <Rect x={100} y={134} width={20} height={6} rx={3} fill={a.ink} opacity={0.35} />
-      <Path d="M112 108 v-8 a8 8 0 0 1 16 0 v8" fill="none" stroke={a.paper} strokeWidth={5} />
-    </Svg>
+      <Path
+        d="M100 122 l14 14 l28 -30"
+        fill="none"
+        stroke={a.accent}
+        strokeWidth={SW + 1}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Frame>
   );
 }
 
-/** Location primer — a map pin with pulse rings. */
+/** Location primer — pin with pulse. */
 export function IllustrationLocation({ size = 200 }: IllustrationProps) {
   const a = useArt();
   return (
-    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="loc" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Ellipse cx={120} cy={196} rx={70} ry={16} fill={a.soft} />
-      <Circle cx={120} cy={120} r={92} fill={a.soft} opacity={0.5} />
-      <Circle cx={120} cy={120} r={62} fill={a.soft} />
+    <Frame size={size}>
+      <Circle cx={120} cy={116} r={92} fill={a.accentSoft} />
       <Path
-        d="M120 54 c-28 0 -50 22 -50 50 c0 36 50 82 50 82 s50 -46 50 -82 c0 -28 -22 -50 -50 -50 Z"
-        fill="url(#loc)"
+        d="M120 60 c-26 0 -46 20 -46 46 c0 34 46 78 46 78 s46 -44 46 -78 c0 -26 -20 -46 -46 -46 Z"
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+        strokeLinejoin="round"
       />
-      <Circle cx={120} cy={104} r={20} fill={a.paper} />
-    </Svg>
+      <Circle cx={120} cy={104} r={16} fill="none" stroke={a.accent} strokeWidth={SW} />
+    </Frame>
   );
 }
 
-/** Notifications primer — a bell with a coral badge. */
+/** Notifications primer — bell with an accent badge. */
 export function IllustrationNotify({ size = 200 }: IllustrationProps) {
   const a = useArt();
   return (
-    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="nt" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Circle cx={120} cy={120} r={92} fill={a.soft} />
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={92} fill={a.accentSoft} />
       <Path
-        d="M120 66 c-22 0 -38 16 -38 40 c0 30 -10 38 -16 46 c-3 4 0 10 6 10 h96 c6 0 9 -6 6 -10 c-6 -8 -16 -16 -16 -46 c0 -24 -16 -40 -38 -40 Z"
-        fill="url(#nt)"
+        d="M120 70 c-20 0 -34 14 -34 36 c0 28 -10 34 -16 42 c-3 4 0 10 6 10 h88 c6 0 9 -6 6 -10 c-6 -8 -16 -14 -16 -42 c0 -22 -14 -36 -34 -36 Z"
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+        strokeLinejoin="round"
       />
-      <Path d="M108 172 a12 12 0 0 0 24 0" fill={a.g2} />
-      <Circle cx={120} cy={60} r={8} fill={a.ink} opacity={0.6} />
-      <Circle cx={160} cy={78} r={16} fill={a.accent} />
-    </Svg>
+      <Path d="M108 168 a12 12 0 0 0 24 0" fill="none" stroke={a.ink} strokeWidth={SW} />
+      <Circle cx={158} cy={78} r={14} fill={a.accent} />
+    </Frame>
   );
 }
 
-/** Generic empty / success spot — concentric ring with a check. */
+/** Generic empty / success spot — ring with a check. */
 export function IllustrationSpot({ size = 160 }: IllustrationProps) {
   const a = useArt();
   return (
     <Svg width={size} height={size} viewBox="0 0 160 160" accessibilityRole="image">
-      <Defs>
-        <LinearGradient id="sp" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a.g1} />
-          <Stop offset="1" stopColor={a.g2} />
-        </LinearGradient>
-      </Defs>
-      <Circle cx={80} cy={80} r={64} fill={a.soft} />
-      <Circle cx={80} cy={80} r={44} fill="url(#sp)" />
+      <Circle cx={80} cy={80} r={60} fill={a.accentSoft} />
+      <Circle cx={80} cy={80} r={40} fill="none" stroke={a.ink} strokeWidth={SW} />
       <Path
-        d="M62 82 l12 12 l26 -30"
+        d="M64 82 l12 12 l24 -28"
         fill="none"
-        stroke={a.paper}
-        strokeWidth={8}
+        stroke={a.accent}
+        strokeWidth={SW + 1}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
     </Svg>
+  );
+}
+
+/** Empty inbox / list — open box with lines. */
+export function IllustrationEmpty({ size = 180 }: IllustrationProps) {
+  const a = useArt();
+  return (
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={92} fill={a.accentSoft} />
+      <Path
+        d="M72 120 l12 -40 h72 l12 40 v44 a6 6 0 0 1 -6 6 H78 a6 6 0 0 1 -6 -6 Z"
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+        strokeLinejoin="round"
+      />
+      <Path d="M72 120 h32 a16 16 0 0 0 32 0 h32" fill="none" stroke={a.ink} strokeWidth={SW} />
+    </Frame>
+  );
+}
+
+/** Error / something went wrong — triangle with a bang. */
+export function IllustrationError({ size = 180 }: IllustrationProps) {
+  const a = useArt();
+  return (
+    <Frame size={size}>
+      <Circle cx={120} cy={120} r={92} fill={a.accentSoft} />
+      <Path
+        d="M120 66 l56 96 a8 8 0 0 1 -7 12 H71 a8 8 0 0 1 -7 -12 Z"
+        fill="none"
+        stroke={a.ink}
+        strokeWidth={SW}
+        strokeLinejoin="round"
+      />
+      <Line
+        x1={120}
+        y1={110}
+        x2={120}
+        y2={140}
+        stroke={a.danger}
+        strokeWidth={SW + 1}
+        strokeLinecap="round"
+      />
+      <Circle cx={120} cy={158} r={3.5} fill={a.danger} />
+    </Frame>
   );
 }
