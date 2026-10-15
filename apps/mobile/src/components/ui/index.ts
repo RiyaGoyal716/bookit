@@ -34,3 +34,5 @@ export { Banner } from './Banner';
 export type { BannerTone } from './Banner';
 export { EmptyState } from './EmptyState';
 export type { EmptyArt } from './EmptyState';
+export { FloatingTabBar } from './FloatingTabBar';
+export type { TabBarProps } from './FloatingTabBar';

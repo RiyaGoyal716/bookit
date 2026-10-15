@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: typography.font.regular,
-    fontSize: 15,
+    fontSize: typography.scale.body.fontSize,
     padding: 0,
   },
 });

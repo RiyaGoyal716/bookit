@@ -90,5 +90,9 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
   },
-  input: { fontFamily: typography.font.regular, fontSize: 15, padding: 0 },
+  input: {
+    fontFamily: typography.font.regular,
+    fontSize: typography.scale.body.fontSize,
+    padding: 0,
+  },
 });
