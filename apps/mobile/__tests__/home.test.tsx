@@ -11,12 +11,12 @@ describe('Badge', () => {
 });
 
 describe('theme tokens', () => {
-  it('exposes the Aurora electric-indigo brand primary colour', () => {
-    expect(colors.brand.primary).toBe('#4F46E5');
+  it('exposes the NOVA ink primary colour', () => {
+    expect(colors.nova.primary).toBe('#0A0A0F');
   });
 
-  it('exposes the signature indigo→cyan gradient', () => {
-    expect(colors.brand.gradient).toEqual(['#4F46E5', '#06B6D4']);
+  it('exposes the single NOVA accent colour', () => {
+    expect(colors.nova.accent).toBe('#6D5BFF');
   });
 
   it('uses a 4pt spacing base', () => {

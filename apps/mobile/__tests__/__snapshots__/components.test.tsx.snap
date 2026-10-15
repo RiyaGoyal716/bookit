@@ -15,7 +15,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
           "paddingVertical": 4,
         },
         {
-          "backgroundColor": "#FEF3C7",
+          "backgroundColor": "#FBEFD9",
         },
       ]
     }
@@ -29,7 +29,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
             "width": 6,
           },
           {
-            "backgroundColor": "#B45309",
+            "backgroundColor": "#D97706",
           },
         ]
       }
@@ -44,7 +44,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
             "lineHeight": 16,
           },
           {
-            "color": "#B45309",
+            "color": "#D97706",
           },
         ]
       }
@@ -65,7 +65,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
           "paddingVertical": 4,
         },
         {
-          "backgroundColor": "#E0E7FF",
+          "backgroundColor": "#E7EEFC",
         },
       ]
     }
@@ -79,7 +79,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
             "width": 6,
           },
           {
-            "backgroundColor": "#2563EB",
+            "backgroundColor": "#1D4ED8",
           },
         ]
       }
@@ -94,7 +94,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
             "lineHeight": 16,
           },
           {
-            "color": "#2563EB",
+            "color": "#1D4ED8",
           },
         ]
       }
@@ -115,7 +115,7 @@ exports[`Badge renders each status and matches snapshot 1`] = `
           "paddingVertical": 4,
         },
         {
-          "backgroundColor": "#DCFCE7",
+          "backgroundColor": "#E7F6EC",
         },
       ]
     }
@@ -192,13 +192,13 @@ exports[`Button renders a primary button and matches snapshot 1`] = `
     [
       {
         "alignItems": "center",
-        "borderRadius": 16,
+        "borderRadius": 20,
         "justifyContent": "center",
         "minHeight": 54,
         "paddingHorizontal": 16,
       },
       {
-        "backgroundColor": "#4F46E5",
+        "backgroundColor": "#0A0A0F",
       },
       false,
       false,
@@ -222,9 +222,9 @@ exports[`Button renders a primary button and matches snapshot 1`] = `
         [
           {
             "fontFamily": "Inter_700Bold",
-            "fontSize": 16,
+            "fontSize": 15,
             "fontWeight": "700",
-            "lineHeight": 24,
+            "lineHeight": 21,
           },
           {
             "color": "#FFFFFF",
@@ -252,7 +252,7 @@ exports[`Input renders a labelled field with an error and matches snapshot 1`] =
   <Text
     style={
       {
-        "color": "#475569",
+        "color": "#5E5E6A",
         "fontFamily": "Inter_600SemiBold",
         "fontSize": 14,
         "fontWeight": "600",
@@ -269,7 +269,7 @@ exports[`Input renders a labelled field with an error and matches snapshot 1`] =
         "alignItems": "center",
         "backgroundColor": "#FFFFFF",
         "borderColor": "#DC2626",
-        "borderRadius": 12,
+        "borderRadius": 14,
         "borderWidth": 1.5,
         "flexDirection": "row",
         "gap": 8,
@@ -287,16 +287,16 @@ exports[`Input renders a labelled field with an error and matches snapshot 1`] =
       onBlur={[Function]}
       onFocus={[Function]}
       placeholder="Phone"
-      placeholderTextColor="#64748B"
+      placeholderTextColor="#6B6B76"
       style={
         [
           {
-            "color": "#0B0F19",
+            "color": "#0A0A0F",
             "flex": 1,
             "fontFamily": "Inter_400Regular",
-            "fontSize": 16,
+            "fontSize": 15,
             "fontWeight": "400",
-            "lineHeight": 24,
+            "lineHeight": 21,
             "padding": 0,
             "textAlignVertical": "top",
           },
