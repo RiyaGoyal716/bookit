@@ -31,7 +31,7 @@ export interface Conversation {
 
 /** Quick-reply suggestions shown above the composer. */
 export const QUICK_REPLIES = [
-  'On my way 👍',
+  'On my way',
   'Running 5 min late',
   'Thanks!',
   'Can we reschedule?',
@@ -67,7 +67,7 @@ const seeded: Conversation[] = [
       {
         id: 'm-s1',
         from: 'them',
-        text: 'Hi! 👋 I’m the Bookit assistant. Ask me about bookings, refunds or payments.',
+        text: 'Hi! I’m the Bookit assistant. Ask me about bookings, refunds or payments.',
         time: '09:00',
       },
     ],
@@ -87,7 +87,7 @@ const seeded: Conversation[] = [
         time: '08:40',
       },
       { id: 'm-2', from: 'me', text: 'Great — the key is under the mat.', time: '08:42' },
-      { id: 'm-3', from: 'them', text: 'Perfect, see you at 9am 🙂', time: '08:43' },
+      { id: 'm-3', from: 'them', text: 'Perfect, see you at 9am', time: '08:43' },
     ],
   },
   {

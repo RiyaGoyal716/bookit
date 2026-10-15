@@ -1,8 +1,7 @@
-import type { Ionicons } from '@expo/vector-icons';
-
 import type { ProviderCategory } from './types';
+import type { IconName as UiIconName } from '../components/ui/Icon';
 
-export type IconName = keyof typeof Ionicons.glyphMap;
+export type IconName = UiIconName;
 
 export interface SubService {
   id: string;
@@ -51,7 +50,7 @@ export const categories: Category[] = [
   {
     slug: 'cleaning',
     label: 'Cleaning',
-    icon: 'sparkles-outline',
+    icon: 'sparkles',
     providerCategory: 'cleaning',
     live: true,
     tagline: 'Vetted cleaners for a spotless home',
@@ -117,7 +116,7 @@ export const categories: Category[] = [
   {
     slug: 'beauty',
     label: 'Beauty',
-    icon: 'cut-outline',
+    icon: 'scissors',
     providerCategory: 'beauty',
     live: true,
     tagline: 'Barber, hair and beauty pros near you',
@@ -183,7 +182,7 @@ export const categories: Category[] = [
   {
     slug: 'tutoring',
     label: 'Tutoring',
-    icon: 'school-outline',
+    icon: 'graduation-cap',
     providerCategory: 'tutoring',
     live: true,
     tagline: 'Expert tutors for every subject',
@@ -249,7 +248,7 @@ export const categories: Category[] = [
   {
     slug: 'handyman',
     label: 'Handyman',
-    icon: 'hammer-outline',
+    icon: 'hammer',
     live: false,
     tagline: 'Odd jobs and repairs, done right',
     subServices: [],
@@ -257,7 +256,7 @@ export const categories: Category[] = [
   {
     slug: 'plumbing',
     label: 'Plumbing',
-    icon: 'water-outline',
+    icon: 'droplet',
     live: false,
     tagline: 'Leaks, taps and installations',
     subServices: [],
@@ -265,7 +264,7 @@ export const categories: Category[] = [
   {
     slug: 'electrician',
     label: 'Electrician',
-    icon: 'flash-outline',
+    icon: 'zap',
     live: false,
     tagline: 'Certified electrical work',
     subServices: [],
@@ -273,7 +272,7 @@ export const categories: Category[] = [
   {
     slug: 'moving',
     label: 'Moving',
-    icon: 'cube-outline',
+    icon: 'box',
     live: false,
     tagline: 'Man-and-van and removals',
     subServices: [],
@@ -281,7 +280,7 @@ export const categories: Category[] = [
   {
     slug: 'pet-care',
     label: 'Pet care',
-    icon: 'paw-outline',
+    icon: 'paw',
     live: false,
     tagline: 'Walking, sitting and grooming',
     subServices: [],

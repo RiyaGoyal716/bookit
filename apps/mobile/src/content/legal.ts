@@ -199,7 +199,7 @@ export const LEGAL_DOCS: Record<string, LegalDoc> = {
     sections: [
       {
         heading: 'Performance targets',
-        bullets: ['Acceptance rate ≥ 85%.', 'Average rating ≥ 4.5★.', 'Cancellation rate ≤ 5%.'],
+        bullets: ['Acceptance rate ≥ 85%.', 'Average rating ≥ 4.5.', 'Cancellation rate ≤ 5%.'],
       },
       {
         heading: 'Professional conduct',

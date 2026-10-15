@@ -1,32 +1,31 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, StatusTimeline, type TimelineStep } from '../../src/components';
+import { Text, Icon, IconButton, Button, type IconName } from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { useProviderStore } from '../../src/stores/providerStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 
-const STEPS: TimelineStep[] = [
+const STEPS: { key: string; label: string; caption: string; icon: IconName }[] = [
   {
     key: 'submitted',
     label: 'Application submitted',
     caption: 'We’ve received your details',
-    icon: 'paper-plane-outline',
+    icon: 'send',
   },
   {
     key: 'review',
     label: 'Documents in review',
     caption: 'ID and background checks',
-    icon: 'search-outline',
+    icon: 'search',
   },
   {
     key: 'approved',
     label: 'Approved',
     caption: 'Start accepting jobs',
-    icon: 'checkmark-circle-outline',
+    icon: 'check-circle',
   },
 ];
 
@@ -45,16 +44,15 @@ export default function ProVerification() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          accessibilityLabel="Go back"
           onPress={() => router.back()}
           style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Verification</Text>
+        />
+        <Text variant="title2" style={styles.title}>
+          Verification
+        </Text>
       </View>
 
       <ScrollView
@@ -68,14 +66,10 @@ export default function ProVerification() {
               { backgroundColor: verified ? c.status.success : c.status.warning },
             ]}
           >
-            <Ionicons
-              name={verified ? 'shield-checkmark' : 'hourglass'}
-              size={36}
-              color={c.text.inverse}
-            />
+            <Icon name={verified ? 'shield-check' : 'clock'} size={24} color={c.text.inverse} />
           </View>
-          <Text style={styles.heroTitle}>{verified ? 'You’re verified!' : 'Under review'}</Text>
-          <Text style={styles.heroSub}>
+          <Text variant="title1">{verified ? 'You’re verified!' : 'Under review'}</Text>
+          <Text variant="caption" tone="muted" center>
             {verified
               ? 'Your profile is live. You can now receive and accept jobs.'
               : 'Most applications are reviewed within 24 hours. We’ll notify you when it’s done.'}
@@ -83,13 +77,42 @@ export default function ProVerification() {
         </View>
 
         <View style={styles.card}>
-          <StatusTimeline steps={STEPS} currentIndex={currentIndex} />
+          {STEPS.map((step, i) => {
+            const done = i < currentIndex;
+            const active = i === currentIndex;
+            const nodeColor = done ? c.status.success : active ? c.brand.tint : c.text.muted;
+            return (
+              <View key={step.key} style={styles.step}>
+                <View style={styles.stepRail}>
+                  <View style={[styles.stepDot, { borderColor: nodeColor }]}>
+                    <Icon name={done ? 'check' : step.icon} size={16} color={nodeColor} />
+                  </View>
+                  {i < STEPS.length - 1 ? (
+                    <View
+                      style={[
+                        styles.stepLine,
+                        { backgroundColor: done ? c.status.success : c.border },
+                      ]}
+                    />
+                  ) : null}
+                </View>
+                <View style={styles.stepBody}>
+                  <Text variant="headline" tone={active || done ? 'default' : 'muted'}>
+                    {step.label}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {step.caption}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         {verified ? (
           <Button
             label="Go to dashboard"
-            icon="speedometer"
+            icon="activity"
             style={styles.action}
             onPress={() => router.replace(route('/pro'))}
           />
@@ -97,7 +120,7 @@ export default function ProVerification() {
           <Button
             label="Simulate approval (demo)"
             variant="secondary"
-            icon="flash"
+            icon="zap"
             style={styles.action}
             onPress={complete}
           />
@@ -118,7 +141,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
     hero: {
       alignItems: 'center',
       gap: spacing.sm,
@@ -135,8 +158,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    heroTitle: { ...typography.scale.h1, color: c.text.primary },
-    heroSub: { ...typography.scale.small, color: c.text.secondary, textAlign: 'center' },
     card: {
       padding: spacing.lg,
       borderRadius: radius.lg,
@@ -144,5 +165,17 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
+    step: { flexDirection: 'row', gap: spacing.md },
+    stepRail: { alignItems: 'center' },
+    stepDot: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.pill,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepLine: { width: 2, flex: 1, minHeight: spacing.md, marginVertical: spacing.xs },
+    stepBody: { flex: 1, paddingTop: spacing.xs, paddingBottom: spacing.lg },
     action: { marginTop: spacing.xl },
   });

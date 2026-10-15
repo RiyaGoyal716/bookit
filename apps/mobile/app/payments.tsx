@@ -1,19 +1,25 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button } from '../src/components';
+import {
+  Button,
+  Icon,
+  PressableScale,
+  ScreenHeader,
+  StatusPill,
+  Text,
+  type IconName,
+} from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 interface Card {
   id: string;
   brand: string;
   last4: string;
   expiry: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
 }
 
 const CARDS: Card[] = [
@@ -22,12 +28,11 @@ const CARDS: Card[] = [
 ];
 
 const WALLETS = [
-  { id: 'applepay', label: 'Apple Pay', icon: 'logo-apple' as const },
-  { id: 'googlepay', label: 'Google Pay', icon: 'logo-google' as const },
+  { id: 'applepay', label: 'Apple Pay', icon: 'wallet' as const },
+  { id: 'googlepay', label: 'Google Pay', icon: 'wallet' as const },
 ];
 
 export default function PaymentsScreen() {
-  const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -35,30 +40,20 @@ export default function PaymentsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Payment methods</Text>
-        <View style={styles.back} />
-      </View>
+      <ScreenHeader title="Payment methods" />
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionLabel}>Cards</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Cards
+        </Text>
         <View style={styles.card}>
           {CARDS.map((cardItem, i) => {
             const selected = defaultId === cardItem.id;
             return (
-              <Pressable
+              <PressableScale
                 key={cardItem.id}
                 style={[styles.row, i < CARDS.length - 1 && styles.rowDivider]}
                 onPress={() => setDefaultId(cardItem.id)}
@@ -67,30 +62,32 @@ export default function PaymentsScreen() {
                 accessibilityLabel={`${cardItem.brand} ending ${cardItem.last4}`}
               >
                 <View style={styles.cardIcon}>
-                  <Ionicons name={cardItem.icon} size={20} color={c.brand.tint} />
+                  <Icon name={cardItem.icon} size={20} color={c.brand.tint} />
                 </View>
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowTitle}>
+                  <Text variant="headline">
                     {cardItem.brand} •••• {cardItem.last4}
                   </Text>
-                  <Text style={styles.rowSub}>Expires {cardItem.expiry}</Text>
+                  <Text variant="caption" tone="muted">
+                    Expires {cardItem.expiry}
+                  </Text>
                 </View>
                 {selected ? (
-                  <View style={styles.defaultTag}>
-                    <Text style={styles.defaultText}>Default</Text>
-                  </View>
+                  <StatusPill label="Default" tone="accent" />
                 ) : (
-                  <Ionicons name="radio-button-off" size={20} color={c.text.muted} />
+                  <Icon name="circle" size={20} color={c.text.muted} />
                 )}
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
 
-        <Text style={styles.sectionLabel}>Wallets</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Wallets
+        </Text>
         <View style={styles.card}>
           {WALLETS.map((w, i) => (
-            <Pressable
+            <PressableScale
               key={w.id}
               style={[styles.row, i < WALLETS.length - 1 && styles.rowDivider]}
               onPress={() => showToast(`${w.label} will be available at checkout`)}
@@ -98,25 +95,27 @@ export default function PaymentsScreen() {
               accessibilityLabel={w.label}
             >
               <View style={styles.cardIcon}>
-                <Ionicons name={w.icon} size={20} color={c.text.primary} />
+                <Icon name={w.icon} size={20} color={c.text.primary} />
               </View>
-              <Text style={styles.rowTitle}>{w.label}</Text>
-              <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </Pressable>
+              <Text variant="headline" style={styles.rowTitle}>
+                {w.label}
+              </Text>
+              <Icon name="chevron-right" size={20} color={c.text.muted} />
+            </PressableScale>
           ))}
         </View>
 
         <Button
           label="Add a new card"
           variant="secondary"
-          icon="add"
+          icon="plus"
           style={styles.addBtn}
           onPress={() => showToast('Add card is not available in the demo')}
         />
 
         <View style={styles.secureNote}>
-          <Ionicons name="lock-closed" size={14} color={c.text.muted} />
-          <Text style={styles.secureText}>
+          <Icon name="lock" size={16} color={c.text.muted} />
+          <Text variant="caption" tone="muted" style={styles.secureText}>
             Your payment details are encrypted and never shared with providers.
           </Text>
         </View>
@@ -128,18 +127,7 @@ export default function PaymentsScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    title: { ...typography.scale.h2, color: c.text.primary },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginBottom: spacing.sm,
       marginTop: spacing.lg,
     },
@@ -166,20 +154,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     rowInfo: { flex: 1, gap: 2 },
-    rowTitle: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
-    rowSub: { ...typography.scale.caption, color: c.text.muted },
-    defaultTag: {
-      paddingVertical: 2,
-      paddingHorizontal: spacing.sm,
-      borderRadius: radius.pill,
-      backgroundColor: c.brand.primarySoft,
-    },
-    defaultText: {
-      ...typography.scale.caption,
-      color: c.brand.tint,
-      fontFamily: typography.font.semibold,
-      fontWeight: '600',
-    },
+    rowTitle: { flex: 1 },
     addBtn: { marginTop: spacing.xl },
     secureNote: {
       flexDirection: 'row',
@@ -187,5 +162,5 @@ const makeStyles = (c: Palette) =>
       gap: spacing.sm,
       marginTop: spacing.lg,
     },
-    secureText: { flex: 1, ...typography.scale.caption, color: c.text.muted },
+    secureText: { flex: 1 },
   });

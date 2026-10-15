@@ -1,20 +1,19 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { Text, Icon, ScreenHeader, type IconName } from '../src/components/ui';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 interface Policy {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   title: string;
   points: string[];
 }
 
 const POLICIES: Policy[] = [
   {
-    icon: 'time-outline',
+    icon: 'clock',
     title: 'Cancellation',
     points: [
       'Free cancellation up to 24 hours before your appointment.',
@@ -23,7 +22,7 @@ const POLICIES: Policy[] = [
     ],
   },
   {
-    icon: 'repeat-outline',
+    icon: 'repeat',
     title: 'Rescheduling',
     points: [
       'Reschedule any booking up to 12 hours before, free of charge.',
@@ -31,7 +30,7 @@ const POLICIES: Policy[] = [
     ],
   },
   {
-    icon: 'card-outline',
+    icon: 'card',
     title: 'Payments & fees',
     points: [
       'A 12% platform fee is added to every booking.',
@@ -40,7 +39,7 @@ const POLICIES: Policy[] = [
     ],
   },
   {
-    icon: 'shield-checkmark-outline',
+    icon: 'shield-check',
     title: 'Satisfaction guarantee',
     points: [
       'Not happy? Report an issue within 48 hours of the job.',
@@ -50,26 +49,13 @@ const POLICIES: Policy[] = [
 ];
 
 export default function PoliciesScreen() {
-  const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Booking policies</Text>
-        <View style={styles.back} />
-      </View>
+      <ScreenHeader title="Booking policies" />
 
       <ScrollView
         contentContainerStyle={{
@@ -79,7 +65,7 @@ export default function PoliciesScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.intro}>
+        <Text variant="caption" tone="muted">
           These policies keep bookings fair for you and our providers. They apply to every booking
           made on Bookit.
         </Text>
@@ -87,14 +73,16 @@ export default function PoliciesScreen() {
           <View key={p.title} style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.cardIcon}>
-                <Ionicons name={p.icon} size={20} color={c.brand.tint} />
+                <Icon name={p.icon} size={20} color={c.brand.tint} />
               </View>
-              <Text style={styles.cardTitle}>{p.title}</Text>
+              <Text variant="title2">{p.title}</Text>
             </View>
             {p.points.map((point) => (
               <View key={point} style={styles.point}>
-                <Ionicons name="checkmark-circle" size={16} color={c.status.success} />
-                <Text style={styles.pointText}>{point}</Text>
+                <Icon name="check-circle" size={16} color={c.status.success} />
+                <Text variant="caption" tone="muted" style={styles.pointText}>
+                  {point}
+                </Text>
               </View>
             ))}
           </View>
@@ -107,16 +95,6 @@ export default function PoliciesScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    title: { ...typography.scale.h2, color: c.text.primary },
-    intro: { ...typography.scale.small, color: c.text.secondary },
     card: {
       padding: spacing.lg,
       borderRadius: radius.lg,
@@ -139,7 +117,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    cardTitle: { ...typography.scale.h2, color: c.text.primary },
     point: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-    pointText: { flex: 1, ...typography.scale.small, color: c.text.secondary },
+    pointText: { flex: 1 },
   });

@@ -1,19 +1,24 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, type ViewStyle, type StyleProp } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
+import { BottomSheet } from '../../src/components';
 import {
+  Text,
+  Icon,
+  IconButton,
+  PressableScale,
+  Chip,
+  Card,
+  Avatar,
+  Rating,
+  Button,
+  SegmentedControl,
+  Toggle,
   EmptyState,
-  MapPlaceholder,
-  ProviderCard,
-  SortFilterSheet,
-  DEFAULT_SORT_FILTER,
-  activeFilterCount,
-  type SortFilterValue,
-} from '../../src/components';
+} from '../../src/components/ui';
 import { getCategoryBySlug, getProvidersByCategory } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
 import type { SubService } from '../../src/mocks/categories';
@@ -23,7 +28,44 @@ import { useCartStore } from '../../src/stores/cartStore';
 import { useCompareStore, COMPARE_LIMIT } from '../../src/stores/compareStore';
 import { showToast } from '../../src/stores/toastStore';
 import { useT, useMoney } from '../../src/i18n';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, shadow, spacing, type Palette } from '../../src/theme';
+
+// ---------------------------------------------------------------------------
+// Sort & filter model (previously src/components/SortFilterSheet, now inlined).
+// ---------------------------------------------------------------------------
+type SortKey = 'rating' | 'price' | 'distance';
+type PriceRange = 'all' | 'low' | 'mid' | 'high';
+
+export interface SortFilterValue {
+  sort: SortKey;
+  priceRange: PriceRange;
+  minRating4: boolean;
+  availableToday: boolean;
+}
+
+const DEFAULT_SORT_FILTER: SortFilterValue = {
+  sort: 'rating',
+  priceRange: 'all',
+  minRating4: false,
+  availableToday: false,
+};
+
+function activeFilterCount(v: SortFilterValue): number {
+  let n = 0;
+  if (v.priceRange !== 'all') n += 1;
+  if (v.minRating4) n += 1;
+  if (v.availableToday) n += 1;
+  return n;
+}
+
+const SORT_KEYS: SortKey[] = ['rating', 'price', 'distance'];
+const SORT_LABELS = ['Top rated', 'Price', 'Distance'];
+const PRICE_OPTIONS: { label: string; value: PriceRange }[] = [
+  { label: 'Any', value: 'all' },
+  { label: 'Budget', value: 'low' },
+  { label: 'Mid', value: 'mid' },
+  { label: 'Premium', value: 'high' },
+];
 
 function priceMatches(range: SortFilterValue['priceRange'], priceFrom: number): boolean {
   switch (range) {
@@ -106,16 +148,15 @@ export default function CategoryScreen() {
   if (!category) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.backPlain}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="alert-circle-outline" title="Category not found" />
+          style={styles.backPlain}
+        />
+        <EmptyState art="error" title="Category not found" />
       </View>
     );
   }
@@ -125,47 +166,36 @@ export default function CategoryScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
+          style={styles.back}
+        />
         <View style={styles.headerText}>
-          <Text style={styles.title}>{category.label}</Text>
-          <Text style={styles.tagline}>{category.tagline}</Text>
+          <Text variant="title1">{category.label}</Text>
+          <Text variant="callout" tone="muted">
+            {category.tagline}
+          </Text>
         </View>
-        <Pressable
+        <IconButton
+          name="compare"
+          size={24}
           onPress={() => setCompareMode((v) => !v)}
-          style={[styles.headerBtn, compareMode && styles.headerBtnActive]}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Toggle compare mode"
-          accessibilityState={{ selected: compareMode }}
-        >
-          <Ionicons
-            name="git-compare-outline"
-            size={22}
-            color={compareMode ? c.brand.tint : c.text.primary}
-          />
-        </Pressable>
-        <Pressable
+          color={compareMode ? c.brand.tint : c.text.primary}
+          style={[styles.headerBtn, compareMode && styles.headerBtnActive]}
+        />
+        <IconButton
+          name={showMap ? 'list-checks' : 'map'}
+          size={24}
           onPress={() => setShowMap((v) => !v)}
-          style={[styles.headerBtn, showMap && styles.headerBtnActive]}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel={showMap ? 'Hide map' : 'Show map'}
-          accessibilityState={{ selected: showMap }}
-        >
-          <Ionicons
-            name={showMap ? 'list-outline' : 'map-outline'}
-            size={22}
-            color={showMap ? c.brand.tint : c.text.primary}
-          />
-        </Pressable>
+          color={showMap ? c.brand.tint : c.text.primary}
+          style={[styles.headerBtn, showMap && styles.headerBtnActive]}
+        />
       </View>
 
       <FlashList
@@ -180,22 +210,19 @@ export default function CategoryScreen() {
         ListHeaderComponent={
           <View>
             {showMap ? (
-              <MapPlaceholder
+              <InlineMap
                 height={200}
                 style={{ marginTop: spacing.lg }}
                 caption={`${results.length} providers near ${category.label.toLowerCase()} in your area`}
-                pins={results.slice(0, 6).map((p, i) => ({
-                  id: p.id,
-                  x: 0.15 + ((i * 0.37) % 0.7),
-                  y: 0.2 + ((i * 0.29) % 0.6),
-                  tone: getAvailability(p.id).availableToday ? 'brand' : 'muted',
-                }))}
+                c={c}
               />
             ) : null}
 
             {category.packages && category.packages.length > 0 ? (
               <>
-                <Text style={styles.sectionLabel}>Bundles &amp; packages</Text>
+                <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+                  Bundles &amp; packages
+                </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -204,45 +231,60 @@ export default function CategoryScreen() {
                   {category.packages.map((pkg) => (
                     <View key={pkg.id} style={styles.pkgCard}>
                       <View style={styles.pkgTop}>
-                        <Text style={styles.pkgName} numberOfLines={1}>
+                        <Text variant="headline" numberOfLines={1} style={styles.pkgName}>
                           {pkg.name}
                         </Text>
                         {pkg.popular ? (
                           <View style={styles.popularTag}>
-                            <Text style={styles.popularText}>Popular</Text>
+                            <Text variant="micro" tone="accent">
+                              Popular
+                            </Text>
                           </View>
                         ) : null}
                       </View>
                       {pkg.includes.map((inc) => (
                         <View key={inc} style={styles.pkgIncRow}>
-                          <Ionicons name="checkmark" size={13} color={c.status.success} />
-                          <Text style={styles.pkgInc} numberOfLines={1}>
+                          <Icon name="check" size={16} color={c.status.success} />
+                          <Text
+                            variant="caption"
+                            tone="muted"
+                            numberOfLines={1}
+                            style={styles.flex1}
+                          >
                             {inc}
                           </Text>
                         </View>
                       ))}
                       <View style={styles.pkgPriceRow}>
-                        <Text style={styles.pkgPrice}>{money(pkg.price)}</Text>
-                        <Text style={styles.pkgWas}>{money(pkg.wasPrice)}</Text>
+                        <Text variant="title2" tone="accent">
+                          {money(pkg.price)}
+                        </Text>
+                        <Text variant="callout" tone="subtle" style={styles.pkgWas}>
+                          {money(pkg.wasPrice)}
+                        </Text>
                         <View style={styles.saveTag}>
-                          <Text style={styles.saveText}>
+                          <Text variant="micro" tone="success">
                             Save {money(pkg.wasPrice - pkg.price)}
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.pkgDuration}>{pkg.durationMin} min total</Text>
+                      <Text variant="caption" tone="subtle">
+                        {pkg.durationMin} min total
+                      </Text>
                     </View>
                   ))}
                 </ScrollView>
               </>
             ) : null}
 
-            <Text style={styles.sectionLabel}>Popular services</Text>
+            <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+              Popular services
+            </Text>
             <View style={styles.subGrid}>
               {category.subServices.map((sub) => {
                 const selected = activeSub === sub.id;
                 return (
-                  <Pressable
+                  <PressableScale
                     key={sub.id}
                     style={[styles.subCard, selected && styles.subCardActive]}
                     onPress={() => setActiveSub(selected ? null : sub.id)}
@@ -252,20 +294,24 @@ export default function CategoryScreen() {
                   >
                     {sub.popular ? (
                       <View style={styles.popularTag}>
-                        <Text style={styles.popularText}>Popular</Text>
+                        <Text variant="micro" tone="accent">
+                          Popular
+                        </Text>
                       </View>
                     ) : null}
-                    <Text style={styles.subName}>{sub.name}</Text>
-                    <Text style={styles.subDesc} numberOfLines={2}>
+                    <Text variant="headline">{sub.name}</Text>
+                    <Text variant="caption" tone="muted" numberOfLines={2} style={styles.subDesc}>
                       {sub.description}
                     </Text>
                     <View style={styles.subMeta}>
-                      <Text style={styles.subPrice}>
+                      <Text variant="callout" tone="accent">
                         {t('money.from')} {money(sub.priceFrom)}
                       </Text>
-                      <Text style={styles.subDuration}>· {sub.durationMin} min</Text>
+                      <Text variant="caption" tone="subtle">
+                        · {sub.durationMin} min
+                      </Text>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </View>
@@ -276,45 +322,45 @@ export default function CategoryScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filterChips}
               >
-                <FilterChip
+                <Chip
                   label="All"
-                  active={activeSub === null}
+                  selected={activeSub === null}
                   onPress={() => setActiveSub(null)}
-                  styles={styles}
                 />
                 {category.subServices.map((sub) => (
-                  <FilterChip
+                  <Chip
                     key={sub.id}
                     label={sub.name}
-                    active={activeSub === sub.id}
+                    selected={activeSub === sub.id}
                     onPress={() => setActiveSub(activeSub === sub.id ? null : sub.id)}
-                    styles={styles}
                   />
                 ))}
               </ScrollView>
-              <Pressable
+              <PressableScale
                 style={styles.sortBtn}
                 onPress={() => setSheetOpen(true)}
                 accessibilityRole="button"
                 accessibilityLabel="Sort and filter"
               >
-                <Ionicons name="options-outline" size={20} color={c.text.primary} />
+                <Icon name="sliders" size={20} color={c.text.primary} />
                 {filterCount > 0 ? (
                   <View style={styles.sortBadge}>
-                    <Text style={styles.sortBadgeText}>{filterCount}</Text>
+                    <Text variant="micro" tone="onPrimary">
+                      {filterCount}
+                    </Text>
                   </View>
                 ) : null}
-              </Pressable>
+              </PressableScale>
             </View>
 
-            <Text style={styles.sectionLabel}>
+            <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
               {results.length} {results.length === 1 ? 'provider' : 'providers'} available
             </Text>
           </View>
         }
         ListEmptyComponent={
           <EmptyState
-            icon="search-outline"
+            art="search"
             title="No providers match"
             message="Try clearing the filters to see more results."
             actionLabel="Clear filters"
@@ -325,7 +371,7 @@ export default function CategoryScreen() {
           />
         }
         renderItem={({ item }: { item: Provider }) => (
-          <ProviderCard
+          <ProviderRowCard
             provider={item}
             onPress={() => router.push(`/provider/${item.id}`)}
             onCompareToggle={compareMode ? () => onToggleCompare(item.id) : undefined}
@@ -335,34 +381,44 @@ export default function CategoryScreen() {
       />
 
       {compareIds.length > 0 ? (
-        <Pressable
+        <PressableScale
           style={[styles.compareBar, { paddingBottom: insets.bottom + spacing.sm }]}
           onPress={() => router.push(route('/compare'))}
           accessibilityRole="button"
           accessibilityLabel={`Compare ${compareIds.length} providers`}
         >
           <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{compareIds.length}</Text>
+            <Text variant="callout" tone="onPrimary" style={styles.cartBadgeText}>
+              {compareIds.length}
+            </Text>
           </View>
-          <Text style={styles.cartBarText}>Compare providers</Text>
-          <Ionicons name="git-compare" size={18} color={c.text.inverse} />
-        </Pressable>
+          <Text variant="headline" tone="onPrimary" style={styles.cartBarText}>
+            Compare providers
+          </Text>
+          <Icon name="compare" size={20} color={c.text.inverse} />
+        </PressableScale>
       ) : null}
 
       {cartCount > 0 && compareIds.length === 0 ? (
-        <Pressable
+        <PressableScale
           style={[styles.cartBar, { paddingBottom: insets.bottom + spacing.sm }]}
           onPress={() => router.push(route('/cart'))}
           accessibilityRole="button"
           accessibilityLabel={`View cart, ${cartCount} items, ${money(cartTotal)}`}
         >
           <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            <Text variant="callout" tone="onPrimary" style={styles.cartBadgeText}>
+              {cartCount}
+            </Text>
           </View>
-          <Text style={styles.cartBarText}>View cart</Text>
-          <Text style={styles.cartBarTotal}>{money(cartTotal)}</Text>
-          <Ionicons name="arrow-forward" size={18} color={c.text.inverse} />
-        </Pressable>
+          <Text variant="headline" tone="onPrimary" style={styles.cartBarText}>
+            View cart
+          </Text>
+          <Text variant="headline" tone="onPrimary" style={styles.cartBarTotal}>
+            {money(cartTotal)}
+          </Text>
+          <Icon name="arrow-right" size={20} color={c.text.inverse} />
+        </PressableScale>
       ) : null}
 
       <SortFilterSheet
@@ -378,29 +434,197 @@ export default function CategoryScreen() {
   );
 }
 
-function FilterChip({
-  label,
-  active,
+// ---------------------------------------------------------------------------
+// Inline provider card (replaces the removed ProviderCard component).
+// ---------------------------------------------------------------------------
+function ProviderRowCard({
+  provider,
   onPress,
-  styles,
+  onCompareToggle,
+  compareSelected,
 }: {
-  label: string;
-  active: boolean;
+  provider: Provider;
   onPress: () => void;
-  styles: ReturnType<typeof makeStyles>;
+  onCompareToggle?: () => void;
+  compareSelected?: boolean;
 }) {
+  const c = useColors();
+  const money = useMoney();
   return (
-    <Pressable
-      style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      accessibilityLabel={label}
-    >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </Pressable>
+    <Card variant="outlined" padding={spacing.md} style={pcStyles.card}>
+      <PressableScale
+        onPress={onPress}
+        scaleTo={0.99}
+        accessibilityRole="button"
+        accessibilityLabel={provider.name}
+        style={pcStyles.row}
+      >
+        <Avatar uri={provider.photo} name={provider.name} size={56} />
+        <View style={pcStyles.body}>
+          <Text variant="headline" numberOfLines={1}>
+            {provider.name}
+          </Text>
+          <Text variant="footnote" tone="muted" numberOfLines={1}>
+            {provider.tagline ?? provider.category} · {provider.area ?? `${provider.distanceKm} km`}
+          </Text>
+          <View style={pcStyles.meta}>
+            <Rating value={provider.rating} count={provider.reviewCount} />
+            <Text variant="footnote" tone="muted">
+              ·
+            </Text>
+            <Text variant="footnote" tabular style={pcStyles.price}>
+              {money(provider.priceFrom)}+
+            </Text>
+          </View>
+        </View>
+      </PressableScale>
+      {onCompareToggle ? (
+        <IconButton
+          name={compareSelected ? 'check-circle' : 'plus'}
+          accessibilityLabel={compareSelected ? 'Remove from compare' : 'Add to compare'}
+          variant="subtle"
+          diameter={36}
+          size={16}
+          color={compareSelected ? c.brand.tint : c.text.muted}
+          onPress={onCompareToggle}
+        />
+      ) : null}
+    </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Inline map placeholder (replaces the removed MapPlaceholder component).
+// ---------------------------------------------------------------------------
+function InlineMap({
+  height,
+  caption,
+  style,
+  c,
+}: {
+  height: number;
+  caption: string;
+  style?: StyleProp<ViewStyle>;
+  c: Palette;
+}) {
+  return (
+    <View
+      style={[
+        {
+          height,
+          borderRadius: radius.lg,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: c.border,
+          backgroundColor: c.background.muted,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing.lg,
+        },
+        style,
+      ]}
+    >
+      <Icon name="map-pin" size={24} color={c.brand.tint} />
+      <Text variant="callout" tone="muted" center style={{ marginTop: spacing.sm }}>
+        {caption}
+      </Text>
+      <Text variant="footnote" tone="subtle" center>
+        Map preview
+      </Text>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline sort & filter sheet (replaces the removed SortFilterSheet component).
+// ---------------------------------------------------------------------------
+function SortFilterSheet({
+  visible,
+  value,
+  onClose,
+  onApply,
+}: {
+  visible: boolean;
+  value: SortFilterValue;
+  onClose: () => void;
+  onApply: (v: SortFilterValue) => void;
+}) {
+  const [draft, setDraft] = useState<SortFilterValue>(value);
+  const [wasVisible, setWasVisible] = useState(visible);
+
+  // Re-seed the draft from the applied value each time the sheet opens
+  // (render-time state sync — the React-recommended alternative to an effect).
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) setDraft(value);
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose} title="Sort & filter">
+      <Text variant="footnote" tone="muted" style={sfStyles.label}>
+        Sort by
+      </Text>
+      <SegmentedControl
+        options={SORT_LABELS}
+        value={Math.max(0, SORT_KEYS.indexOf(draft.sort))}
+        onChange={(i) => setDraft({ ...draft, sort: SORT_KEYS[i] })}
+      />
+
+      <Text variant="footnote" tone="muted" style={[sfStyles.label, sfStyles.labelSpaced]}>
+        Price
+      </Text>
+      <View style={sfStyles.chipRow}>
+        {PRICE_OPTIONS.map((o) => (
+          <Chip
+            key={o.value}
+            label={o.label}
+            selected={draft.priceRange === o.value}
+            onPress={() => setDraft({ ...draft, priceRange: o.value })}
+          />
+        ))}
+      </View>
+
+      <View style={[sfStyles.toggleRow, sfStyles.labelSpaced]}>
+        <Text variant="body">Rated 4 stars &amp; up</Text>
+        <Toggle
+          value={draft.minRating4}
+          onChange={(v) => setDraft({ ...draft, minRating4: v })}
+          accessibilityLabel="Rated 4 stars and up"
+        />
+      </View>
+      <View style={sfStyles.toggleRow}>
+        <Text variant="body">Available today</Text>
+        <Toggle
+          value={draft.availableToday}
+          onChange={(v) => setDraft({ ...draft, availableToday: v })}
+          accessibilityLabel="Available today"
+        />
+      </View>
+
+      <Button label="Show results" onPress={() => onApply(draft)} style={sfStyles.applyBtn} />
+    </BottomSheet>
+  );
+}
+
+const pcStyles = StyleSheet.create({
+  card: { marginBottom: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  row: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  body: { flex: 1, gap: 2 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  price: { fontWeight: '600' },
+});
+
+const sfStyles = StyleSheet.create({
+  label: { marginBottom: spacing.sm },
+  labelSpaced: { marginTop: spacing.lg },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  applyBtn: { marginTop: spacing.xl },
+});
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
@@ -412,14 +636,12 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
-    backPlain: { alignSelf: 'flex-start', marginBottom: spacing.lg, marginLeft: spacing.lg },
+    back: { marginLeft: -spacing.xs },
+    backPlain: { alignSelf: 'flex-start', marginBottom: spacing.lg, marginLeft: spacing.sm },
     headerBtn: {
       width: 44,
       height: 44,
       borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     headerBtnActive: { backgroundColor: c.brand.primarySoft },
     headerText: { flex: 1 },
@@ -435,19 +657,16 @@ const makeStyles = (c: Palette) =>
       ...shadow.soft,
     },
     pkgTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    pkgName: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
+    pkgName: { flex: 1 },
     pkgIncRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    pkgInc: { flex: 1, ...typography.scale.caption, color: c.text.secondary },
+    flex1: { flex: 1 },
     pkgPriceRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
       gap: spacing.sm,
       marginTop: spacing.xs,
     },
-    pkgPrice: { ...typography.scale.h2, color: c.brand.tint },
     pkgWas: {
-      ...typography.scale.small,
-      color: c.text.muted,
       textDecorationLine: 'line-through',
     },
     saveTag: {
@@ -456,20 +675,8 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.pill,
       backgroundColor: c.status.successSoft,
     },
-    saveText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.status.success,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    pkgDuration: { ...typography.scale.caption, color: c.text.muted },
-    title: { ...typography.scale.h1, color: c.text.primary },
-    tagline: { ...typography.scale.small, color: c.text.secondary },
     sep: { height: spacing.md },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginTop: spacing.lg,
       marginBottom: spacing.md,
     },
@@ -493,23 +700,13 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.accentSoft,
       marginBottom: spacing.xs,
     },
-    popularText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.brand.accent,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    subName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    subDesc: { ...typography.scale.caption, color: c.text.secondary, minHeight: 32 },
+    subDesc: { minHeight: 32 },
     subMeta: {
       flexDirection: 'row',
       alignItems: 'baseline',
       gap: spacing.xs,
       marginTop: spacing.xs,
     },
-    subPrice: { ...typography.scale.smallMedium, color: c.brand.tint },
-    subDuration: { ...typography.scale.caption, color: c.text.muted },
     filterRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -517,17 +714,6 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.lg,
     },
     filterChips: { gap: spacing.sm, paddingRight: spacing.sm },
-    chip: {
-      minHeight: 40,
-      justifyContent: 'center',
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-    },
-    chipActive: { backgroundColor: c.brand.primary, borderColor: c.brand.primary },
-    chipInactive: { backgroundColor: c.background.surface, borderColor: c.border },
-    chipText: { ...typography.scale.smallMedium, color: c.text.secondary },
-    chipTextActive: { color: c.text.inverse },
     sortBtn: {
       width: 44,
       height: 44,
@@ -550,7 +736,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    sortBadgeText: { ...typography.scale.caption, fontSize: 10, color: c.text.inverse },
     cartBar: {
       position: 'absolute',
       left: spacing.lg,
@@ -586,21 +771,11 @@ const makeStyles = (c: Palette) =>
       height: 24,
       paddingHorizontal: 6,
       borderRadius: 12,
-      backgroundColor: 'rgba(255,255,255,0.25)',
+      backgroundColor: c.overlay,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    cartBadgeText: {
-      ...typography.scale.smallMedium,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    cartBarText: { flex: 1, ...typography.scale.bodyMedium, color: c.text.inverse },
-    cartBarTotal: {
-      ...typography.scale.bodyMedium,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
+    cartBadgeText: { fontWeight: '700' },
+    cartBarText: { flex: 1 },
+    cartBarTotal: { fontWeight: '700' },
   });

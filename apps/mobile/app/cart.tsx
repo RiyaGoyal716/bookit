@@ -1,16 +1,24 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, EmptyState, Input } from '../src/components';
+import {
+  Button,
+  EmptyState,
+  TextField,
+  Text,
+  Icon,
+  IconButton,
+  PressableScale,
+  Chip,
+} from '../src/components/ui';
 import { getProviderById } from '../src/mocks';
 import { route } from '../src/lib/nav';
 import { ADD_ONS, computeCart, useCartStore } from '../src/stores/cartStore';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 import { useMoney } from '../src/i18n';
 
 export default function CartScreen() {
@@ -70,15 +78,9 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <View style={styles.container}>
-        <Header
-          title="Your cart"
-          onClose={() => router.back()}
-          styles={styles}
-          c={c}
-          insets={insets}
-        />
+        <Header title="Your cart" onClose={() => router.back()} styles={styles} insets={insets} />
         <EmptyState
-          icon="cart-outline"
+          art="empty"
           title="Your cart is empty"
           message="Browse providers and add a service to get started."
           actionLabel="Explore services"
@@ -90,13 +92,7 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      <Header
-        title="Your cart"
-        onClose={() => router.back()}
-        styles={styles}
-        c={c}
-        insets={insets}
-      />
+      <Header title="Your cart" onClose={() => router.back()} styles={styles} insets={insets} />
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + 120 }}
@@ -105,8 +101,10 @@ export default function CartScreen() {
       >
         {provider ? (
           <View style={styles.providerRow}>
-            <Ionicons name="storefront-outline" size={16} color={c.brand.tint} />
-            <Text style={styles.providerName}>{providerName}</Text>
+            <Icon name="store" size={16} color={c.brand.tint} />
+            <Text variant="callout" tone="muted">
+              {providerName}
+            </Text>
           </View>
         ) : null}
 
@@ -118,45 +116,44 @@ export default function CartScreen() {
               style={[styles.itemRow, i < items.length - 1 && styles.itemDivider]}
             >
               <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemMeta}>
+                <Text variant="headline">{item.name}</Text>
+                <Text variant="caption" tone="subtle">
                   {item.durationMin} min · {money(item.price)}
                 </Text>
               </View>
               <View style={styles.stepper}>
-                <Pressable
+                <PressableScale
                   style={styles.stepBtn}
                   onPress={() => decrement(item.key)}
-                  hitSlop={6}
                   accessibilityRole="button"
                   accessibilityLabel={`Decrease ${item.name}`}
                 >
-                  <Ionicons
-                    name={item.quantity === 1 ? 'trash-outline' : 'remove'}
+                  <Icon
+                    name={item.quantity === 1 ? 'trash' : 'minus'}
                     size={16}
                     color={c.brand.tint}
                   />
-                </Pressable>
-                <Text style={styles.stepQty}>{item.quantity}</Text>
-                <Pressable
+                </PressableScale>
+                <Text variant="headline" style={styles.stepQty}>
+                  {item.quantity}
+                </Text>
+                <PressableScale
                   style={styles.stepBtn}
                   onPress={() => increment(item.key)}
-                  hitSlop={6}
                   accessibilityRole="button"
                   accessibilityLabel={`Increase ${item.name}`}
                 >
-                  <Ionicons name="add" size={16} color={c.brand.tint} />
-                </Pressable>
+                  <Icon name="plus" size={16} color={c.brand.tint} />
+                </PressableScale>
               </View>
-              <Pressable
+              <PressableScale
                 onPress={() => removeItem(item.key)}
-                hitSlop={8}
                 style={styles.removeBtn}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${item.name}`}
               >
-                <Text style={styles.itemLineTotal}>{money(item.price * item.quantity)}</Text>
-              </Pressable>
+                <Text variant="headline">{money(item.price * item.quantity)}</Text>
+              </PressableScale>
             </View>
           ))}
         </View>
@@ -164,7 +161,9 @@ export default function CartScreen() {
         {/* Frequently added together */}
         {suggestions.length > 0 ? (
           <>
-            <Text style={styles.sectionLabel}>Frequently added together</Text>
+            <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+              Frequently added together
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -172,11 +171,13 @@ export default function CartScreen() {
             >
               {suggestions.map((s) => (
                 <View key={s.name} style={styles.suggestCard}>
-                  <Text style={styles.suggestName} numberOfLines={2}>
+                  <Text variant="callout" numberOfLines={2} style={styles.suggestName}>
                     {s.name}
                   </Text>
-                  <Text style={styles.suggestPrice}>{money(s.price)}</Text>
-                  <Pressable
+                  <Text variant="callout" tone="accent">
+                    {money(s.price)}
+                  </Text>
+                  <PressableScale
                     style={styles.suggestAdd}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -192,9 +193,11 @@ export default function CartScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={`Add ${s.name}`}
                   >
-                    <Ionicons name="add" size={16} color={c.brand.tint} />
-                    <Text style={styles.suggestAddText}>Add</Text>
-                  </Pressable>
+                    <Icon name="plus" size={16} color={c.brand.tint} />
+                    <Text variant="callout" tone="accent">
+                      Add
+                    </Text>
+                  </PressableScale>
                 </View>
               ))}
             </ScrollView>
@@ -202,69 +205,73 @@ export default function CartScreen() {
         ) : null}
 
         {/* Add-ons */}
-        <Text style={styles.sectionLabel}>Add-ons</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Add-ons
+        </Text>
         <View style={styles.card}>
           {ADD_ONS.map((a, i) => {
             const selected = addOnIds.includes(a.id);
             return (
-              <Pressable
+              <PressableScale
                 key={a.id}
                 style={[styles.addOnRow, i < ADD_ONS.length - 1 && styles.itemDivider]}
                 onPress={() => toggleAddOn(a.id)}
+                haptic="selection"
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected }}
                 accessibilityLabel={`${a.name}, ${money(a.price)}`}
               >
                 <View style={[styles.checkbox, selected && styles.checkboxOn]}>
-                  {selected ? <Ionicons name="checkmark" size={14} color={c.text.inverse} /> : null}
+                  {selected ? <Icon name="check" size={16} color={c.text.inverse} /> : null}
                 </View>
-                <Text style={styles.addOnName}>{a.name}</Text>
-                <Text style={styles.addOnPrice}>+{money(a.price)}</Text>
-              </Pressable>
+                <Text variant="body" style={styles.addOnName}>
+                  {a.name}
+                </Text>
+                <Text variant="callout" tone="muted">
+                  +{money(a.price)}
+                </Text>
+              </PressableScale>
             );
           })}
         </View>
 
         {/* Tip */}
-        <Text style={styles.sectionLabel}>Add a tip</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Add a tip
+        </Text>
         <View style={styles.tipRow}>
-          {tipOptions.map((t) => {
-            const active = tip === t.value;
-            return (
-              <Pressable
-                key={t.label}
-                style={[styles.tipChip, active && styles.tipChipActive]}
-                onPress={() => setTip(t.value)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={`Tip ${t.label}`}
-              >
-                <Text style={[styles.tipText, active && styles.tipTextActive]}>{t.label}</Text>
-              </Pressable>
-            );
-          })}
+          {tipOptions.map((opt) => (
+            <Chip
+              key={opt.label}
+              label={opt.label}
+              selected={tip === opt.value}
+              onPress={() => setTip(opt.value)}
+            />
+          ))}
         </View>
 
         {/* Promo */}
-        <Text style={styles.sectionLabel}>Promo code</Text>
-        <View style={styles.promoRow}>
-          <Input
-            containerStyle={styles.promoInput}
-            value={promo}
-            onChangeText={(t) => {
-              setPromo(t);
-              if (promoApplied) clearPromo();
-            }}
-            placeholder="Try BOOKIT10"
-            autoCapitalize="characters"
-            autoCorrect={false}
-            editable={!promoApplied}
-          />
+        <View style={[styles.promoRow, styles.promoSpaced]}>
+          <View style={styles.promoInput}>
+            <TextField
+              label="Promo code"
+              value={promo}
+              onChangeText={(text) => {
+                setPromo(text);
+                if (promoApplied) clearPromo();
+              }}
+              placeholder="Try BOOKIT10"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!promoApplied}
+            />
+          </View>
           <Button
             label={promoApplied ? 'Applied' : 'Apply'}
             variant="secondary"
             disabled={promoApplied || promo.trim().length === 0}
             onPress={onApplyPromo}
+            fullWidth={false}
             style={styles.promoBtn}
           />
         </View>
@@ -286,20 +293,25 @@ export default function CartScreen() {
           ) : null}
           <View style={styles.divider} />
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{money(breakdown.total)}</Text>
+            <Text variant="headline">Total</Text>
+            <Text variant="title1" tone="accent">
+              {money(breakdown.total)}
+            </Text>
           </View>
         </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.footerPrice}>
-          <Text style={styles.footerLabel}>Total</Text>
-          <Text style={styles.footerTotal}>{money(breakdown.total)}</Text>
+          <Text variant="caption" tone="subtle">
+            Total
+          </Text>
+          <Text variant="title2">{money(breakdown.total)}</Text>
         </View>
         <Button
           label="Proceed to checkout"
-          icon="arrow-forward"
+          icon="arrow-right"
+          iconPosition="right"
           style={styles.checkoutBtn}
           onPress={() => router.push(route('/checkout'))}
         />
@@ -312,27 +324,23 @@ function Header({
   title,
   onClose,
   styles,
-  c,
   insets,
 }: {
   title: string;
   onClose: () => void;
   styles: ReturnType<typeof makeStyles>;
-  c: Palette;
   insets: { top: number };
 }) {
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      <Pressable
+      <IconButton
+        name="close"
+        size={24}
+        variant="subtle"
         onPress={onClose}
-        hitSlop={8}
-        style={styles.headerBtn}
-        accessibilityRole="button"
         accessibilityLabel="Close cart"
-      >
-        <Ionicons name="close" size={26} color={c.text.primary} />
-      </Pressable>
-      <Text style={styles.headerTitle}>{title}</Text>
+      />
+      <Text variant="title2">{title}</Text>
       <View style={styles.headerBtn} />
     </View>
   );
@@ -351,8 +359,12 @@ function Row({
 }) {
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowLabel, discount && styles.rowDiscount]}>{label}</Text>
-      <Text style={[styles.rowValue, discount && styles.rowDiscount]}>{value}</Text>
+      <Text variant="callout" tone={discount ? 'success' : 'muted'}>
+        {label}
+      </Text>
+      <Text variant="callout" tone={discount ? 'success' : 'default'}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -369,15 +381,13 @@ const makeStyles = (c: Palette) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: c.border,
     },
-    headerBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    headerTitle: { ...typography.scale.h2, color: c.text.primary },
+    headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     providerRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
       marginBottom: spacing.md,
     },
-    providerName: { ...typography.scale.smallMedium, color: c.text.secondary },
     card: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -393,8 +403,6 @@ const makeStyles = (c: Palette) =>
     },
     itemDivider: { borderBottomWidth: 1, borderBottomColor: c.border },
     itemInfo: { flex: 1, gap: 2 },
-    itemName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    itemMeta: { ...typography.scale.caption, color: c.text.muted },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     stepBtn: {
       width: 32,
@@ -408,14 +416,9 @@ const makeStyles = (c: Palette) =>
     stepQty: {
       minWidth: 18,
       textAlign: 'center',
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
     },
     removeBtn: { minWidth: 44, alignItems: 'flex-end' },
-    itemLineTotal: { ...typography.scale.bodyMedium, color: c.text.primary },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginTop: spacing.xl,
       marginBottom: spacing.md,
     },
@@ -429,8 +432,7 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
       gap: spacing.xs,
     },
-    suggestName: { ...typography.scale.smallMedium, color: c.text.primary, minHeight: 40 },
-    suggestPrice: { ...typography.scale.smallMedium, color: c.brand.tint },
+    suggestName: { minHeight: 40 },
     suggestAdd: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -442,7 +444,6 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1.5,
       borderColor: c.brand.primary,
     },
-    suggestAddText: { ...typography.scale.smallMedium, color: c.brand.tint },
     addOnRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -459,33 +460,16 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     checkboxOn: { backgroundColor: c.brand.primary, borderColor: c.brand.primary },
-    addOnName: { flex: 1, ...typography.scale.body, color: c.text.primary },
-    addOnPrice: { ...typography.scale.smallMedium, color: c.text.secondary },
+    addOnName: { flex: 1 },
     tipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    tipChip: {
-      minHeight: 44,
-      justifyContent: 'center',
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    tipChipActive: { backgroundColor: c.brand.primary, borderColor: c.brand.primary },
-    tipText: { ...typography.scale.smallMedium, color: c.text.secondary },
-    tipTextActive: { color: c.text.inverse },
-    promoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+    promoRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
+    promoSpaced: { marginTop: spacing.xl },
     promoInput: { flex: 1 },
-    promoBtn: { minWidth: 100 },
+    promoBtn: { minWidth: 100, height: 48 },
     breakdownCard: { paddingVertical: spacing.lg, marginTop: spacing.xl, gap: spacing.md },
     row: { flexDirection: 'row', justifyContent: 'space-between' },
-    rowLabel: { ...typography.scale.small, color: c.text.secondary },
-    rowValue: { ...typography.scale.smallMedium, color: c.text.primary },
-    rowDiscount: { color: c.status.success },
     divider: { height: 1, backgroundColor: c.border },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    totalLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    totalValue: { ...typography.scale.h1, color: c.brand.tint },
     footer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -497,7 +481,5 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
     },
     footerPrice: { justifyContent: 'center' },
-    footerLabel: { ...typography.scale.caption, color: c.text.muted },
-    footerTotal: { ...typography.scale.h2, color: c.text.primary },
     checkoutBtn: { flex: 1 },
   });

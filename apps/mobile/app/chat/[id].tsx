@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
@@ -14,11 +12,10 @@ import { Image } from 'expo-image';
 import { MotiView } from 'moti';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 
-import { EmptyState } from '../../src/components';
+import { EmptyState, Text, Icon, IconButton, PressableScale } from '../../src/components/ui';
 import { showToast } from '../../src/stores/toastStore';
 import { useChatStore, QUICK_REPLIES, type ChatMessage } from '../../src/stores/chatStore';
 import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
@@ -56,16 +53,14 @@ export default function ChatScreen() {
   if (!conversation) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.iconBtn}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="chatbubbles-outline" title="Conversation not found" />
+        />
+        <EmptyState art="error" title="Conversation not found" />
       </View>
     );
   }
@@ -99,18 +94,16 @@ export default function ChatScreen() {
       keyboardVerticalOffset={0}
     >
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.iconBtn}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
+        />
         {isSupport ? (
           <View style={styles.supportAvatar}>
-            <Ionicons name="sparkles" size={18} color={c.text.inverse} />
+            <Icon name="sparkles" size={20} color={c.text.inverse} />
           </View>
         ) : conversation.avatar ? (
           <Image
@@ -121,25 +114,23 @@ export default function ChatScreen() {
           />
         ) : null}
         <View style={styles.flex1}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text variant="headline" numberOfLines={1}>
             {conversation.name}
           </Text>
-          <Text style={styles.presence}>
+          <Text variant="caption" tone="accent">
             {typing ? 'typing…' : isSupport ? 'Bookit assistant' : 'Online'}
           </Text>
         </View>
         {!isSupport ? (
-          <Pressable
-            style={styles.iconBtn}
+          <IconButton
+            name="phone"
+            size={24}
+            color={c.brand.tint}
             onPress={() =>
               Linking.openURL('tel:+441130000000').catch(() => showToast('Calling unavailable'))
             }
-            hitSlop={8}
-            accessibilityRole="button"
             accessibilityLabel="Call"
-          >
-            <Ionicons name="call" size={22} color={c.brand.tint} />
-          </Pressable>
+          />
         ) : null}
       </View>
 
@@ -162,28 +153,29 @@ export default function ChatScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {QUICK_REPLIES.map((q) => (
-          <Pressable
+          <PressableScale
             key={q}
             style={styles.quickChip}
             onPress={() => doSend(q)}
+            haptic="selection"
             accessibilityRole="button"
             accessibilityLabel={`Send quick reply: ${q}`}
           >
-            <Text style={styles.quickText}>{q}</Text>
-          </Pressable>
+            <Text variant="callout" tone="muted">
+              {q}
+            </Text>
+          </PressableScale>
         ))}
       </ScrollView>
 
       <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <Pressable
-          style={styles.attach}
+        <IconButton
+          name="image"
+          size={24}
+          color={c.brand.tint}
           onPress={attachImage}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Attach a photo"
-        >
-          <Ionicons name="image-outline" size={22} color={c.brand.tint} />
-        </Pressable>
+        />
         <TextInput
           style={styles.input}
           value={draft}
@@ -193,15 +185,15 @@ export default function ChatScreen() {
           multiline
           accessibilityLabel="Message input"
         />
-        <Pressable
+        <PressableScale
           style={[styles.sendBtn, !draft.trim() && styles.sendBtnOff]}
           onPress={() => doSend()}
           disabled={!draft.trim()}
           accessibilityRole="button"
           accessibilityLabel="Send message"
         >
-          <Ionicons name="arrow-up" size={20} color={c.text.inverse} />
-        </Pressable>
+          <Icon name="arrow-up" size={20} color={c.text.inverse} />
+        </PressableScale>
       </View>
     </KeyboardAvoidingView>
   );
@@ -232,9 +224,17 @@ function Bubble({
           />
         ) : null}
         {message.text ? (
-          <Text style={[styles.bubbleText, mine && styles.bubbleTextMine]}>{message.text}</Text>
+          <Text variant="callout" tone={mine ? 'onPrimary' : 'default'}>
+            {message.text}
+          </Text>
         ) : null}
-        <Text style={[styles.bubbleTime, mine && styles.bubbleTimeMine]}>{message.time}</Text>
+        <Text
+          variant="micro"
+          tone={mine ? 'onPrimary' : 'subtle'}
+          style={[styles.bubbleTime, mine && styles.bubbleTimeMine]}
+        >
+          {message.time}
+        </Text>
       </View>
     </MotiView>
   );
@@ -270,7 +270,6 @@ const makeStyles = (c: Palette) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: c.border,
     },
-    iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     flex1: { flex: 1 },
     avatar: { width: 36, height: 36, borderRadius: radius.pill, backgroundColor: c.skeleton },
     supportAvatar: {
@@ -281,8 +280,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    name: { ...typography.scale.bodyMedium, color: c.text.primary },
-    presence: { ...typography.scale.caption, color: c.brand.tint },
     messages: { padding: spacing.lg, gap: spacing.sm },
     bubbleRow: { flexDirection: 'row' },
     bubbleRowMine: { justifyContent: 'flex-end' },
@@ -300,8 +297,6 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       borderBottomLeftRadius: radius.sm,
     },
-    bubbleText: { ...typography.scale.small, color: c.text.primary },
-    bubbleTextMine: { color: c.text.inverse },
     bubbleImage: {
       width: 180,
       height: 135,
@@ -309,12 +304,9 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.skeleton,
     },
     bubbleTime: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.text.muted,
       alignSelf: 'flex-end',
     },
-    bubbleTimeMine: { color: 'rgba(255,255,255,0.75)' },
+    bubbleTimeMine: { opacity: 0.75 },
     typing: { flexDirection: 'row', gap: 5, paddingVertical: spacing.md, alignItems: 'center' },
     typingDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: c.text.muted },
     quickRow: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
@@ -326,7 +318,6 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
-    quickText: { ...typography.scale.smallMedium, color: c.text.secondary },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -337,7 +328,6 @@ const makeStyles = (c: Palette) =>
       borderTopColor: c.border,
       backgroundColor: c.background.surface,
     },
-    attach: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
     input: {
       flex: 1,
       minHeight: 44,

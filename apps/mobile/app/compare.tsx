@@ -1,17 +1,16 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState, RatingStars } from '../src/components';
+import { Text, Icon, IconButton, PressableScale, Rating, EmptyState } from '../src/components/ui';
 import { getProviderById } from '../src/mocks';
 import { getAvailability } from '../src/mocks/availability';
 import { useCompareStore } from '../src/stores/compareStore';
 import { route } from '../src/lib/nav';
 import { useT, useMoney } from '../src/i18n';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const COL_W = 150;
 
@@ -97,25 +96,22 @@ export default function CompareScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.iconBtn}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Compare</Text>
+        />
+        <Text variant="title1" style={styles.title}>
+          Compare
+        </Text>
         {providers.length > 0 ? (
-          <Pressable
-            onPress={clear}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Clear all"
-          >
-            <Text style={styles.clear}>Clear</Text>
-          </Pressable>
+          <PressableScale onPress={clear} accessibilityRole="button" accessibilityLabel="Clear all">
+            <Text variant="callout" tone="accent">
+              Clear
+            </Text>
+          </PressableScale>
         ) : (
           <View style={styles.iconBtn} />
         )}
@@ -123,7 +119,7 @@ export default function CompareScreen() {
 
       {providers.length === 0 ? (
         <EmptyState
-          icon="git-compare-outline"
+          art="empty"
           title="Nothing to compare yet"
           message="Add up to three providers from a category to see them side by side."
           actionLabel="Browse providers"
@@ -141,15 +137,14 @@ export default function CompareScreen() {
                 <View style={styles.rowLabelCell} />
                 {providers.map((p) => (
                   <View key={p.id} style={styles.headCell}>
-                    <Pressable
+                    <PressableScale
                       style={styles.removeBtn}
                       onPress={() => remove(p.id)}
-                      hitSlop={8}
                       accessibilityRole="button"
                       accessibilityLabel={`Remove ${p.name}`}
                     >
-                      <Ionicons name="close" size={14} color={c.text.inverse} />
-                    </Pressable>
+                      <Icon name="close" size={16} color={c.text.inverse} />
+                    </PressableScale>
                     <Image
                       source={{ uri: p.photo }}
                       style={styles.avatar}
@@ -157,10 +152,10 @@ export default function CompareScreen() {
                       transition={150}
                       cachePolicy="memory-disk"
                     />
-                    <Text style={styles.headName} numberOfLines={2}>
+                    <Text variant="callout" center numberOfLines={2} style={styles.headName}>
                       {p.name}
                     </Text>
-                    <RatingStars value={p.rating} size={12} />
+                    <Rating value={p.rating} size={16} />
                   </View>
                 ))}
               </View>
@@ -168,11 +163,15 @@ export default function CompareScreen() {
               {rows.map((r, idx) => (
                 <View key={r.key} style={[styles.row, idx % 2 === 0 && styles.rowAlt]}>
                   <View style={styles.rowLabelCell}>
-                    <Text style={styles.rowLabel}>{r.label}</Text>
+                    <Text variant="caption" tone="muted">
+                      {r.label}
+                    </Text>
                   </View>
                   {providers.map((p) => (
                     <View key={p.id} style={styles.valueCell}>
-                      <Text style={styles.value}>{r.render(p.id)}</Text>
+                      <Text variant="callout" center>
+                        {r.render(p.id)}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -182,14 +181,16 @@ export default function CompareScreen() {
                 <View style={styles.rowLabelCell} />
                 {providers.map((p) => (
                   <View key={p.id} style={styles.valueCell}>
-                    <Pressable
+                    <PressableScale
                       style={styles.viewBtn}
                       onPress={() => router.push(`/provider/${p.id}`)}
                       accessibilityRole="button"
                       accessibilityLabel={`View ${p.name}`}
                     >
-                      <Text style={styles.viewBtnText}>View</Text>
-                    </Pressable>
+                      <Text variant="callout" tone="onPrimary" style={styles.viewBtnText}>
+                        View
+                      </Text>
+                    </PressableScale>
                   </View>
                 ))}
               </View>
@@ -213,12 +214,10 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    title: { flex: 1, ...typography.scale.h1, color: c.text.primary },
-    clear: { ...typography.scale.smallMedium, color: c.brand.tint },
+    title: { flex: 1 },
     row: { flexDirection: 'row', borderRadius: radius.md },
     rowAlt: { backgroundColor: c.background.muted },
     rowLabelCell: { width: 96, paddingVertical: spacing.md, justifyContent: 'center' },
-    rowLabel: { ...typography.scale.caption, color: c.text.muted },
     headCell: {
       width: COL_W,
       alignItems: 'center',
@@ -239,7 +238,7 @@ const makeStyles = (c: Palette) =>
       zIndex: 2,
     },
     avatar: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: c.skeleton },
-    headName: { ...typography.scale.smallMedium, color: c.text.primary, textAlign: 'center' },
+    headName: {},
     valueCell: {
       width: COL_W,
       paddingVertical: spacing.md,
@@ -247,7 +246,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    value: { ...typography.scale.small, color: c.text.primary, textAlign: 'center' },
     viewBtn: {
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.lg,
@@ -256,10 +254,5 @@ const makeStyles = (c: Palette) =>
       minHeight: 40,
       justifyContent: 'center',
     },
-    viewBtnText: {
-      ...typography.scale.smallMedium,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
+    viewBtnText: { fontWeight: '700' },
   });

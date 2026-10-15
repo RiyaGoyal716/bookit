@@ -1,13 +1,20 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Input, MapPlaceholder } from '../src/components';
+import {
+  Button,
+  Icon,
+  PressableScale,
+  ScreenHeader,
+  Text,
+  TextField,
+  type IconName,
+} from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
 import { useAddressStore, type Address } from '../src/stores/addressStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 export default function AddressesScreen() {
   const router = useRouter();
@@ -34,26 +41,15 @@ export default function AddressesScreen() {
     showToast('Address saved');
   };
 
-  const iconFor = (a: Address): keyof typeof Ionicons.glyphMap => {
-    if (a.fromLocation) return 'navigate';
+  const iconFor = (a: Address): IconName => {
+    if (a.fromLocation) return 'navigation';
     if (a.label.toLowerCase() === 'work') return 'briefcase';
     return 'home';
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Saved addresses</Text>
-      </View>
+      <ScreenHeader title="Saved addresses" onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
@@ -64,62 +60,67 @@ export default function AddressesScreen() {
           {addresses.map((a) => (
             <View key={a.id} style={styles.addressRow}>
               <View style={styles.addressIcon}>
-                <Ionicons name={iconFor(a)} size={18} color={c.brand.tint} />
+                <Icon name={iconFor(a)} size={20} color={c.brand.tint} />
               </View>
               <View style={styles.addressInfo}>
-                <Text style={styles.addressLabel}>{a.label}</Text>
-                <Text style={styles.addressLine} numberOfLines={2}>
+                <Text variant="headline">{a.label}</Text>
+                <Text variant="caption" tone="muted" numberOfLines={2}>
                   {a.line}
                 </Text>
                 {a.instructions ? (
-                  <Text style={styles.addressNote} numberOfLines={1}>
-                    <Ionicons name="information-circle-outline" size={12} /> {a.instructions}
-                  </Text>
+                  <View style={styles.addressNoteRow}>
+                    <Icon name="info" size={16} color={c.text.muted} />
+                    <Text variant="caption" tone="subtle" numberOfLines={1} style={styles.flex1}>
+                      {a.instructions}
+                    </Text>
+                  </View>
                 ) : null}
               </View>
-              <Pressable
+              <PressableScale
                 onPress={() => {
                   remove(a.id);
                   showToast('Address removed');
                 }}
-                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${a.label}`}
               >
-                <Ionicons name="trash-outline" size={20} color={c.text.muted} />
-              </Pressable>
+                <Icon name="trash" size={20} color={c.text.muted} />
+              </PressableScale>
             </View>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Add a new address</Text>
-        <MapPlaceholder
-          height={140}
-          style={{ marginBottom: spacing.lg }}
-          caption={line.trim() ? line.trim() : 'Drop a pin to set your address'}
-        />
+        <Text variant="title2" style={styles.sectionTitle}>
+          Add a new address
+        </Text>
+        <View style={styles.mapPlaceholder}>
+          <Icon name="map-pin" size={24} color={c.brand.tint} />
+          <Text variant="callout" tone="muted" center style={styles.mapCaption}>
+            {line.trim() ? line.trim() : 'Drop a pin to set your address'}
+          </Text>
+        </View>
         <View style={styles.form}>
-          <Input
+          <TextField
             label="Label"
             value={label}
             onChangeText={setLabel}
             placeholder="e.g. Mum's house"
           />
-          <Input
+          <TextField
             label="Address"
             value={line}
             onChangeText={setLine}
             placeholder="e.g. 5 Otley Road, Headingley, LS6 3AA"
             multiline
           />
-          <Input
+          <TextField
             label="Access instructions (optional)"
             value={instructions}
             onChangeText={setInstructions}
             placeholder="e.g. buzzer 4, side gate code 1980"
             multiline
           />
-          <Button label="Save address" icon="add" disabled={!canSave} onPress={save} />
+          <Button label="Save address" icon="plus" disabled={!canSave} onPress={save} />
         </View>
       </ScrollView>
     </View>
@@ -129,21 +130,10 @@ export default function AddressesScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { marginLeft: -spacing.xs },
-    headerTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
     content: {
       paddingHorizontal: spacing.lg,
     },
+    flex1: { flex: 1 },
     list: {
       gap: spacing.sm,
     },
@@ -166,24 +156,22 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     addressInfo: { flex: 1, gap: 2 },
-    addressLabel: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    addressLine: {
-      ...typography.scale.small,
-      color: c.text.secondary,
-    },
-    addressNote: {
-      ...typography.scale.caption,
-      color: c.text.muted,
-    },
+    addressNoteRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
       marginTop: spacing.xl,
       marginBottom: spacing.md,
     },
+    mapPlaceholder: {
+      height: 140,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.muted,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.lg,
+    },
+    mapCaption: { marginTop: spacing.sm, paddingHorizontal: spacing.lg },
     form: {
       gap: spacing.lg,
     },

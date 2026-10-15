@@ -1,10 +1,22 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Badge, BottomSheet, Button, Chip, EmptyState, Screen } from '../../src/components';
+import { BottomSheet } from '../../src/components';
+import {
+  Button,
+  Chip,
+  EmptyState,
+  Screen,
+  StatusPill,
+  Text,
+  Icon,
+  IconButton,
+  PressableScale,
+  type IconName,
+  type StatusTone,
+} from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { showToast } from '../../src/stores/toastStore';
 import {
@@ -14,12 +26,20 @@ import {
   RECURRENCE_LABEL,
   type BookingStatus,
 } from '../../src/stores/bookingsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const TIME_SLOTS = ['09:00', '11:00', '13:00', '15:00', '17:00'];
+
+const STATUS_TONE: Record<BookingStatus, StatusTone> = {
+  Requested: 'info',
+  Accepted: 'accent',
+  'On the way': 'warning',
+  Completed: 'success',
+  Cancelled: 'danger',
+};
 
 const CANCEL_REASONS = [
   'Booked by mistake',
@@ -65,16 +85,15 @@ export default function BookingDetailScreen() {
   if (!booking) {
     return (
       <Screen>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.backPlain}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="alert-circle-outline" title="Booking not found" />
+          style={styles.backPlain}
+        />
+        <EmptyState art="error" title="Booking not found" />
       </Screen>
     );
   }
@@ -124,16 +143,15 @@ export default function BookingDetailScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Booking details</Text>
+          style={styles.back}
+        />
+        <Text variant="title2">Booking details</Text>
       </View>
 
       <ScrollView
@@ -142,61 +160,77 @@ export default function BookingDetailScreen() {
       >
         <View style={styles.summaryCard}>
           <View style={styles.summaryTop}>
-            <Text style={styles.provider} numberOfLines={1}>
+            <Text variant="title2" numberOfLines={1} style={styles.provider}>
               {booking.providerName}
             </Text>
-            <Badge status={booking.status} />
+            <StatusPill label={booking.status} tone={STATUS_TONE[booking.status]} />
           </View>
-          <Text style={styles.service}>{booking.serviceName}</Text>
+          <Text variant="body" tone="muted">
+            {booking.serviceName}
+          </Text>
           <View style={styles.metaRow}>
-            <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
-            <Text style={styles.meta}>
+            <Icon name="calendar" size={16} color={c.text.muted} />
+            <Text variant="callout" tone="muted">
               {booking.date} · {booking.time}
             </Text>
-            <Text style={styles.dot}>·</Text>
-            <Text style={styles.price}>{money(booking.total)}</Text>
+            <Text variant="callout" tone="subtle" style={styles.dot}>
+              ·
+            </Text>
+            <Text variant="callout" tone="accent">
+              {money(booking.total)}
+            </Text>
           </View>
-          <Text style={styles.bookingId}>{booking.id}</Text>
+          <Text variant="caption" tone="subtle" style={styles.bookingId}>
+            {booking.id}
+          </Text>
         </View>
 
         <View style={styles.contactRow}>
           <Button
             label="Call"
             variant="secondary"
-            icon="call"
+            icon="phone"
             onPress={contactCall}
             style={styles.contactBtn}
           />
           <Button
             label="Message"
             variant="secondary"
-            icon="chatbubble-ellipses"
+            icon="message"
             onPress={contactMessageFn}
             style={styles.contactBtn}
           />
         </View>
 
         {booking.status === 'Accepted' || booking.status === 'On the way' ? (
-          <Pressable
+          <PressableScale
             style={styles.trackCard}
             onPress={() => router.push(route(`/tracking/${booking.id}`))}
             accessibilityRole="button"
             accessibilityLabel="Track your pro live"
           >
-            <Ionicons name="navigate" size={20} color={c.text.inverse} />
+            <Icon name="navigation" size={20} color={c.text.inverse} />
             <View style={styles.flex1}>
-              <Text style={styles.trackTitle}>Track your pro live</Text>
-              <Text style={styles.trackSub}>See their route and ETA</Text>
+              <Text variant="headline" tone="onPrimary">
+                Track your pro live
+              </Text>
+              <Text variant="caption" tone="onPrimary" style={styles.trackSub}>
+                See their route and ETA
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={c.text.inverse} />
-          </Pressable>
+            <Icon name="chevron-right" size={20} color={c.text.inverse} />
+          </PressableScale>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Status</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          Status
+        </Text>
         {cancelled ? (
           <View style={styles.cancelledBox}>
-            <Ionicons name="close-circle" size={18} color={c.status.danger} />
-            <Text style={styles.cancelledText}>This booking was cancelled.</Text>
+            <Icon name="close-circle" size={20} color={c.status.danger} />
+            <Text variant="callout" tone="danger">
+              This booking was cancelled.
+            </Text>
           </View>
         ) : (
           <View style={styles.timeline}>
@@ -207,17 +241,24 @@ export default function BookingDetailScreen() {
                 <View key={stage} style={styles.timelineRow}>
                   <View style={styles.timelineLeft}>
                     <View style={[styles.node, done && styles.nodeDone]}>
-                      {done ? <Ionicons name="checkmark" size={12} color={c.text.inverse} /> : null}
+                      {done ? <Icon name="check" size={16} color={c.text.inverse} /> : null}
                     </View>
                     {i < BOOKING_TIMELINE.length - 1 ? (
                       <View style={[styles.line, i < currentIndex && styles.lineDone]} />
                     ) : null}
                   </View>
                   <View style={styles.timelineBody}>
-                    <Text style={[styles.stageText, isCurrent && styles.stageCurrent]}>
+                    <Text
+                      variant={isCurrent ? 'headline' : 'body'}
+                      tone={isCurrent ? 'default' : 'muted'}
+                    >
                       {stage}
                     </Text>
-                    {isCurrent ? <Text style={styles.stageHint}>Current status</Text> : null}
+                    {isCurrent ? (
+                      <Text variant="caption" tone="accent">
+                        Current status
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
               );
@@ -228,18 +269,21 @@ export default function BookingDetailScreen() {
         {!terminal && next ? (
           <Button
             label={`Advance to “${next}” (demo)`}
-            variant="ghost"
-            icon="play-forward"
+            variant="tertiary"
+            icon="arrow-right"
             onPress={() => advanceStatus(booking.id)}
+            fullWidth={false}
             style={styles.demoBtn}
           />
         ) : null}
 
-        <Text style={styles.sectionTitle}>Details</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          Details
+        </Text>
         <View style={styles.detailCard}>
           {booking.address ? (
             <DetailRow
-              icon="location-outline"
+              icon="map-pin"
               label="Address"
               value={booking.address}
               styles={styles}
@@ -255,23 +299,25 @@ export default function BookingDetailScreen() {
           />
           {booking.paymentLabel ? (
             <DetailRow
-              icon="card-outline"
+              icon="card"
               label="Payment"
               value={booking.paymentLabel}
               styles={styles}
               c={c}
             />
           ) : null}
-          <Pressable
+          <PressableScale
             style={styles.invoiceRow}
             onPress={() => router.push(route(`/invoice/${booking.id}`))}
             accessibilityRole="button"
             accessibilityLabel="View invoice"
           >
-            <Ionicons name="document-text-outline" size={18} color={c.brand.tint} />
-            <Text style={styles.invoiceText}>View invoice (PDF)</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
+            <Icon name="file-text" size={20} color={c.brand.tint} />
+            <Text variant="callout" tone="accent" style={styles.invoiceText}>
+              View invoice (PDF)
+            </Text>
+            <Icon name="chevron-right" size={20} color={c.text.muted} />
+          </PressableScale>
         </View>
       </ScrollView>
 
@@ -319,7 +365,9 @@ export default function BookingDetailScreen() {
         onClose={() => setRescheduleOpen(false)}
         title="Reschedule booking"
       >
-        <Text style={styles.sheetLabel}>Date</Text>
+        <Text variant="footnote" tone="muted" style={styles.sheetLabel}>
+          Date
+        </Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -329,15 +377,22 @@ export default function BookingDetailScreen() {
             <Chip
               key={d.key}
               label={d.label}
-              active={draftDate === d.key}
+              selected={draftDate === d.key}
               onPress={() => setDraftDate(d.key)}
             />
           ))}
         </ScrollView>
-        <Text style={[styles.sheetLabel, styles.sheetLabelSpaced]}>Time</Text>
+        <Text variant="footnote" tone="muted" style={[styles.sheetLabel, styles.sheetLabelSpaced]}>
+          Time
+        </Text>
         <View style={styles.timeGrid}>
-          {TIME_SLOTS.map((t) => (
-            <Chip key={t} label={t} active={draftTime === t} onPress={() => setDraftTime(t)} />
+          {TIME_SLOTS.map((slot) => (
+            <Chip
+              key={slot}
+              label={slot}
+              selected={draftTime === slot}
+              onPress={() => setDraftTime(slot)}
+            />
           ))}
         </View>
         <Button
@@ -350,19 +405,21 @@ export default function BookingDetailScreen() {
 
       <BottomSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel booking">
         <View style={styles.policyBox}>
-          <Ionicons name="shield-checkmark-outline" size={18} color={c.brand.tint} />
-          <Text style={styles.policyBoxText}>
+          <Icon name="shield-check" size={20} color={c.brand.tint} />
+          <Text variant="caption" tone="muted" style={styles.policyBoxText}>
             Free cancellation up to 24 hours before your appointment. Later cancellations may incur
             a fee.
           </Text>
         </View>
-        <Text style={[styles.sheetLabel, styles.sheetLabelSpaced]}>Why are you cancelling?</Text>
+        <Text variant="footnote" tone="muted" style={[styles.sheetLabel, styles.sheetLabelSpaced]}>
+          Why are you cancelling?
+        </Text>
         <View style={styles.reasonWrap}>
           {CANCEL_REASONS.map((r) => (
             <Chip
               key={r}
               label={r}
-              active={cancelReason === r}
+              selected={cancelReason === r}
               onPress={() => setCancelReason(r)}
             />
           ))}
@@ -374,7 +431,7 @@ export default function BookingDetailScreen() {
           onPress={doCancel}
           style={styles.sheetBtn}
         />
-        <Button label="Keep booking" variant="ghost" onPress={() => setCancelOpen(false)} />
+        <Button label="Keep booking" variant="tertiary" onPress={() => setCancelOpen(false)} />
       </BottomSheet>
     </View>
   );
@@ -387,7 +444,7 @@ function DetailRow({
   styles,
   c,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   label: string;
   value: string;
   styles: ReturnType<typeof makeStyles>;
@@ -395,9 +452,11 @@ function DetailRow({
 }) {
   return (
     <View style={styles.detailRow}>
-      <Ionicons name={icon} size={16} color={c.text.muted} />
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue} numberOfLines={2}>
+      <Icon name={icon} size={16} color={c.text.muted} />
+      <Text variant="callout" tone="muted" style={styles.detailLabel}>
+        {label}
+      </Text>
+      <Text variant="callout" numberOfLines={2} style={styles.detailValue}>
         {value}
       </Text>
     </View>
@@ -416,10 +475,6 @@ const makeStyles = (c: Palette) =>
     },
     back: { marginLeft: -spacing.xs },
     backPlain: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
-    headerTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
     scroll: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.sm,
@@ -441,12 +496,6 @@ const makeStyles = (c: Palette) =>
     },
     provider: {
       flex: 1,
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
-    service: {
-      ...typography.scale.body,
-      color: c.text.secondary,
     },
     metaRow: {
       flexDirection: 'row',
@@ -454,19 +503,9 @@ const makeStyles = (c: Palette) =>
       gap: 4,
       marginTop: spacing.xs,
     },
-    meta: {
-      ...typography.scale.small,
-      color: c.text.secondary,
-    },
-    dot: { color: c.text.muted, marginHorizontal: 2 },
-    price: {
-      ...typography.scale.smallMedium,
-      color: c.brand.tint,
-    },
+    dot: { marginHorizontal: 2 },
     bookingId: {
       marginTop: spacing.xs,
-      ...typography.scale.caption,
-      color: c.text.muted,
       letterSpacing: 0.5,
     },
     contactRow: {
@@ -483,17 +522,8 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       backgroundColor: c.brand.primary,
     },
-    trackTitle: {
-      ...typography.scale.bodyMedium,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    trackSub: { ...typography.scale.caption, color: c.text.inverse, opacity: 0.85 },
-    sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
+    trackSub: { opacity: 0.85 },
+    sectionTitle: {},
     detailCard: {
       padding: spacing.lg,
       borderRadius: radius.lg,
@@ -503,12 +533,10 @@ const makeStyles = (c: Palette) =>
       gap: spacing.md,
     },
     detailRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    detailLabel: { ...typography.scale.small, color: c.text.secondary, width: 80 },
+    detailLabel: { width: 80 },
     detailValue: {
       flex: 1,
       textAlign: 'right',
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
     },
     invoiceRow: {
       flexDirection: 'row',
@@ -518,7 +546,7 @@ const makeStyles = (c: Palette) =>
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
-    invoiceText: { flex: 1, ...typography.scale.smallMedium, color: c.brand.tint },
+    invoiceText: { flex: 1 },
     policyBox: {
       flexDirection: 'row',
       gap: spacing.sm,
@@ -526,7 +554,7 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.md,
       backgroundColor: c.brand.primarySoft,
     },
-    policyBoxText: { flex: 1, ...typography.scale.caption, color: c.text.secondary },
+    policyBoxText: { flex: 1 },
     reasonWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     timeline: {
       paddingLeft: spacing.xs,
@@ -566,18 +594,6 @@ const makeStyles = (c: Palette) =>
       flex: 1,
       paddingBottom: spacing.lg,
     },
-    stageText: {
-      ...typography.scale.body,
-      color: c.text.secondary,
-    },
-    stageCurrent: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    stageHint: {
-      ...typography.scale.caption,
-      color: c.brand.tint,
-    },
     cancelledBox: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -585,10 +601,6 @@ const makeStyles = (c: Palette) =>
       padding: spacing.lg,
       borderRadius: radius.lg,
       backgroundColor: c.status.dangerSoft,
-    },
-    cancelledText: {
-      ...typography.scale.small,
-      color: c.status.danger,
     },
     demoBtn: {
       alignSelf: 'flex-start',
@@ -605,8 +617,6 @@ const makeStyles = (c: Palette) =>
     footerBtn: { flex: 1 },
     reviewBtn: { flex: 1 },
     sheetLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginBottom: spacing.sm,
     },
     sheetLabelSpaced: { marginTop: spacing.lg },

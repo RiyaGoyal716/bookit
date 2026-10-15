@@ -1,15 +1,24 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
+import {
+  Divider,
+  Icon,
+  ListRow,
+  PressableScale,
+  ScreenHeader,
+  Text,
+  Toggle,
+  type IconName,
+} from '../src/components/ui';
 import { useAuthStore } from '../src/stores/authStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
 import { useRegionStore } from '../src/stores/regionStore';
 import { useThemeStore, type ThemePreference } from '../src/stores/themeStore';
 import type { LocaleCode } from '../src/i18n';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const LANGUAGE_OPTIONS: { key: LocaleCode; label: string }[] = [
   { key: 'en', label: 'English' },
@@ -20,11 +29,11 @@ const LANGUAGE_OPTIONS: { key: LocaleCode; label: string }[] = [
 const THEME_OPTIONS: {
   key: ThemePreference;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
 }[] = [
-  { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
-  { key: 'light', label: 'Light', icon: 'sunny-outline' },
-  { key: 'dark', label: 'Dark', icon: 'moon-outline' },
+  { key: 'system', label: 'System', icon: 'smartphone' },
+  { key: 'light', label: 'Light', icon: 'sun' },
+  { key: 'dark', label: 'Dark', icon: 'moon' },
 ];
 
 export default function SettingsScreen() {
@@ -59,178 +68,165 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </View>
+      <ScreenHeader title="Settings" onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionLabel}>Appearance</Text>
+        <Text variant="caption" tone="muted" style={styles.sectionLabel}>
+          Appearance
+        </Text>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Dark mode</Text>
+          <Text variant="headline" style={styles.cardTitle}>
+            Dark mode
+          </Text>
           <View style={styles.segment}>
             {THEME_OPTIONS.map((opt) => {
               const active = preference === opt.key;
               return (
-                <Pressable
+                <PressableScale
                   key={opt.key}
                   onPress={() => setPreference(opt.key)}
+                  haptic="selection"
                   style={[styles.segmentBtn, active && styles.segmentBtnActive]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   accessibilityLabel={`${opt.label} theme`}
                 >
-                  <Ionicons
-                    name={opt.icon}
-                    size={18}
-                    color={active ? c.brand.tint : c.text.muted}
-                  />
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                  <Icon name={opt.icon} size={20} color={active ? c.brand.tint : c.text.muted} />
+                  <Text
+                    variant="footnote"
+                    tone={active ? 'default' : 'subtle'}
+                    style={styles.semibold}
+                  >
                     {opt.label}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>Preferences</Text>
+        <Text variant="caption" tone="muted" style={styles.sectionLabel}>
+          Preferences
+        </Text>
         <View style={styles.card}>
-          <Pressable
-            style={styles.row}
-            onPress={() => setNotificationsEnabled(!notificationsEnabled)}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: notificationsEnabled }}
-            accessibilityLabel="Push notifications"
-          >
+          <View style={styles.row}>
             <View style={styles.rowIcon}>
-              <Ionicons name="notifications-outline" size={18} color={c.brand.tint} />
+              <Icon name="bell" size={20} color={c.brand.tint} />
             </View>
-            <Text style={styles.rowLabel}>Push notifications</Text>
-            <View style={[styles.switch, notificationsEnabled && styles.switchOn]}>
-              <View style={[styles.knob, notificationsEnabled && styles.knobOn]} />
-            </View>
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          <Pressable
-            style={styles.row}
-            onPress={() => setHapticsEnabled(!hapticsEnabled)}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: hapticsEnabled }}
-            accessibilityLabel="Haptic feedback"
-          >
-            <View style={styles.rowIcon}>
-              <Ionicons name="phone-portrait-outline" size={18} color={c.brand.tint} />
-            </View>
-            <Text style={styles.rowLabel}>Haptic feedback</Text>
-            <View style={[styles.switch, hapticsEnabled && styles.switchOn]}>
-              <View style={[styles.knob, hapticsEnabled && styles.knobOn]} />
-            </View>
-          </Pressable>
+            <Text variant="headline" style={styles.rowLabel}>
+              Push notifications
+            </Text>
+            <Toggle
+              value={notificationsEnabled}
+              onChange={setNotificationsEnabled}
+              accessibilityLabel="Push notifications"
+            />
+          </View>
 
           <View style={styles.divider} />
 
           <View style={styles.row}>
             <View style={styles.rowIcon}>
-              <Ionicons name="language-outline" size={18} color={c.brand.tint} />
+              <Icon name="smartphone" size={20} color={c.brand.tint} />
             </View>
-            <Text style={styles.rowLabel}>Language</Text>
+            <Text variant="headline" style={styles.rowLabel}>
+              Haptic feedback
+            </Text>
+            <Toggle
+              value={hapticsEnabled}
+              onChange={setHapticsEnabled}
+              accessibilityLabel="Haptic feedback"
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <View style={styles.rowIcon}>
+              <Icon name="languages" size={20} color={c.brand.tint} />
+            </View>
+            <Text variant="headline" style={styles.rowLabel}>
+              Language
+            </Text>
           </View>
           <View style={[styles.segment, styles.languageSegment]}>
             {LANGUAGE_OPTIONS.map((opt) => {
               const active = language === opt.key;
               return (
-                <Pressable
+                <PressableScale
                   key={opt.key}
                   onPress={() => setLanguage(opt.key)}
+                  haptic="selection"
                   style={[styles.segmentBtn, active && styles.segmentBtnActive]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   accessibilityLabel={`${opt.label} language`}
                 >
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                  <Text
+                    variant="footnote"
+                    tone={active ? 'default' : 'subtle'}
+                    style={styles.semibold}
+                  >
                     {opt.label}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>Account</Text>
-        <View style={styles.card}>
-          <Pressable
-            style={styles.linkRow}
+        <Text variant="caption" tone="muted" style={styles.sectionLabel}>
+          Account
+        </Text>
+        <View style={styles.linkCard}>
+          <ListRow
+            title="Edit profile"
+            icon="user"
+            iconTone="accent"
             onPress={() => router.push('/profile')}
-            accessibilityRole="button"
-            accessibilityLabel="Edit profile"
-          >
-            <View style={styles.rowIcon}>
-              <Ionicons name="person-outline" size={18} color={c.brand.tint} />
-            </View>
-            <Text style={styles.rowLabel}>Edit profile</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
-          <View style={styles.divider} />
-          <Pressable
-            style={styles.linkRow}
+          />
+          <Divider inset={spacing.lg} />
+          <ListRow
+            title="Security (PIN & biometrics)"
+            icon="lock"
+            iconTone="accent"
             onPress={() => router.push('/security')}
-            accessibilityRole="button"
-            accessibilityLabel="Security"
-          >
-            <View style={styles.rowIcon}>
-              <Ionicons name="lock-closed-outline" size={18} color={c.brand.tint} />
-            </View>
-            <Text style={styles.rowLabel}>Security (PIN & biometrics)</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
-          <View style={styles.divider} />
-          <Pressable
-            style={styles.linkRow}
+          />
+          <Divider inset={spacing.lg} />
+          <ListRow
+            title="Account status"
+            icon="activity"
+            iconTone="accent"
             onPress={() => router.push('/account-status')}
-            accessibilityRole="button"
-            accessibilityLabel="Account status"
-          >
-            <View style={styles.rowIcon}>
-              <Ionicons name="pulse-outline" size={18} color={c.brand.tint} />
-            </View>
-            <Text style={styles.rowLabel}>Account status</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
+          />
         </View>
 
-        <Pressable
+        <PressableScale
           style={styles.deleteRow}
           onPress={deleteAccount}
           accessibilityRole="button"
           accessibilityLabel="Delete account"
         >
-          <Ionicons name="trash-outline" size={18} color={c.status.danger} />
-          <Text style={styles.deleteText}>Delete account</Text>
-        </Pressable>
+          <Icon name="trash" size={20} color={c.status.danger} />
+          <Text variant="headline" tone="danger">
+            Delete account
+          </Text>
+        </PressableScale>
 
-        <Pressable
+        <PressableScale
           onLongPress={() => router.push('/dev/design-system')}
           delayLongPress={600}
           accessibilityRole="text"
           accessibilityLabel="App version 1.0.0"
-          style={{ alignItems: 'center', paddingVertical: spacing.xl }}
+          style={styles.version}
         >
-          <Text style={{ ...typography.scale.caption, color: c.text.muted }}>Bookit · v1.0.0</Text>
-        </Pressable>
+          <Text variant="caption" tone="subtle">
+            Bookit · v1.0.0
+          </Text>
+        </PressableScale>
       </ScrollView>
     </View>
   );
@@ -239,25 +235,12 @@ export default function SettingsScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { marginLeft: -spacing.xs },
-    headerTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
     content: {
       paddingHorizontal: spacing.lg,
       gap: spacing.sm,
     },
+    semibold: { fontWeight: '600' },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.muted,
       marginTop: spacing.lg,
       marginBottom: spacing.xs,
     },
@@ -268,9 +251,14 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
       padding: spacing.lg,
     },
+    linkCard: {
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      overflow: 'hidden',
+    },
     cardTitle: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
       marginBottom: spacing.md,
     },
     segment: {
@@ -292,13 +280,6 @@ const makeStyles = (c: Palette) =>
     segmentBtnActive: {
       backgroundColor: c.background.surface,
     },
-    segmentText: {
-      ...typography.scale.smallMedium,
-      color: c.text.muted,
-    },
-    segmentTextActive: {
-      color: c.text.primary,
-    },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -315,8 +296,6 @@ const makeStyles = (c: Palette) =>
     },
     rowLabel: {
       flex: 1,
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
     },
     languageSegment: {
       marginTop: spacing.sm,
@@ -325,32 +304,6 @@ const makeStyles = (c: Palette) =>
       height: 1,
       backgroundColor: c.border,
       marginVertical: spacing.sm,
-    },
-    switch: {
-      width: 48,
-      height: 28,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.muted,
-      padding: 3,
-      justifyContent: 'center',
-    },
-    switchOn: {
-      backgroundColor: c.brand.primary,
-    },
-    knob: {
-      width: 22,
-      height: 22,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.surface,
-    },
-    knobOn: {
-      alignSelf: 'flex-end',
-    },
-    linkRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      minHeight: 52,
     },
     deleteRow: {
       flexDirection: 'row',
@@ -364,8 +317,5 @@ const makeStyles = (c: Palette) =>
       borderColor: c.status.dangerSoft,
       backgroundColor: c.status.dangerSoft,
     },
-    deleteText: {
-      ...typography.scale.bodyMedium,
-      color: c.status.danger,
-    },
+    version: { alignItems: 'center', paddingVertical: spacing.xl },
   });

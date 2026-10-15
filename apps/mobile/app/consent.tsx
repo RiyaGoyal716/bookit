@@ -1,44 +1,51 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button } from '../src/components';
+import {
+  Text,
+  Icon,
+  IconButton,
+  Button,
+  Toggle,
+  PressableScale,
+  type IconName,
+} from '../src/components/ui';
 import { route } from '../src/lib/nav';
 import { showToast } from '../src/stores/toastStore';
 import { useConsentStore, type ConsentPrefs } from '../src/stores/consentStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const ROWS: {
   key: keyof ConsentPrefs;
   label: string;
   sub: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
 }[] = [
   {
     key: 'analytics',
     label: 'Usage analytics',
     sub: 'Help us improve the app',
-    icon: 'bar-chart-outline',
+    icon: 'chart',
   },
   {
     key: 'personalization',
     label: 'Personalisation',
     sub: 'Tailor recommendations to you',
-    icon: 'sparkles-outline',
+    icon: 'sparkles',
   },
   {
     key: 'marketing',
     label: 'Marketing',
     sub: 'Offers and partner promotions',
-    icon: 'megaphone-outline',
+    icon: 'tag',
   },
   {
     key: 'crashReports',
     label: 'Crash reports',
     sub: 'Share diagnostics when something breaks',
-    icon: 'bug-outline',
+    icon: 'alert-triangle',
   },
 ];
 
@@ -52,23 +59,24 @@ export default function ConsentScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Data & consent</Text>
+          variant="subtle"
+          size={24}
+          style={styles.back}
+        />
+        <Text variant="title2" style={styles.flex1}>
+          Data & consent
+        </Text>
       </View>
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.intro}>
+        <Text variant="footnote" tone="muted" style={styles.intro}>
           You’re in control of your data. Essential processing needed to run bookings is always on;
           everything below is optional.
         </Text>
@@ -77,17 +85,17 @@ export default function ConsentScreen() {
           {ROWS.map((r, i) => (
             <View key={r.key} style={[styles.row, i < ROWS.length - 1 && styles.divider]}>
               <View style={styles.rowIcon}>
-                <Ionicons name={r.icon} size={18} color={c.brand.tint} />
+                <Icon name={r.icon} size={20} color={c.brand.tint} />
               </View>
               <View style={styles.flex1}>
-                <Text style={styles.rowLabel}>{r.label}</Text>
-                <Text style={styles.rowSub}>{r.sub}</Text>
+                <Text variant="headline">{r.label}</Text>
+                <Text variant="caption" tone="muted">
+                  {r.sub}
+                </Text>
               </View>
-              <Switch
+              <Toggle
                 value={consent[r.key]}
-                onValueChange={() => consent.toggle(r.key)}
-                trackColor={{ false: c.border, true: c.brand.primary }}
-                thumbColor={c.background.surface}
+                onChange={() => consent.toggle(r.key)}
                 accessibilityLabel={r.label}
               />
             </View>
@@ -97,19 +105,21 @@ export default function ConsentScreen() {
         <Button
           label="Download my data (demo)"
           variant="secondary"
-          icon="download-outline"
+          icon="arrow-down"
           style={styles.action}
           onPress={() => showToast('We’ll email your data export shortly')}
         />
-        <Pressable
+        <PressableScale
           style={styles.policyLink}
           onPress={() => router.push(route('/legal/privacy'))}
           accessibilityRole="button"
           accessibilityLabel="Read privacy policy"
         >
-          <Ionicons name="lock-closed-outline" size={16} color={c.brand.tint} />
-          <Text style={styles.policyText}>Read our Privacy Policy</Text>
-        </Pressable>
+          <Icon name="lock" size={16} color={c.brand.tint} />
+          <Text variant="footnote" tone="accent">
+            Read our Privacy Policy
+          </Text>
+        </PressableScale>
       </ScrollView>
     </View>
   );
@@ -118,6 +128,7 @@ export default function ConsentScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
+    flex1: { flex: 1 },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -126,8 +137,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
-    intro: { ...typography.scale.small, color: c.text.secondary, marginBottom: spacing.lg },
+    intro: { marginBottom: spacing.lg },
     card: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -150,9 +160,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    flex1: { flex: 1 },
-    rowLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    rowSub: { ...typography.scale.caption, color: c.text.muted },
     action: { marginTop: spacing.lg },
     policyLink: {
       flexDirection: 'row',
@@ -161,5 +168,4 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.lg,
       justifyContent: 'center',
     },
-    policyText: { ...typography.scale.smallMedium, color: c.brand.tint },
   });

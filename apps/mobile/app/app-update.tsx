@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Logo, Screen } from '../src/components';
+import { Button, Text, Icon, Screen } from '../src/components/ui';
+import { Logo } from '../src/brand';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const WHATS_NEW = [
   'Live tracking with ETA on your bookings',
@@ -23,18 +23,24 @@ export default function AppUpdateScreen() {
       <View style={styles.center}>
         <Logo size={56} />
         <View style={styles.iconWrap}>
-          <Ionicons name="rocket" size={40} color={c.brand.tint} />
+          <Icon name="rocket" size={24} color={c.brand.tint} />
         </View>
-        <Text style={styles.title}>Update available</Text>
-        <Text style={styles.body}>
+        <Text variant="title1" style={styles.title}>
+          Update available
+        </Text>
+        <Text variant="body" tone="muted" style={styles.body}>
           A new version of Bookit is ready with faster performance and fresh features.
         </Text>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>What’s new</Text>
+          <Text variant="headline" style={styles.cardTitle}>
+            What&apos;s new
+          </Text>
           {WHATS_NEW.map((w) => (
             <View key={w} style={styles.featRow}>
-              <Ionicons name="checkmark-circle" size={16} color={c.status.success} />
-              <Text style={styles.featText}>{w}</Text>
+              <Icon name="check-circle" size={16} color={c.status.success} />
+              <Text variant="callout" tone="muted" style={styles.featText}>
+                {w}
+              </Text>
             </View>
           ))}
         </View>
@@ -42,12 +48,12 @@ export default function AppUpdateScreen() {
       <View style={styles.footer}>
         <Button
           label="Update now"
-          icon="download"
+          icon="arrow-down"
           onPress={() => showToast('Opening the app store (demo)')}
         />
         <Button
           label="Later"
-          variant="ghost"
+          variant="tertiary"
           onPress={() => {
             if (router.canGoBack()) router.back();
           }}
@@ -69,10 +75,8 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       marginTop: spacing.lg,
     },
-    title: { ...typography.scale.h1, color: c.text.primary, marginTop: spacing.sm },
+    title: { marginTop: spacing.sm },
     body: {
-      ...typography.scale.body,
-      color: c.text.secondary,
       textAlign: 'center',
       paddingHorizontal: spacing.lg,
     },
@@ -86,8 +90,8 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
       gap: spacing.sm,
     },
-    cardTitle: { ...typography.scale.bodyMedium, color: c.text.primary, marginBottom: spacing.xs },
+    cardTitle: { marginBottom: spacing.xs },
     featRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    featText: { flex: 1, ...typography.scale.small, color: c.text.secondary },
+    featText: { flex: 1 },
     footer: { gap: spacing.sm, paddingBottom: spacing.md },
   });

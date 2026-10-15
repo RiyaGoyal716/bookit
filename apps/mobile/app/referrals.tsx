@@ -1,38 +1,42 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Share } from 'react-native';
+import { View, StyleSheet, ScrollView, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button } from '../src/components';
+import {
+  Button,
+  Text,
+  Icon,
+  PressableScale,
+  ScreenHeader,
+  type IconName,
+} from '../src/components/ui';
 import { track } from '../src/lib/analytics';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const CODE = 'ALEX-BOOKIT';
 
-const STEPS = [
+const STEPS: { icon: IconName; title: string; text: string }[] = [
   {
-    icon: 'share-social-outline' as const,
+    icon: 'share',
     title: 'Share your code',
     text: 'Send your referral code to a friend.',
   },
   {
-    icon: 'cart-outline' as const,
+    icon: 'cart',
     title: 'They book',
     text: 'Your friend gets £10 off their first booking.',
   },
   {
-    icon: 'cash-outline' as const,
+    icon: 'banknote',
     title: 'You earn £10',
     text: 'Credit lands after their job completes.',
   },
 ];
 
 export default function ReferralsScreen() {
-  const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -47,19 +51,7 @@ export default function ReferralsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Refer & earn</Text>
-        <View style={styles.back} />
-      </View>
+      <ScreenHeader title="Refer & earn" />
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
@@ -71,45 +63,50 @@ export default function ReferralsScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <Ionicons name="gift" size={40} color="#FFFFFF" />
-          <Text style={styles.heroTitle}>Give £10, get £10</Text>
-          <Text style={styles.heroText}>
+          <Icon name="gift" size={24} color={c.text.onBrand} />
+          <Text variant="title1" style={styles.heroTitle}>
+            Give £10, get £10
+          </Text>
+          <Text variant="caption" style={styles.heroText}>
             Invite friends to Bookit. They save £10, and you earn £10 credit when they book.
           </Text>
         </LinearGradient>
 
-        <Text style={styles.sectionLabel}>Your referral code</Text>
-        <Pressable
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Your referral code
+        </Text>
+        <PressableScale
           style={styles.codeBox}
           onPress={() => showToast('Code copied')}
           accessibilityRole="button"
           accessibilityLabel={`Copy referral code ${CODE}`}
         >
-          <Text style={styles.code}>{CODE}</Text>
-          <Ionicons name="copy-outline" size={20} color={c.brand.tint} />
-        </Pressable>
+          <Text variant="title2" tone="accent" style={styles.code}>
+            {CODE}
+          </Text>
+          <Icon name="copy" size={20} color={c.brand.tint} />
+        </PressableScale>
 
-        <Text style={styles.sectionLabel}>How it works</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          How it works
+        </Text>
         <View style={styles.steps}>
           {STEPS.map((s, i) => (
             <View key={s.title} style={[styles.step, i < STEPS.length - 1 && styles.stepDivider]}>
               <View style={styles.stepIcon}>
-                <Ionicons name={s.icon} size={20} color={c.brand.tint} />
+                <Icon name={s.icon} size={20} color={c.brand.tint} />
               </View>
               <View style={styles.stepBody}>
-                <Text style={styles.stepTitle}>{s.title}</Text>
-                <Text style={styles.stepText}>{s.text}</Text>
+                <Text variant="headline">{s.title}</Text>
+                <Text variant="caption" tone="muted">
+                  {s.text}
+                </Text>
               </View>
             </View>
           ))}
         </View>
 
-        <Button
-          label="Share your invite"
-          icon="share-social"
-          style={styles.shareBtn}
-          onPress={onShare}
-        />
+        <Button label="Share your invite" icon="share" style={styles.shareBtn} onPress={onShare} />
       </ScrollView>
     </View>
   );
@@ -118,32 +115,22 @@ export default function ReferralsScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    title: { ...typography.scale.h2, color: c.text.primary },
     hero: {
       alignItems: 'center',
       gap: spacing.sm,
       padding: spacing.xl,
       borderRadius: radius.xl,
     },
-    heroTitle: { ...typography.scale.h1, color: '#FFFFFF' },
+    heroTitle: { color: c.text.onBrand },
     heroText: {
-      ...typography.scale.small,
-      color: 'rgba(255,255,255,0.9)',
+      color: c.text.onBrand,
+      opacity: 0.9,
       textAlign: 'center',
     },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginTop: spacing.xl,
       marginBottom: spacing.sm,
+      fontWeight: '600',
     },
     codeBox: {
       flexDirection: 'row',
@@ -156,11 +143,7 @@ const makeStyles = (c: Palette) =>
       borderColor: c.brand.primary,
       backgroundColor: c.brand.primarySoft,
     },
-    code: {
-      ...typography.scale.h2,
-      color: c.brand.tint,
-      letterSpacing: 1,
-    },
+    code: { letterSpacing: 1 },
     steps: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -184,7 +167,5 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     stepBody: { flex: 1, gap: 2 },
-    stepTitle: { ...typography.scale.bodyMedium, color: c.text.primary },
-    stepText: { ...typography.scale.caption, color: c.text.secondary },
     shareBtn: { marginTop: spacing.xl },
   });

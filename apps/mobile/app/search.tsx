@@ -1,12 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState } from '../src/components';
+import { EmptyState, Text, Icon, PressableScale, IconButton } from '../src/components/ui';
 import { providers as allProviders, categories } from '../src/mocks';
 import type { Provider } from '../src/mocks/types';
 import { track } from '../src/lib/analytics';
@@ -100,17 +99,15 @@ export default function SearchScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.searchRow}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
+          style={styles.back}
+        />
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={c.text.muted} />
+          <Icon name="search" size={20} color={c.text.muted} />
           <TextInput
             ref={inputRef}
             style={styles.input}
@@ -124,14 +121,13 @@ export default function SearchScreen() {
             accessibilityLabel="Search"
           />
           {query.length > 0 ? (
-            <Pressable
+            <PressableScale
               onPress={() => setQuery('')}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Clear search"
             >
-              <Ionicons name="close-circle" size={18} color={c.text.muted} />
-            </Pressable>
+              <Icon name="close-circle" size={20} color={c.text.muted} />
+            </PressableScale>
           ) : null}
         </View>
       </View>
@@ -145,63 +141,71 @@ export default function SearchScreen() {
           {recent.length > 0 ? (
             <View style={styles.block}>
               <View style={styles.blockHeader}>
-                <Text style={styles.blockTitle}>Recent searches</Text>
-                <Pressable
+                <Text variant="footnote" tone="muted">
+                  Recent searches
+                </Text>
+                <PressableScale
                   onPress={clearRecent}
-                  hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Clear recent searches"
                 >
-                  <Text style={styles.clear}>Clear</Text>
-                </Pressable>
+                  <Text variant="footnote" tone="accent">
+                    Clear
+                  </Text>
+                </PressableScale>
               </View>
               {recent.map((term) => (
-                <Pressable
+                <PressableScale
                   key={term}
                   style={styles.recentRow}
                   onPress={() => submit(term)}
                   accessibilityRole="button"
                   accessibilityLabel={`Search ${term}`}
                 >
-                  <Ionicons name="time-outline" size={18} color={c.text.muted} />
-                  <Text style={styles.recentText}>{term}</Text>
-                  <Pressable
+                  <Icon name="clock" size={20} color={c.text.muted} />
+                  <Text variant="body" style={styles.flex1}>
+                    {term}
+                  </Text>
+                  <PressableScale
                     onPress={() => removeRecent(term)}
-                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${term}`}
                   >
-                    <Ionicons name="close" size={16} color={c.text.muted} />
-                  </Pressable>
-                </Pressable>
+                    <Icon name="close" size={16} color={c.text.muted} />
+                  </PressableScale>
+                </PressableScale>
               ))}
             </View>
           ) : null}
 
           <View style={styles.block}>
-            <Text style={styles.blockTitle}>Trending services</Text>
+            <Text variant="footnote" tone="muted">
+              Trending services
+            </Text>
             <View style={styles.trendingWrap}>
               {TRENDING.map((term) => (
-                <Pressable
+                <PressableScale
                   key={term}
                   style={styles.trendingChip}
                   onPress={() => submit(term)}
                   accessibilityRole="button"
                   accessibilityLabel={`Search ${term}`}
                 >
-                  <Ionicons name="trending-up" size={14} color={c.brand.tint} />
-                  <Text style={styles.trendingText}>{term}</Text>
-                </Pressable>
+                  <Icon name="trending-up" size={16} color={c.brand.tint} />
+                  <Text variant="caption">{term}</Text>
+                </PressableScale>
               ))}
             </View>
           </View>
 
           <View style={styles.block}>
-            <Text style={styles.blockTitle}>Browse categories</Text>
+            <Text variant="footnote" tone="muted">
+              Browse categories
+            </Text>
             {categories
               .filter((cat) => cat.live)
               .map((cat) => (
-                <Pressable
+                <PressableScale
                   key={cat.slug}
                   style={styles.catRow}
                   onPress={() => router.push(route(`/category/${cat.slug}`))}
@@ -209,11 +213,13 @@ export default function SearchScreen() {
                   accessibilityLabel={cat.label}
                 >
                   <View style={styles.catIcon}>
-                    <Ionicons name={cat.icon} size={18} color={c.brand.tint} />
+                    <Icon name={cat.icon} size={20} color={c.brand.tint} />
                   </View>
-                  <Text style={styles.catLabel}>{cat.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-                </Pressable>
+                  <Text variant="body" style={styles.flex1}>
+                    {cat.label}
+                  </Text>
+                  <Icon name="chevron-right" size={20} color={c.text.muted} />
+                </PressableScale>
               ))}
           </View>
         </ScrollView>
@@ -228,32 +234,34 @@ export default function SearchScreen() {
             suggestions.length > 0 ? (
               <View style={styles.suggestions}>
                 {suggestions.map((s) => (
-                  <Pressable
+                  <PressableScale
                     key={`${s.type}-${s.label}`}
                     style={styles.suggestionRow}
                     onPress={() => (s.slug ? openCategory(s.slug, s.label) : submit(s.label))}
                     accessibilityRole="button"
                     accessibilityLabel={s.label}
                   >
-                    <Ionicons name="search" size={16} color={c.text.muted} />
-                    <Text style={styles.suggestionText}>{s.label}</Text>
-                    <Text style={styles.suggestionType}>
+                    <Icon name="search" size={16} color={c.text.muted} />
+                    <Text variant="body" style={styles.flex1}>
+                      {s.label}
+                    </Text>
+                    <Text variant="caption" tone="muted">
                       {s.type === 'category' ? 'Category' : 'Service'}
                     </Text>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
             ) : null
           }
           ListEmptyComponent={
             <EmptyState
-              icon="search-outline"
+              art="search"
               title="No matches"
               message={`We couldn't find anything for “${query.trim()}”. Try another term.`}
             />
           }
           renderItem={({ item }: { item: Provider }) => (
-            <Pressable
+            <PressableScale
               style={styles.providerRow}
               onPress={() => openProvider(item)}
               accessibilityRole="button"
@@ -267,18 +275,24 @@ export default function SearchScreen() {
                 cachePolicy="memory-disk"
               />
               <View style={styles.providerInfo}>
-                <Text style={styles.providerName} numberOfLines={1}>
+                <Text variant="headline" numberOfLines={1}>
                   {item.name}
                 </Text>
                 <View style={styles.providerMeta}>
-                  <Ionicons name="star" size={12} color={c.brand.star} />
-                  <Text style={styles.providerRating}>{item.rating.toFixed(1)}</Text>
-                  <Text style={styles.providerDot}>·</Text>
-                  <Text style={styles.providerArea}>{item.area ?? `${item.distanceKm} km`}</Text>
+                  <Icon name="star" size={16} color={c.brand.star} />
+                  <Text variant="caption">{item.rating.toFixed(1)}</Text>
+                  <Text variant="caption" tone="muted">
+                    ·
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {item.area ?? `${item.distanceKm} km`}
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.providerPrice}>from {money(item.priceFrom)}</Text>
-            </Pressable>
+              <Text variant="footnote" tone="accent">
+                from {money(item.priceFrom)}
+              </Text>
+            </PressableScale>
           )}
         />
       )}
@@ -296,7 +310,8 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
+    back: { width: 44, height: 44 },
+    flex1: { flex: 1 },
     searchBar: {
       flex: 1,
       flexDirection: 'row',
@@ -317,10 +332,7 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'space-between',
     },
-    blockTitle: { ...typography.scale.smallMedium, color: c.text.secondary },
-    clear: { ...typography.scale.smallMedium, color: c.brand.tint },
     recentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
-    recentText: { flex: 1, ...typography.scale.body, color: c.text.primary },
     trendingWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     trendingChip: {
       flexDirection: 'row',
@@ -333,7 +345,6 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.border,
     },
-    trendingText: { ...typography.scale.small, color: c.text.primary },
     catRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
     catIcon: {
       width: 36,
@@ -343,7 +354,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    catLabel: { flex: 1, ...typography.scale.body, color: c.text.primary },
     results: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
     suggestions: { marginBottom: spacing.md },
     suggestionRow: {
@@ -352,8 +362,6 @@ const makeStyles = (c: Palette) =>
       gap: spacing.md,
       minHeight: 44,
     },
-    suggestionText: { flex: 1, ...typography.scale.body, color: c.text.primary },
-    suggestionType: { ...typography.scale.caption, color: c.text.muted },
     providerRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -362,10 +370,5 @@ const makeStyles = (c: Palette) =>
     },
     providerPhoto: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: c.skeleton },
     providerInfo: { flex: 1, gap: 2 },
-    providerName: { ...typography.scale.bodyMedium, color: c.text.primary },
     providerMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    providerRating: { ...typography.scale.caption, color: c.text.primary },
-    providerDot: { color: c.text.muted },
-    providerArea: { ...typography.scale.caption, color: c.text.muted },
-    providerPrice: { ...typography.scale.smallMedium, color: c.brand.tint },
   });

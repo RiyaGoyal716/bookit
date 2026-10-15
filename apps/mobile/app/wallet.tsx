@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { BarChart, Button, type BarDatum } from '../src/components';
+import { BarChart, type BarDatum } from '../src/components';
+import { Button, Text, Icon, IconButton } from '../src/components/ui';
 import { route } from '../src/lib/nav';
 import { showToast } from '../src/stores/toastStore';
 import { useWalletStore, type WalletTransaction } from '../src/stores/walletStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 import { useMoney } from '../src/i18n';
 
 export default function WalletScreen() {
@@ -34,16 +34,16 @@ export default function WalletScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Wallet</Text>
+          style={styles.back}
+        />
+        <Text variant="title2" style={styles.title}>
+          Wallet
+        </Text>
       </View>
 
       <ScrollView
@@ -51,12 +51,16 @@ export default function WalletScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Available balance</Text>
-          <Text style={styles.balanceValue}>{money(balance)}</Text>
+          <Text variant="caption" tone="inverse" style={styles.balanceLabel}>
+            Available balance
+          </Text>
+          <Text variant="display" tone="inverse">
+            {money(balance)}
+          </Text>
           <View style={styles.balanceActions}>
             <Button
               label="Top up"
-              icon="add"
+              icon="plus"
               variant="secondary"
               style={styles.balanceBtn}
               onPress={() => {
@@ -66,7 +70,7 @@ export default function WalletScreen() {
             />
             <Button
               label="Redeem code"
-              icon="gift-outline"
+              icon="gift"
               variant="secondary"
               style={styles.balanceBtn}
               onPress={() => router.push(route('/referrals'))}
@@ -74,7 +78,9 @@ export default function WalletScreen() {
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>Activity</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Activity
+        </Text>
         <View style={styles.card}>
           <BarChart
             data={chartData}
@@ -84,7 +90,9 @@ export default function WalletScreen() {
           />
         </View>
 
-        <Text style={styles.sectionLabel}>Transactions</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Transactions
+        </Text>
         <View style={styles.card}>
           {transactions.map((t: WalletTransaction, i) => (
             <View
@@ -100,22 +108,19 @@ export default function WalletScreen() {
                   },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={t.type === 'credit' ? 'arrow-down' : 'arrow-up'}
                   size={16}
                   color={t.type === 'credit' ? c.status.success : c.text.muted}
                 />
               </View>
               <View style={styles.txnInfo}>
-                <Text style={styles.txnLabel}>{t.label}</Text>
-                <Text style={styles.txnDate}>{t.date}</Text>
+                <Text variant="headline">{t.label}</Text>
+                <Text variant="caption" tone="muted">
+                  {t.date}
+                </Text>
               </View>
-              <Text
-                style={[
-                  styles.txnAmount,
-                  { color: t.type === 'credit' ? c.status.success : c.text.primary },
-                ]}
-              >
+              <Text variant="headline" tone={t.type === 'credit' ? 'success' : 'default'}>
                 {t.type === 'credit' ? '+' : '−'}
                 {money(t.amount)}
               </Text>
@@ -138,20 +143,17 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
     balanceCard: {
       padding: spacing.xl,
       borderRadius: radius.xl,
       backgroundColor: c.brand.primary,
       gap: spacing.xs,
     },
-    balanceLabel: { ...typography.scale.small, color: c.text.inverse, opacity: 0.85 },
-    balanceValue: { ...typography.scale.hero, color: c.text.inverse },
+    balanceLabel: { opacity: 0.85 },
     balanceActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
     balanceBtn: { flex: 1 },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginTop: spacing.xl,
       marginBottom: spacing.sm,
     },
@@ -177,11 +179,4 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     txnInfo: { flex: 1, gap: 2 },
-    txnLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    txnDate: { ...typography.scale.caption, color: c.text.muted },
-    txnAmount: {
-      ...typography.scale.bodyMedium,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
   });

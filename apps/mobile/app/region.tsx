@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, Search } from 'lucide-react-native';
 
-import { AuroraBackground, GradientButton } from '../src/components';
+import { Button, Text, Icon, PressableScale } from '../src/components/ui';
 import {
   useT,
   useDirectionalStyles,
@@ -17,11 +16,19 @@ import {
 import { useRegionStore } from '../src/stores/regionStore';
 import { dialCodeFor } from '../src/lib/countries';
 import { route } from '../src/lib/nav';
-import { useColors, typography, spacing, radius, type Palette } from '../src/theme';
+import {
+  useColors,
+  useColorSchemeName,
+  typography,
+  spacing,
+  radius,
+  type Palette,
+} from '../src/theme';
 
 export default function RegionScreen() {
   const router = useRouter();
   const c = useColors();
+  const scheme = useColorSchemeName();
   const t = useT();
   const dir = useDirectionalStyles();
   const insets = useSafeAreaInsets();
@@ -48,37 +55,43 @@ export default function RegionScreen() {
     const active = item.code === selected;
     const cur = CURRENCIES[item.currency];
     return (
-      <Pressable
+      <PressableScale
         onPress={() => {
           setSelected(item.code);
           setRegion(item.code);
         }}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
+        accessibilityLabel={item.name}
         style={[styles.row, dir.row, active && styles.rowActive]}
       >
-        <Text style={styles.flag}>{regionFlag(item.code)}</Text>
+        <Text variant="display">{regionFlag(item.code)}</Text>
         <View style={styles.rowBody}>
-          <Text style={[styles.rowName, dir.textAlign]}>{item.name}</Text>
-          <Text style={[styles.rowMeta, dir.textAlign]}>
+          <Text variant="headline" style={dir.textAlign}>
+            {item.name}
+          </Text>
+          <Text variant="caption" tone="muted" style={dir.textAlign}>
             {cur.symbol} {item.currency} · +{dialCodeFor(item.code)}
           </Text>
         </View>
-        {active ? <Check size={22} color={c.brand.primary} /> : null}
-      </Pressable>
+        {active ? <Icon name="check" size={24} color={c.brand.primary} /> : null}
+      </PressableScale>
     );
   };
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={styles.hero}>
-        <AuroraBackground blobs={false} />
         <View style={[styles.heroInner, { paddingTop: insets.top + spacing.lg }]}>
-          <Text style={[styles.title, dir.textAlign]}>{t('region.title')}</Text>
-          <Text style={[styles.subtitle, dir.textAlign]}>{t('region.subtitle')}</Text>
+          <Text variant="display" style={dir.textAlign}>
+            {t('region.title')}
+          </Text>
+          <Text variant="body" tone="muted" style={dir.textAlign}>
+            {t('region.subtitle')}
+          </Text>
           <View style={[styles.search, dir.row]}>
-            <Search size={18} color={c.text.muted} />
+            <Icon name="search" size={20} color={c.text.muted} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -100,7 +113,7 @@ export default function RegionScreen() {
       />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <GradientButton label={t('common.continue')} onPress={onContinue} />
+        <Button label={t('common.continue')} onPress={onContinue} />
       </View>
     </View>
   );
@@ -113,10 +126,9 @@ const makeStyles = (c: Palette) =>
       overflow: 'hidden',
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
+      backgroundColor: c.background.base,
     },
     heroInner: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.sm },
-    title: { ...typography.scale.display, color: c.text.onBrand },
-    subtitle: { ...typography.scale.body, color: c.text.onBrand, opacity: 0.88 },
     search: {
       alignItems: 'center',
       gap: spacing.sm,
@@ -138,10 +150,7 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
     },
     rowActive: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
-    flag: { fontSize: 30 },
     rowBody: { flex: 1, gap: 2 },
-    rowName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    rowMeta: { ...typography.scale.small, color: c.text.muted },
     footer: {
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.md,

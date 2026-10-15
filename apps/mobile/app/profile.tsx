@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Input } from '../src/components';
+import { Button, Icon, PressableScale, ScreenHeader, Text, TextField } from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
 import { useAuthStore } from '../src/stores/authStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -33,18 +32,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Edit profile</Text>
-      </View>
+      <ScreenHeader title="Edit profile" onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
@@ -53,21 +41,28 @@ export default function ProfileScreen() {
       >
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
+            <Text variant="display" tone="onPrimary">
+              {initial}
+            </Text>
           </View>
-          <Pressable
+          <PressableScale
             style={styles.avatarEdit}
             onPress={() => showToast('Photo upload is a demo')}
             accessibilityRole="button"
             accessibilityLabel="Change photo"
           >
-            <Ionicons name="camera" size={16} color={c.text.inverse} />
-          </Pressable>
+            <Icon name="camera" size={16} color={c.text.inverse} />
+          </PressableScale>
         </View>
 
         <View style={styles.form}>
-          <Input label="Full name" value={name} onChangeText={setName} placeholder="Your name" />
-          <Input
+          <TextField
+            label="Full name"
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+          />
+          <TextField
             label="Email"
             value={email}
             onChangeText={setEmail}
@@ -78,12 +73,16 @@ export default function ProfileScreen() {
           />
           <View style={styles.phoneRow}>
             <View style={styles.flex1}>
-              <Text style={styles.phoneLabel}>Phone</Text>
-              <Text style={styles.phoneValue}>{user?.phone ?? '—'}</Text>
+              <Text variant="caption" tone="subtle">
+                Phone
+              </Text>
+              <Text variant="headline">{user?.phone ?? '—'}</Text>
             </View>
             <View style={styles.verifiedTag}>
-              <Ionicons name="checkmark-circle" size={14} color={c.status.success} />
-              <Text style={styles.verifiedText}>Verified</Text>
+              <Icon name="check-circle" size={16} color={c.status.success} />
+              <Text variant="caption" tone="success">
+                Verified
+              </Text>
             </View>
           </View>
         </View>
@@ -97,15 +96,6 @@ export default function ProfileScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
     avatarWrap: { alignSelf: 'center', marginVertical: spacing.lg },
     avatar: {
       width: 96,
@@ -115,7 +105,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: { ...typography.scale.hero, color: c.text.inverse },
     avatarEdit: {
       position: 'absolute',
       bottom: 0,
@@ -140,9 +129,6 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
     },
     flex1: { flex: 1 },
-    phoneLabel: { ...typography.scale.caption, color: c.text.muted },
-    phoneValue: { ...typography.scale.bodyMedium, color: c.text.primary },
     verifiedTag: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    verifiedText: { ...typography.scale.caption, color: c.status.success },
     save: { marginTop: spacing.xl },
   });

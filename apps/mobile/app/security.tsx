@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, InlineBanner } from '../src/components';
+import {
+  Button,
+  Banner,
+  Toggle,
+  Text,
+  Icon,
+  PressableScale,
+  IconButton,
+} from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
 import { useSecurityStore } from '../src/stores/securityStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
@@ -50,21 +57,23 @@ export default function SecurityScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => (entering ? setEntering(false) : router.back())}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>{entering ? 'Set a PIN' : 'Security'}</Text>
+          style={styles.back}
+        />
+        <Text variant="title2" style={styles.title}>
+          {entering ? 'Set a PIN' : 'Security'}
+        </Text>
       </View>
 
       {entering ? (
         <View style={styles.pinPad}>
-          <Text style={styles.pinPrompt}>Enter a 4-digit PIN</Text>
+          <Text variant="body" tone="muted" style={styles.pinPrompt}>
+            Enter a 4-digit PIN
+          </Text>
           <View style={styles.pinDots}>
             {[0, 1, 2, 3].map((i) => (
               <View key={i} style={[styles.pinDot, i < digits.length && styles.pinDotFilled]} />
@@ -72,8 +81,9 @@ export default function SecurityScreen() {
           </View>
           <View style={styles.keypad}>
             {KEYS.map((k, i) => (
-              <Pressable
+              <PressableScale
                 key={`${k}-${i}`}
+                haptic={null}
                 style={[styles.key, !k && styles.keyEmpty]}
                 onPress={() => press(k)}
                 disabled={!k}
@@ -81,11 +91,11 @@ export default function SecurityScreen() {
                 accessibilityLabel={k === 'del' ? 'Delete' : k}
               >
                 {k === 'del' ? (
-                  <Ionicons name="backspace-outline" size={24} color={c.text.primary} />
+                  <Icon name="backspace" size={24} color={c.text.primary} />
                 ) : (
-                  <Text style={styles.keyText}>{k}</Text>
+                  <Text variant="title1">{k}</Text>
                 )}
-              </Pressable>
+              </PressableScale>
             ))}
           </View>
         </View>
@@ -94,25 +104,29 @@ export default function SecurityScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
           showsVerticalScrollIndicator={false}
         >
-          <InlineBanner
-            tone="info"
-            title="App lock is a demo"
-            message="PIN and biometrics are mocked for this prototype and never leave your device."
-            style={{ marginBottom: spacing.lg }}
-          />
+          <View style={styles.bannerWrap}>
+            <Banner
+              tone="info"
+              title="App lock is a demo"
+              message="PIN and biometrics are mocked for this prototype and never leave your device."
+            />
+          </View>
 
           <View style={styles.card}>
             <View style={styles.row}>
               <View style={styles.rowIcon}>
-                <Ionicons name="keypad-outline" size={18} color={c.brand.tint} />
+                <Icon name="grid" size={20} color={c.brand.tint} />
               </View>
               <View style={styles.flex1}>
-                <Text style={styles.rowLabel}>App PIN</Text>
-                <Text style={styles.rowSub}>{pinSet ? 'PIN is set' : 'Not set'}</Text>
+                <Text variant="headline">App PIN</Text>
+                <Text variant="caption" tone="muted">
+                  {pinSet ? 'PIN is set' : 'Not set'}
+                </Text>
               </View>
               <Button
                 label={pinSet ? 'Change' : 'Set PIN'}
                 variant="secondary"
+                fullWidth={false}
                 onPress={() => {
                   setDigits('');
                   setEntering(true);
@@ -125,28 +139,28 @@ export default function SecurityScreen() {
 
             <View style={styles.row}>
               <View style={styles.rowIcon}>
-                <Ionicons name="finger-print" size={18} color={c.brand.tint} />
+                <Icon name="fingerprint" size={20} color={c.brand.tint} />
               </View>
               <View style={styles.flex1}>
-                <Text style={styles.rowLabel}>Biometric unlock</Text>
-                <Text style={styles.rowSub}>Face ID / fingerprint</Text>
+                <Text variant="headline">Biometric unlock</Text>
+                <Text variant="caption" tone="muted">
+                  Face ID / fingerprint
+                </Text>
               </View>
-              <Switch
+              <Toggle
                 value={biometricEnabled}
                 disabled={!pinSet}
-                onValueChange={(v) => {
+                onChange={(v) => {
                   setBiometric(v);
                   showToast(v ? 'Biometric unlock on' : 'Biometric unlock off');
                 }}
-                trackColor={{ false: c.border, true: c.brand.primary }}
-                thumbColor={c.background.surface}
                 accessibilityLabel="Biometric unlock"
               />
             </View>
           </View>
 
           {pinSet ? (
-            <Pressable
+            <PressableScale
               style={styles.removeRow}
               onPress={() => {
                 clearPin();
@@ -155,9 +169,11 @@ export default function SecurityScreen() {
               accessibilityRole="button"
               accessibilityLabel="Remove PIN"
             >
-              <Ionicons name="trash-outline" size={18} color={c.status.danger} />
-              <Text style={styles.removeText}>Remove PIN</Text>
-            </Pressable>
+              <Icon name="trash" size={20} color={c.status.danger} />
+              <Text variant="headline" tone="danger">
+                Remove PIN
+              </Text>
+            </PressableScale>
           ) : null}
         </ScrollView>
       )}
@@ -176,7 +192,8 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
+    bannerWrap: { marginBottom: spacing.lg },
     card: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -199,8 +216,6 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     flex1: { flex: 1 },
-    rowLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    rowSub: { ...typography.scale.caption, color: c.text.muted },
     smallBtn: { minHeight: 40, paddingHorizontal: spacing.lg },
     divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     removeRow: {
@@ -213,9 +228,8 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       backgroundColor: c.status.dangerSoft,
     },
-    removeText: { ...typography.scale.bodyMedium, color: c.status.danger },
     pinPad: { flex: 1, alignItems: 'center', paddingTop: spacing.xl },
-    pinPrompt: { ...typography.scale.body, color: c.text.secondary, marginBottom: spacing.xl },
+    pinPrompt: { marginBottom: spacing.xl },
     pinDots: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.xxl },
     pinDot: {
       width: 18,
@@ -243,5 +257,4 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
     },
     keyEmpty: { backgroundColor: 'transparent', borderColor: 'transparent' },
-    keyText: { ...typography.scale.h1, color: c.text.primary },
   });

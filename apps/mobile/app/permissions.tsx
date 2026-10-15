@@ -1,24 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 
-import { GradientButton } from '../src/components';
+import { Button, Text, PressableScale } from '../src/components/ui';
 import { IllustrationLocation, IllustrationNotify } from '../src/assets/illustrations';
 import { useT } from '../src/i18n';
 import { useOnboardingStore } from '../src/stores/onboardingStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
 import { route } from '../src/lib/nav';
-import {
-  useColors,
-  useColorSchemeName,
-  typography,
-  spacing,
-  radius,
-  type Palette,
-} from '../src/theme';
+import { useColors, useColorSchemeName, spacing, radius, type Palette } from '../src/theme';
 
 type Step = 'location' | 'notifications';
 
@@ -79,27 +72,30 @@ export default function PermissionsScreen() {
             <View style={[styles.dot, isLocation && styles.dotActive]} />
             <View style={[styles.dot, !isLocation && styles.dotActive]} />
           </View>
-          <Text style={styles.title}>
+          <Text variant="display" center>
             {t(isLocation ? 'permissions.locationTitle' : 'permissions.notifTitle')}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text variant="body" tone="muted" center style={styles.subtitle}>
             {t(isLocation ? 'permissions.locationBody' : 'permissions.notifBody')}
           </Text>
         </View>
 
         <View style={styles.footer}>
-          <GradientButton
+          <Button
             label={t(isLocation ? 'permissions.allow' : 'permissions.enable')}
             loading={busy}
             onPress={isLocation ? onAllowLocation : onEnableNotifications}
           />
-          <Pressable
+          <PressableScale
             onPress={isLocation ? nextAfterLocation : finish}
             style={styles.skip}
             accessibilityRole="button"
+            accessibilityLabel={t('permissions.notNow')}
           >
-            <Text style={styles.skipText}>{t('permissions.notNow')}</Text>
-          </Pressable>
+            <Text variant="body" tone="muted">
+              {t('permissions.notNow')}
+            </Text>
+          </PressableScale>
         </View>
       </View>
     </View>
@@ -115,14 +111,7 @@ const makeStyles = (c: Palette) =>
     dots: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
     dot: { width: 8, height: 8, borderRadius: radius.pill, backgroundColor: c.border },
     dotActive: { backgroundColor: c.brand.primary, width: 24 },
-    title: { ...typography.scale.display, color: c.text.primary, textAlign: 'center' },
-    subtitle: {
-      ...typography.scale.body,
-      color: c.text.secondary,
-      textAlign: 'center',
-      maxWidth: 320,
-    },
+    subtitle: { maxWidth: 320 },
     footer: { gap: spacing.sm, marginTop: spacing.xxl },
     skip: { alignItems: 'center', paddingVertical: spacing.md },
-    skipText: { ...typography.scale.bodyMedium, color: c.text.muted },
   });

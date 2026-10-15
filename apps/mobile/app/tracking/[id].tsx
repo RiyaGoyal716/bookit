@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
 import {
   Button,
   EmptyState,
-  RouteMapTracker,
-  StatusTimeline,
-  type TimelineStep,
-} from '../../src/components';
+  Text,
+  Icon,
+  PressableScale,
+  IconButton,
+  type IconName,
+} from '../../src/components/ui';
 import { getProviderById } from '../../src/mocks';
 import { route } from '../../src/lib/nav';
 import { showToast } from '../../src/stores/toastStore';
@@ -21,7 +22,14 @@ import {
   useBookingsStore,
   type BookingStatus,
 } from '../../src/stores/bookingsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
+
+interface TimelineStep {
+  key: string;
+  label: string;
+  caption: string;
+  icon: IconName;
+}
 
 /** Map the booking status to tracker progress (0..1) and a rough ETA. */
 function statusProgress(status: BookingStatus): number {
@@ -54,19 +62,19 @@ function etaFor(status: BookingStatus): string {
   }
 }
 
-const STEP_META: Record<string, { label: string; caption: string; icon: TimelineStep['icon'] }> = {
+const STEP_META: Record<string, { label: string; caption: string; icon: IconName }> = {
   Requested: {
     label: 'Request sent',
     caption: 'Waiting for the pro to accept',
-    icon: 'paper-plane-outline',
+    icon: 'send',
   },
   Accepted: {
     label: 'Pro confirmed',
     caption: 'Your booking is locked in',
-    icon: 'checkmark-circle-outline',
+    icon: 'check-circle',
   },
-  'On the way': { label: 'On the way', caption: 'Your pro is heading to you', icon: 'car-outline' },
-  Completed: { label: 'Arrived & completed', caption: 'Hope it went well!', icon: 'home-outline' },
+  'On the way': { label: 'On the way', caption: 'Your pro is heading to you', icon: 'truck' },
+  Completed: { label: 'Arrived & completed', caption: 'Hope it went well!', icon: 'home' },
 };
 
 export default function TrackingScreen() {
@@ -83,16 +91,15 @@ export default function TrackingScreen() {
   if (!booking) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="surface"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="navigate-outline" title="Nothing to track" />
+          style={styles.back}
+        />
+        <EmptyState art="empty" title="Nothing to track" />
       </View>
     );
   }
@@ -114,26 +121,35 @@ export default function TrackingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mapWrap}>
-          <RouteMapTracker progress={progress} height={300} />
-          <Pressable
-            style={[styles.back, styles.backFloat, { top: insets.top + spacing.sm }]}
+          <View style={styles.mapPlaceholder}>
+            <Icon name="map-pin" size={24} color={c.brand.tint} />
+            <Text variant="caption" tone="muted">
+              Live route tracking
+            </Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+            </View>
+          </View>
+          <IconButton
+            name="chevron-left"
+            size={24}
+            variant="surface"
             onPress={() => router.back()}
-            hitSlop={8}
-            accessibilityRole="button"
             accessibilityLabel="Go back"
-          >
-            <Ionicons name="chevron-back" size={24} color={c.text.primary} />
-          </Pressable>
+            style={[styles.backFloat, { top: insets.top + spacing.sm }]}
+          />
         </View>
 
         <View style={styles.body}>
           <View style={styles.etaCard}>
             <View style={styles.etaIcon}>
-              <Ionicons name="time-outline" size={22} color={c.brand.tint} />
+              <Icon name="clock" size={24} color={c.brand.tint} />
             </View>
             <View style={styles.flex1}>
-              <Text style={styles.etaLabel}>{booking.status}</Text>
-              <Text style={styles.etaValue}>{etaFor(booking.status)}</Text>
+              <Text variant="caption" tone="muted">
+                {booking.status}
+              </Text>
+              <Text variant="title2">{etaFor(booking.status)}</Text>
             </View>
           </View>
 
@@ -147,10 +163,12 @@ export default function TrackingScreen() {
                 cachePolicy="memory-disk"
               />
               <View style={styles.flex1}>
-                <Text style={styles.proName}>{provider.name}</Text>
-                <Text style={styles.proService}>{booking.serviceName}</Text>
+                <Text variant="headline">{provider.name}</Text>
+                <Text variant="caption" tone="muted">
+                  {booking.serviceName}
+                </Text>
               </View>
-              <Pressable
+              <PressableScale
                 style={styles.circleBtn}
                 onPress={() =>
                   Linking.openURL('tel:+441130000000').catch(() => showToast('Calling unavailable'))
@@ -158,27 +176,56 @@ export default function TrackingScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Call ${provider.name}`}
               >
-                <Ionicons name="call" size={20} color={c.brand.tint} />
-              </Pressable>
-              <Pressable
+                <Icon name="phone" size={20} color={c.brand.tint} />
+              </PressableScale>
+              <PressableScale
                 style={styles.circleBtn}
                 onPress={() => router.push(route(`/chat/${provider.id}`))}
                 accessibilityRole="button"
                 accessibilityLabel={`Message ${provider.name}`}
               >
-                <Ionicons name="chatbubble-ellipses" size={20} color={c.brand.tint} />
-              </Pressable>
+                <Icon name="message" size={20} color={c.brand.tint} />
+              </PressableScale>
             </View>
           ) : null}
 
-          <Text style={styles.sectionTitle}>Status timeline</Text>
-          <StatusTimeline steps={steps} currentIndex={currentIndex} />
+          <Text variant="title2" style={styles.sectionTitle}>
+            Status timeline
+          </Text>
+          <View style={styles.timeline}>
+            {steps.map((step, i) => {
+              const done = i <= currentIndex;
+              const isLast = i === steps.length - 1;
+              return (
+                <View key={step.key} style={styles.tlRow}>
+                  <View style={styles.tlRail}>
+                    <View style={[styles.tlDot, done && styles.tlDotActive]}>
+                      <Icon
+                        name={step.icon}
+                        size={16}
+                        color={done ? c.text.inverse : c.text.muted}
+                      />
+                    </View>
+                    {!isLast ? <View style={[styles.tlLine, done && styles.tlLineActive]} /> : null}
+                  </View>
+                  <View style={styles.tlBody}>
+                    <Text variant="headline" tone={done ? 'default' : 'muted'}>
+                      {step.label}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {step.caption}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
 
           {next ? (
             <Button
               label={`Advance to “${next}” (demo)`}
-              variant="ghost"
-              icon="play-forward"
+              variant="tertiary"
+              icon="arrow-right"
               onPress={() => advanceStatus(booking.id)}
             />
           ) : null}
@@ -192,14 +239,26 @@ const makeStyles = (c: Palette) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: c.background.base },
     mapWrap: { position: 'relative' },
-    back: {
-      width: 40,
-      height: 40,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.surface,
+    mapPlaceholder: {
+      height: 300,
       alignItems: 'center',
       justifyContent: 'center',
+      gap: spacing.sm,
+      backgroundColor: c.background.muted,
     },
+    progressTrack: {
+      width: 160,
+      height: 6,
+      borderRadius: radius.pill,
+      backgroundColor: c.border,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: 6,
+      borderRadius: radius.pill,
+      backgroundColor: c.brand.primary,
+    },
+    back: { alignSelf: 'flex-start', marginLeft: spacing.sm },
     backFloat: { position: 'absolute', left: spacing.lg },
     body: { padding: spacing.lg, gap: spacing.lg },
     flex1: { flex: 1 },
@@ -219,8 +278,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    etaLabel: { ...typography.scale.caption, color: c.text.secondary },
-    etaValue: { ...typography.scale.h2, color: c.text.primary },
     proRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -232,8 +289,6 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
     },
     proAvatar: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: c.skeleton },
-    proName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    proService: { ...typography.scale.caption, color: c.text.muted },
     circleBtn: {
       width: 44,
       height: 44,
@@ -243,5 +298,20 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    sectionTitle: { ...typography.scale.h2, color: c.text.primary },
+    sectionTitle: {},
+    timeline: { gap: 0 },
+    tlRow: { flexDirection: 'row', gap: spacing.md },
+    tlRail: { width: 36, alignItems: 'center' },
+    tlDot: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.background.muted,
+    },
+    tlDotActive: { backgroundColor: c.brand.primary },
+    tlLine: { width: 2, flex: 1, marginVertical: spacing.xs, backgroundColor: c.border },
+    tlLineActive: { backgroundColor: c.brand.primary },
+    tlBody: { flex: 1, paddingBottom: spacing.lg, gap: spacing.xxs },
   });

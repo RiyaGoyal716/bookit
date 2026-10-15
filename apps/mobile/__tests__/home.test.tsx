@@ -1,11 +1,11 @@
 import { render } from '@testing-library/react-native';
 
-import { Badge } from '../src/components/Badge';
+import { StatusPill } from '../src/components/ui/StatusPill';
 import { colors, spacing } from '../src/theme';
 
-describe('Badge', () => {
+describe('StatusPill', () => {
   it('renders its status label', async () => {
-    const { getByText } = await render(<Badge status="Requested" />);
+    const { getByText } = await render(<StatusPill label="Requested" tone="info" />);
     expect(getByText('Requested')).toBeTruthy();
   });
 });

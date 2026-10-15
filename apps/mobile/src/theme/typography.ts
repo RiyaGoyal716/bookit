@@ -78,7 +78,7 @@ const scale: Scale = {
   caption: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, fontWeight: '500' },
   micro: { fontFamily: font.medium, fontSize: 11, lineHeight: 14, fontWeight: '500' },
 
-  // Legacy aliases → mapped onto the NOVA scale
+  // Legacy aliases to mapped onto the NOVA scale
   hero: {
     fontFamily: font.titleBold,
     fontSize: 30,

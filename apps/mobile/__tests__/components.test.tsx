@@ -1,39 +1,37 @@
 import { render } from '@testing-library/react-native';
 
-import { Button } from '../src/components/Button';
-import { Input } from '../src/components/Input';
-import { Badge } from '../src/components/Badge';
+import { StatusPill } from '../src/components/ui/StatusPill';
+import { Rating } from '../src/components/ui/Rating';
+import { Avatar } from '../src/components/ui/Avatar';
 
-describe('Button', () => {
-  it('renders a primary button and matches snapshot', async () => {
-    const { toJSON } = await render(<Button label="Continue" />);
-    expect(toJSON()).toMatchSnapshot();
-  });
-
-  it('renders a disabled ghost button', async () => {
-    const { getByText } = await render(<Button label="Skip" variant="ghost" disabled />);
-    expect(getByText('Skip')).toBeTruthy();
-  });
-});
-
-describe('Input', () => {
-  it('renders a labelled field with an error and matches snapshot', async () => {
-    const { toJSON } = await render(
-      <Input label="Mobile number" value="123" error="Too short" placeholder="Phone" />,
-    );
-    expect(toJSON()).toMatchSnapshot();
-  });
-});
-
-describe('Badge', () => {
+describe('StatusPill', () => {
   it('renders each status and matches snapshot', async () => {
     const { toJSON } = await render(
       <>
-        <Badge status="Requested" />
-        <Badge status="Accepted" />
-        <Badge status="Completed" />
+        <StatusPill label="Requested" tone="info" />
+        <StatusPill label="Accepted" tone="accent" />
+        <StatusPill label="Completed" tone="success" />
       </>,
     );
+    expect(toJSON()).toMatchSnapshot();
+  });
+
+  it('renders its label', async () => {
+    const { getByText } = await render(<StatusPill label="On the way" tone="warning" />);
+    expect(getByText('On the way')).toBeTruthy();
+  });
+});
+
+describe('Rating', () => {
+  it('renders a value with a review count and matches snapshot', async () => {
+    const { toJSON } = await render(<Rating value={4.5} count={128} />);
+    expect(toJSON()).toMatchSnapshot();
+  });
+});
+
+describe('Avatar', () => {
+  it('renders initials when no photo is supplied and matches snapshot', async () => {
+    const { toJSON } = await render(<Avatar name="Jordan Lee" />);
     expect(toJSON()).toMatchSnapshot();
   });
 });

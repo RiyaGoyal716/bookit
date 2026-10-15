@@ -24,7 +24,7 @@ interface RegionState {
   /**
    * Active UI language — INDEPENDENT of the region. Defaults to English for
    * every region (like Uber / Urban Company); users opt into Hindi/Arabic in
-   * Settings. This also drives text direction (Arabic → RTL).
+   * Settings. This also drives text direction (Arabic to RTL).
    */
   language: LocaleCode;
   /** Alias of `language`, kept so existing i18n consumers keep working. */

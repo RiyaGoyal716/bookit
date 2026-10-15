@@ -1,16 +1,23 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-import { Button, Input } from '../../src/components';
+import {
+  Text,
+  Icon,
+  IconButton,
+  Button,
+  TextField,
+  PressableScale,
+  type IconName,
+} from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { showToast } from '../../src/stores/toastStore';
 import { useProviderStore } from '../../src/stores/providerStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 
 export default function ProOnboarding() {
   const router = useRouter();
@@ -54,16 +61,15 @@ export default function ProOnboarding() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          accessibilityLabel="Go back"
           onPress={() => router.back()}
           style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Become a pro</Text>
+        />
+        <Text variant="title2" style={styles.title}>
+          Become a pro
+        </Text>
       </View>
 
       <ScrollView
@@ -71,12 +77,14 @@ export default function ProOnboarding() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.intro}>
+        <Text variant="body" tone="muted">
           Join thousands of Bookit pros. We’ll verify your ID to keep the community safe — it
           usually takes under 24 hours.
         </Text>
 
-        <Text style={styles.sectionTitle}>1 · Photo ID</Text>
+        <Text variant="headline" style={styles.sectionTitle}>
+          1 · Photo ID
+        </Text>
         <UploadTile
           label="Driving licence or passport"
           uri={idDoc}
@@ -86,20 +94,24 @@ export default function ProOnboarding() {
           c={c}
         />
 
-        <Text style={styles.sectionTitle}>2 · Selfie check</Text>
+        <Text variant="headline" style={styles.sectionTitle}>
+          2 · Selfie check
+        </Text>
         <UploadTile
           label="A clear selfie to match your ID"
           uri={selfie}
           done={onboarding.selfie}
-          icon="happy-outline"
+          icon="user"
           onPress={() => pick('selfie')}
           styles={styles}
           c={c}
         />
 
-        <Text style={styles.sectionTitle}>3 · Bank details (for payouts)</Text>
+        <Text variant="headline" style={styles.sectionTitle}>
+          3 · Bank details (for payouts)
+        </Text>
         <View style={styles.bankCard}>
-          <Input
+          <TextField
             label="Sort code"
             value={sortCode}
             onChangeText={setSortCode}
@@ -107,18 +119,21 @@ export default function ProOnboarding() {
             keyboardType="number-pad"
             maxLength={8}
           />
-          <Input
-            containerStyle={{ marginTop: spacing.md }}
-            label="Account number"
-            value={accountNo}
-            onChangeText={setAccountNo}
-            placeholder="12345678"
-            keyboardType="number-pad"
-            maxLength={8}
-          />
+          <View style={{ marginTop: spacing.md }}>
+            <TextField
+              label="Account number"
+              value={accountNo}
+              onChangeText={setAccountNo}
+              placeholder="12345678"
+              keyboardType="number-pad"
+              maxLength={8}
+            />
+          </View>
           <View style={styles.secureNote}>
-            <Ionicons name="lock-closed" size={13} color={c.text.muted} />
-            <Text style={styles.secureText}>Encrypted and used only for payouts (demo).</Text>
+            <Icon name="lock" size={16} color={c.text.muted} />
+            <Text variant="caption" tone="muted">
+              Encrypted and used only for payouts (demo).
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -134,7 +149,7 @@ function UploadTile({
   label,
   uri,
   done,
-  icon = 'cloud-upload-outline',
+  icon = 'image',
   onPress,
   styles,
   c,
@@ -142,13 +157,13 @@ function UploadTile({
   label: string;
   uri: string | null;
   done: boolean;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IconName;
   onPress: () => void;
   styles: ReturnType<typeof makeStyles>;
   c: Palette;
 }) {
   return (
-    <Pressable
+    <PressableScale
       style={styles.uploadTile}
       onPress={onPress}
       accessibilityRole="button"
@@ -163,15 +178,17 @@ function UploadTile({
         />
       ) : (
         <View style={styles.uploadIcon}>
-          <Ionicons name={icon} size={24} color={c.brand.tint} />
+          <Icon name={icon} size={24} color={c.brand.tint} />
         </View>
       )}
       <View style={styles.flex1}>
-        <Text style={styles.uploadLabel}>{label}</Text>
-        <Text style={styles.uploadHint}>{uri ? 'Tap to replace' : 'Tap to upload'}</Text>
+        <Text variant="headline">{label}</Text>
+        <Text variant="caption" tone="muted">
+          {uri ? 'Tap to replace' : 'Tap to upload'}
+        </Text>
       </View>
-      {done ? <Ionicons name="checkmark-circle" size={22} color={c.status.success} /> : null}
-    </Pressable>
+      {done ? <Icon name="check-circle" size={24} color={c.status.success} /> : null}
+    </PressableScale>
   );
 }
 
@@ -186,11 +203,8 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
-    intro: { ...typography.scale.body, color: c.text.secondary },
+    title: { flex: 1 },
     sectionTitle: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
       marginTop: spacing.xl,
       marginBottom: spacing.sm,
     },
@@ -215,8 +229,6 @@ const makeStyles = (c: Palette) =>
     },
     uploadImage: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: c.skeleton },
     flex1: { flex: 1 },
-    uploadLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    uploadHint: { ...typography.scale.caption, color: c.text.muted },
     bankCard: {
       padding: spacing.lg,
       borderRadius: radius.lg,
@@ -230,7 +242,6 @@ const makeStyles = (c: Palette) =>
       gap: spacing.xs,
       marginTop: spacing.md,
     },
-    secureText: { ...typography.scale.caption, color: c.text.muted },
     footer: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,

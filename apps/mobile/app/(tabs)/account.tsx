@@ -1,12 +1,18 @@
-import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useMemo } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { AppDrawer, Button, ConfirmModal, EmptyState } from '../../src/components';
+import {
+  Button,
+  EmptyState,
+  Icon,
+  PressableScale,
+  Text,
+  type IconName,
+} from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { getProviderById } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
@@ -14,24 +20,22 @@ import { useAuthStore } from '../../src/stores/authStore';
 import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useWalletStore } from '../../src/stores/walletStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
-type RowIcon = keyof typeof Ionicons.glyphMap;
-
-const MENU: { icon: RowIcon; label: string; href: string }[] = [
-  { icon: 'wallet-outline', label: 'Wallet & transactions', href: '/wallet' },
-  { icon: 'card-outline', label: 'Payment methods', href: '/payments' },
-  { icon: 'location-outline', label: 'Saved addresses', href: '/addresses' },
-  { icon: 'star-outline', label: 'Bookit Plus', href: '/plus' },
-  { icon: 'briefcase-outline', label: 'Become a pro', href: '/pro' },
-  { icon: 'gift-outline', label: 'Refer & earn', href: '/referrals' },
-  { icon: 'notifications-outline', label: 'Notifications', href: '/notifications' },
-  { icon: 'shield-outline', label: 'Safety centre', href: '/safety' },
-  { icon: 'document-text-outline', label: 'Booking & cancellation policy', href: '/policies' },
-  { icon: 'settings-outline', label: 'Settings', href: '/settings' },
-  { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
-  { icon: 'shield-checkmark-outline', label: 'Legal & guidelines', href: '/legal' },
+const MENU: { icon: IconName; label: string; href: string }[] = [
+  { icon: 'wallet', label: 'Wallet & transactions', href: '/wallet' },
+  { icon: 'card', label: 'Payment methods', href: '/payments' },
+  { icon: 'map-pin', label: 'Saved addresses', href: '/addresses' },
+  { icon: 'star', label: 'Bookit Plus', href: '/plus' },
+  { icon: 'briefcase', label: 'Become a pro', href: '/pro' },
+  { icon: 'gift', label: 'Refer & earn', href: '/referrals' },
+  { icon: 'bell', label: 'Notifications', href: '/notifications' },
+  { icon: 'shield', label: 'Safety centre', href: '/safety' },
+  { icon: 'file-text', label: 'Booking & cancellation policy', href: '/policies' },
+  { icon: 'settings', label: 'Settings', href: '/settings' },
+  { icon: 'help', label: 'Help & support', href: '/help' },
+  { icon: 'shield-check', label: 'Legal & guidelines', href: '/legal' },
 ];
 
 export default function AccountScreen() {
@@ -46,9 +50,6 @@ export default function AccountScreen() {
   const bookingCount = useBookingsStore((s) => s.bookings.length);
   const walletBalance = useWalletStore((s) => s.balance());
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [logoutOpen, setLogoutOpen] = useState(false);
-
   const favourites = useMemo(
     () => favouriteIds.map((id) => getProviderById(id)).filter((p): p is Provider => Boolean(p)),
     [favouriteIds],
@@ -56,75 +57,88 @@ export default function AccountScreen() {
 
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
 
-  const handleLogout = () => {
-    setLogoutOpen(false);
-    logout();
-    router.replace('/');
+  const confirmLogout = () => {
+    Alert.alert('Log out?', "You'll need to sign in again to manage your bookings.", [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log out',
+        style: 'destructive',
+        onPress: () => {
+          logout();
+          router.replace('/');
+        },
+      },
+    ]);
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.topBar}>
-        <Text style={styles.heading}>Account</Text>
-        <Pressable
-          style={styles.menuBtn}
-          onPress={() => setDrawerOpen(true)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Open menu"
-        >
-          <Ionicons name="menu" size={24} color={c.text.primary} />
-        </Pressable>
+        <Text variant="title1">Account</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
+        <PressableScale
           style={styles.userCard}
           onPress={() => router.push(route('/profile'))}
           accessibilityRole="button"
           accessibilityLabel="Edit profile"
         >
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
+            <Text variant="title2" tone="onPrimary">
+              {initial}
+            </Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
-            <Text style={styles.phone}>{user?.phone ?? '—'}</Text>
+            <Text variant="title2">{user?.name ?? 'Guest'}</Text>
+            <Text variant="caption" tone="muted">
+              {user?.phone ?? '—'}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={c.brand.tint} />
-        </Pressable>
+          <Icon name="chevron-right" size={20} color={c.brand.tint} />
+        </PressableScale>
 
         <View style={styles.statsRow}>
           <Stat value={`${bookingCount}`} label="Bookings" styles={styles} />
           <View style={styles.statDivider} />
           <Stat value={`${favourites.length}`} label="Favourites" styles={styles} />
           <View style={styles.statDivider} />
-          <Pressable style={styles.stat} onPress={() => router.push(route('/wallet'))}>
-            <Text style={styles.statValue}>{money(walletBalance)}</Text>
-            <Text style={styles.statLabel}>Wallet</Text>
-          </Pressable>
+          <PressableScale
+            style={styles.stat}
+            onPress={() => router.push(route('/wallet'))}
+            accessibilityRole="button"
+            accessibilityLabel="Wallet"
+          >
+            <Text variant="title2" tone="accent" tabular>
+              {money(walletBalance)}
+            </Text>
+            <Text variant="caption" tone="subtle">
+              Wallet
+            </Text>
+          </PressableScale>
         </View>
 
         <View style={styles.favHeader}>
-          <Text style={styles.sectionTitle}>Favourites</Text>
+          <Text variant="title2">Favourites</Text>
           {favourites.length > 0 ? (
-            <Pressable
+            <PressableScale
               onPress={() => router.push(route('/favourites'))}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="See all favourites"
             >
-              <Text style={styles.seeAll}>See all</Text>
-            </Pressable>
+              <Text variant="footnote" tone="accent" style={styles.semibold}>
+                See all
+              </Text>
+            </PressableScale>
           ) : null}
         </View>
         {favourites.length === 0 ? (
           <View style={styles.favEmpty}>
             <EmptyState
-              icon="heart-outline"
+              art="empty"
               title="No favourites yet"
               message="Tap the heart on a provider to save them here."
             />
@@ -138,7 +152,7 @@ export default function AccountScreen() {
               showsHorizontalScrollIndicator={false}
               ItemSeparatorComponent={() => <View style={styles.favSeparator} />}
               renderItem={({ item }: { item: Provider }) => (
-                <Pressable
+                <PressableScale
                   style={styles.favCard}
                   onPress={() => router.push(`/provider/${item.id}`)}
                   accessibilityRole="button"
@@ -151,15 +165,19 @@ export default function AccountScreen() {
                     transition={200}
                     cachePolicy="memory-disk"
                   />
-                  <Text style={styles.favName} numberOfLines={1}>
+                  <Text variant="footnote" style={styles.semibold} numberOfLines={1}>
                     {item.name}
                   </Text>
                   <View style={styles.favMeta}>
-                    <Ionicons name="star" size={12} color={c.brand.star} />
-                    <Text style={styles.favRating}>{item.rating.toFixed(1)}</Text>
-                    <Text style={styles.favPrice}>· from {money(item.priceFrom)}</Text>
+                    <Icon name="star" size={16} color={c.brand.star} />
+                    <Text variant="caption" tabular>
+                      {item.rating.toFixed(1)}
+                    </Text>
+                    <Text variant="caption" tone="subtle">
+                      · from {money(item.priceFrom)}
+                    </Text>
                   </View>
-                </Pressable>
+                </PressableScale>
               )}
             />
           </View>
@@ -167,46 +185,32 @@ export default function AccountScreen() {
 
         <View style={styles.menu}>
           {MENU.map((item, i) => (
-            <Pressable
+            <PressableScale
               key={item.label}
               onPress={() => router.push(route(item.href))}
               accessibilityRole="button"
               accessibilityLabel={item.label}
-              style={({ pressed }) => [
-                styles.menuRow,
-                i < MENU.length - 1 && styles.menuDivider,
-                pressed && styles.menuPressed,
-              ]}
+              style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name={item.icon} size={18} color={c.brand.tint} />
+                <Icon name={item.icon} size={20} color={c.brand.tint} />
               </View>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </Pressable>
+              <Text variant="headline" style={styles.menuLabel}>
+                {item.label}
+              </Text>
+              <Icon name="chevron-right" size={20} color={c.text.muted} />
+            </PressableScale>
           ))}
         </View>
 
         <Button
           label="Log out"
           variant="secondary"
-          icon="log-out-outline"
-          onPress={() => setLogoutOpen(true)}
+          icon="logout"
+          onPress={confirmLogout}
           style={styles.logout}
         />
       </ScrollView>
-
-      <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <ConfirmModal
-        visible={logoutOpen}
-        icon="log-out-outline"
-        title="Log out?"
-        message="You'll need to sign in again to manage your bookings."
-        confirmLabel="Log out"
-        destructive
-        onConfirm={handleLogout}
-        onCancel={() => setLogoutOpen(false)}
-      />
     </View>
   );
 }
@@ -222,8 +226,12 @@ function Stat({
 }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text variant="title2" tone="accent" tabular>
+        {value}
+      </Text>
+      <Text variant="caption" tone="subtle">
+        {label}
+      </Text>
     </View>
   );
 }
@@ -238,8 +246,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.sm,
     },
-    heading: { ...typography.scale.h1, color: c.text.primary },
-    menuBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    semibold: { fontWeight: '600' },
     content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
     userCard: {
       flexDirection: 'row',
@@ -257,10 +264,7 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: { ...typography.scale.h2, color: c.text.inverse },
     userInfo: { flex: 1, gap: 2 },
-    name: { ...typography.scale.h2, color: c.text.primary },
-    phone: { ...typography.scale.small, color: c.text.secondary },
     statsRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -273,8 +277,6 @@ const makeStyles = (c: Palette) =>
     },
     stat: { flex: 1, alignItems: 'center', gap: 2 },
     statDivider: { width: 1, height: 32, backgroundColor: c.border },
-    statValue: { ...typography.scale.h2, color: c.brand.tint },
-    statLabel: { ...typography.scale.caption, color: c.text.muted },
     favHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -282,8 +284,6 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.xl,
       marginBottom: spacing.md,
     },
-    sectionTitle: { ...typography.scale.h2, color: c.text.primary },
-    seeAll: { ...typography.scale.smallMedium, color: c.brand.tint },
     favEmpty: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -302,10 +302,7 @@ const makeStyles = (c: Palette) =>
       gap: spacing.xs,
     },
     favPhoto: { width: '100%', height: 84, borderRadius: radius.md, backgroundColor: c.skeleton },
-    favName: { ...typography.scale.smallMedium, color: c.text.primary },
     favMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    favRating: { ...typography.scale.caption, color: c.text.primary },
-    favPrice: { ...typography.scale.caption, color: c.text.muted },
     menu: {
       marginTop: spacing.xl,
       borderRadius: radius.lg,
@@ -321,7 +318,6 @@ const makeStyles = (c: Palette) =>
       minHeight: 56,
       paddingHorizontal: spacing.lg,
     },
-    menuPressed: { backgroundColor: c.background.muted },
     menuDivider: { borderBottomWidth: 1, borderBottomColor: c.border },
     menuIcon: {
       width: 34,
@@ -331,6 +327,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    menuLabel: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
+    menuLabel: { flex: 1 },
     logout: { marginTop: spacing.xl },
   });

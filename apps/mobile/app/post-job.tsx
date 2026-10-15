@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { ChevronLeft, ImagePlus, X } from 'lucide-react-native';
 
-import { GradientButton } from '../src/components';
+import { Button, Text, Icon, Chip, PressableScale } from '../src/components/ui';
 import { useT, useMoney, useDirectionalStyles } from '../src/i18n';
 import { showToast } from '../src/stores/toastStore';
 import { route } from '../src/lib/nav';
@@ -54,15 +53,14 @@ export default function PostJobScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, dir.row, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <PressableScale
           onPress={() => router.back()}
-          hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
         >
-          <ChevronLeft size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>{t('postJob.title')}</Text>
+          <Icon name="chevron-left" size={24} color={c.text.primary} />
+        </PressableScale>
+        <Text variant="title2">{t('postJob.title')}</Text>
         <View style={{ width: 26 }} />
       </View>
 
@@ -93,26 +91,28 @@ export default function PostJobScreen() {
             {photos.map((uri, i) => (
               <View key={uri + i} style={styles.photoWrap}>
                 <Image source={{ uri }} style={styles.photo} contentFit="cover" />
-                <Pressable
+                <PressableScale
                   style={styles.photoRemove}
                   onPress={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
                   accessibilityRole="button"
                   accessibilityLabel="Remove photo"
                 >
-                  <X size={12} color={c.text.onBrand} />
-                </Pressable>
+                  <Icon name="close" size={16} color={c.text.onBrand} />
+                </PressableScale>
               </View>
             ))}
             {photos.length < 6 ? (
-              <Pressable
+              <PressableScale
                 style={styles.addPhoto}
                 onPress={addPhoto}
                 accessibilityRole="button"
                 accessibilityLabel={t('postJob.addPhoto')}
               >
-                <ImagePlus size={22} color={c.brand.primary} />
-                <Text style={styles.addPhotoText}>{t('postJob.addPhoto')}</Text>
-              </Pressable>
+                <Icon name="image" size={24} color={c.brand.primary} />
+                <Text variant="micro" tone="accent">
+                  {t('postJob.addPhoto')}
+                </Text>
+              </PressableScale>
             ) : null}
           </View>
         </Field>
@@ -120,16 +120,7 @@ export default function PostJobScreen() {
         <Field label={t('postJob.budget')} styles={styles} dir={dir}>
           <View style={[styles.chips, dir.row]}>
             {BUDGETS.map((b) => (
-              <Pressable
-                key={b}
-                style={[styles.chip, budget === b && styles.chipActive]}
-                onPress={() => setBudget(b)}
-                accessibilityRole="button"
-              >
-                <Text style={[styles.chipText, budget === b && styles.chipTextActive]}>
-                  {money(b)}
-                </Text>
-              </Pressable>
+              <Chip key={b} label={money(b)} selected={budget === b} onPress={() => setBudget(b)} />
             ))}
           </View>
         </Field>
@@ -137,22 +128,17 @@ export default function PostJobScreen() {
         <Field label={t('postJob.date')} styles={styles} dir={dir}>
           <View style={[styles.chips, dir.row]}>
             {DATES.map((d, i) => (
-              <Pressable
-                key={d}
-                style={[styles.chip, dateIdx === i && styles.chipActive]}
-                onPress={() => setDateIdx(i)}
-                accessibilityRole="button"
-              >
-                <Text style={[styles.chipText, dateIdx === i && styles.chipTextActive]}>{d}</Text>
-              </Pressable>
+              <Chip key={d} label={d} selected={dateIdx === i} onPress={() => setDateIdx(i)} />
             ))}
           </View>
         </Field>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <Text style={styles.promise}>{t('postJob.responsePromise')}</Text>
-        <GradientButton label={t('postJob.submit')} disabled={!canSubmit} onPress={submit} />
+        <Text variant="caption" tone="muted" style={styles.promise}>
+          {t('postJob.responsePromise')}
+        </Text>
+        <Button label={t('postJob.submit')} disabled={!canSubmit} onPress={submit} />
       </View>
     </View>
   );
@@ -171,7 +157,9 @@ function Field({
 }) {
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, dir.textAlign]}>{label}</Text>
+      <Text variant="footnote" tone="muted" style={[styles.label, dir.textAlign]}>
+        {label}
+      </Text>
       {children}
     </View>
   );
@@ -186,10 +174,9 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    headerTitle: { ...typography.scale.h2, color: c.text.primary },
     body: { padding: spacing.lg, gap: spacing.xl },
     field: { gap: spacing.sm },
-    label: { ...typography.scale.smallMedium, color: c.text.secondary },
+    label: { fontWeight: '600' },
     input: {
       minHeight: 52,
       paddingHorizontal: spacing.lg,
@@ -227,19 +214,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       gap: 2,
     },
-    addPhotoText: { ...typography.scale.caption, fontSize: 9, color: c.brand.primary },
     chips: { flexWrap: 'wrap', gap: spacing.sm },
-    chip: {
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    chipActive: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
-    chipText: { ...typography.scale.smallMedium, color: c.text.secondary },
-    chipTextActive: { color: c.brand.tint },
     footer: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
@@ -247,5 +222,5 @@ const makeStyles = (c: Palette) =>
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
-    promise: { ...typography.scale.small, color: c.text.secondary, textAlign: 'center' },
+    promise: { textAlign: 'center' },
   });

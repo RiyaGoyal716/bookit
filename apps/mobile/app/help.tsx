@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Input } from '../src/components';
+import { Text, Icon, IconButton, Button, TextField, PressableScale } from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -46,16 +45,15 @@ export default function HelpScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Help & support</Text>
+          variant="subtle"
+          size={24}
+          style={styles.back}
+        />
+        <Text variant="title2">Help & support</Text>
       </View>
 
       <ScrollView
@@ -63,36 +61,46 @@ export default function HelpScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.sectionTitle}>Frequently asked</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          Frequently asked
+        </Text>
         <View style={styles.faqCard}>
           {FAQS.map((item, i) => {
             const expanded = open === i;
             return (
               <View key={item.q} style={[styles.faqItem, i < FAQS.length - 1 && styles.faqDivider]}>
-                <Pressable
+                <PressableScale
                   style={styles.faqQuestion}
                   onPress={() => setOpen(expanded ? null : i)}
                   accessibilityRole="button"
                   accessibilityState={{ expanded }}
                   accessibilityLabel={item.q}
                 >
-                  <Text style={styles.faqQ}>{item.q}</Text>
-                  <Ionicons
+                  <Text variant="headline" style={styles.faqQ}>
+                    {item.q}
+                  </Text>
+                  <Icon
                     name={expanded ? 'chevron-up' : 'chevron-down'}
-                    size={18}
+                    size={20}
                     color={c.text.muted}
                   />
-                </Pressable>
-                {expanded ? <Text style={styles.faqA}>{item.a}</Text> : null}
+                </PressableScale>
+                {expanded ? (
+                  <Text variant="footnote" tone="muted" style={styles.faqA}>
+                    {item.a}
+                  </Text>
+                ) : null}
               </View>
             );
           })}
         </View>
 
-        <Text style={styles.sectionTitle}>Contact us</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          Contact us
+        </Text>
         <View style={styles.form}>
-          <Input label="Your name" value={name} onChangeText={setName} placeholder="Alex" />
-          <Input
+          <TextField label="Your name" value={name} onChangeText={setName} placeholder="Alex" />
+          <TextField
             label="Message"
             value={message}
             onChangeText={setMessage}
@@ -101,7 +109,7 @@ export default function HelpScreen() {
           />
           <Button
             label="Send message"
-            icon="paper-plane"
+            icon="send"
             disabled={name.trim().length === 0 || message.trim().length === 0}
             onPress={submit}
           />
@@ -122,16 +130,10 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    headerTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-    },
     content: {
       paddingHorizontal: spacing.lg,
     },
     sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
       marginTop: spacing.lg,
       marginBottom: spacing.md,
     },
@@ -158,12 +160,8 @@ const makeStyles = (c: Palette) =>
     },
     faqQ: {
       flex: 1,
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
     },
     faqA: {
-      ...typography.scale.small,
-      color: c.text.secondary,
       marginTop: spacing.sm,
     },
     form: {

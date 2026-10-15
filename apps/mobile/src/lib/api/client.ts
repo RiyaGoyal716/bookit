@@ -63,7 +63,7 @@ export async function apiFetch<TResponse = unknown>(
     throw error;
   }
 
-  // 204 No Content → nothing to parse.
+  // 204 No Content to nothing to parse.
   if (response.status === 204) {
     return undefined as TResponse;
   }

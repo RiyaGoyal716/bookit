@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Share } from 'react-native';
+import { View, StyleSheet, ScrollView, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, EmptyState, Logo } from '../../src/components';
+import { Text, Icon, IconButton, Button, EmptyState } from '../../src/components/ui';
+import { Logo } from '../../src/brand';
 import { useBookingsStore, RECURRENCE_LABEL } from '../../src/stores/bookingsStore';
 import { showToast } from '../../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 export default function InvoiceScreen() {
@@ -22,16 +22,15 @@ export default function InvoiceScreen() {
   if (!booking) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="document-text-outline" title="Invoice not found" />
+          variant="subtle"
+          size={24}
+          style={styles.back}
+        />
+        <EmptyState art="error" title="Invoice not found" />
       </View>
     );
   }
@@ -52,25 +51,21 @@ export default function InvoiceScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Invoice</Text>
-        <Pressable
+          variant="subtle"
+          size={24}
+        />
+        <Text variant="title2">Invoice</Text>
+        <IconButton
+          name="share"
           onPress={shareInvoice}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Share invoice"
-        >
-          <Ionicons name="share-outline" size={22} color={c.text.primary} />
-        </Pressable>
+          variant="subtle"
+          size={20}
+        />
       </View>
 
       <ScrollView
@@ -81,15 +76,19 @@ export default function InvoiceScreen() {
           <View style={styles.paperTop}>
             <Logo size={28} />
             <View style={styles.paidTag}>
-              <Ionicons name="checkmark-circle" size={14} color={c.status.success} />
-              <Text style={styles.paidText}>
+              <Icon name="check-circle" size={16} color={c.status.success} />
+              <Text variant="caption" tone="success" style={styles.paidText}>
                 {booking.status === 'Completed' ? 'Paid' : 'Issued'}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.invoiceNo}>Invoice {booking.id}</Text>
-          <Text style={styles.invoiceDate}>{booking.date}</Text>
+          <Text variant="title2" style={styles.invoiceNo}>
+            Invoice {booking.id}
+          </Text>
+          <Text variant="footnote" tone="muted">
+            {booking.date}
+          </Text>
 
           <View style={styles.divider} />
 
@@ -111,11 +110,13 @@ export default function InvoiceScreen() {
 
           <View style={styles.divider} />
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{money(booking.total)}</Text>
+            <Text variant="headline">Total</Text>
+            <Text variant="title1" tone="accent">
+              {money(booking.total)}
+            </Text>
           </View>
 
-          <Text style={styles.footerNote}>
+          <Text variant="caption" tone="muted" style={styles.footerNote}>
             This is a demo invoice generated in-app. Bookit Ltd · VAT GB000000000
           </Text>
         </View>
@@ -124,12 +125,12 @@ export default function InvoiceScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
           label="Download PDF (demo)"
-          icon="download-outline"
+          icon="arrow-down"
           variant="secondary"
           style={styles.flex1}
           onPress={() => showToast('Invoice saved to your device (demo)')}
         />
-        <Button label="Share" icon="share-outline" style={styles.flex1} onPress={shareInvoice} />
+        <Button label="Share" icon="share" style={styles.flex1} onPress={shareInvoice} />
       </View>
     </View>
   );
@@ -146,8 +147,10 @@ function Row({
 }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={2}>
+      <Text variant="footnote" tone="muted" style={styles.rowLabel}>
+        {label}
+      </Text>
+      <Text variant="footnote" style={styles.rowValue} numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -164,8 +167,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    headerTitle: { ...typography.scale.h2, color: c.text.primary },
+    back: { marginLeft: spacing.xs },
     paper: {
       padding: spacing.xl,
       borderRadius: radius.lg,
@@ -185,13 +187,9 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.status.successSoft,
     },
     paidText: {
-      ...typography.scale.caption,
-      color: c.status.success,
-      fontFamily: typography.font.bold,
       fontWeight: '700',
     },
-    invoiceNo: { ...typography.scale.h2, color: c.text.primary, marginTop: spacing.md },
-    invoiceDate: { ...typography.scale.small, color: c.text.muted },
+    invoiceNo: { marginTop: spacing.md },
     divider: { height: 1, backgroundColor: c.border, marginVertical: spacing.sm },
     row: {
       flexDirection: 'row',
@@ -199,17 +197,14 @@ const makeStyles = (c: Palette) =>
       gap: spacing.lg,
       paddingVertical: 2,
     },
-    rowLabel: { ...typography.scale.small, color: c.text.secondary, flexShrink: 1 },
+    rowLabel: { flexShrink: 1 },
     rowValue: {
       flex: 1,
       textAlign: 'right',
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
+      fontWeight: '600',
     },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    totalLabel: { ...typography.scale.bodyMedium, color: c.text.primary },
-    totalValue: { ...typography.scale.h1, color: c.brand.tint },
-    footerNote: { ...typography.scale.caption, color: c.text.muted, marginTop: spacing.lg },
+    footerNote: { marginTop: spacing.lg },
     footer: {
       flexDirection: 'row',
       gap: spacing.md,

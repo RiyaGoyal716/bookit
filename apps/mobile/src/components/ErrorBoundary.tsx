@@ -1,9 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet } from 'react-native';
 
-import { lightColors, darkColors, radius, spacing, typography, type Palette } from '../theme';
-import { Button } from './Button';
+import { lightColors, darkColors, radius, spacing, type Palette } from '../theme';
+import { Button } from './ui/Button';
+import { Text } from './ui/Text';
+import { Icon } from './ui/Icon';
 
 interface Props {
   children: ReactNode;
@@ -44,13 +45,21 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <View style={styles.root}>
         <View style={styles.iconCircle}>
-          <Ionicons name="warning-outline" size={40} color={c.status.warning} />
+          <Icon name="alert-triangle" size={24} color={c.status.warning} />
         </View>
-        <Text style={styles.title}>Something went wrong</Text>
-        <Text style={styles.message}>
+        <Text variant="title1" center>
+          Something went wrong
+        </Text>
+        <Text variant="body" tone="muted" center>
           The app hit an unexpected error. You can try again — your bookings are safe.
         </Text>
-        <Button label="Try again" icon="refresh" onPress={this.handleRetry} style={styles.btn} />
+        <Button
+          label="Try again"
+          icon="refresh"
+          onPress={this.handleRetry}
+          fullWidth={false}
+          style={styles.btn}
+        />
       </View>
     );
   }
@@ -74,16 +83,6 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       backgroundColor: c.status.warningSoft,
       marginBottom: spacing.sm,
-    },
-    title: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-      textAlign: 'center',
-    },
-    message: {
-      ...typography.scale.body,
-      color: c.text.secondary,
-      textAlign: 'center',
     },
     btn: {
       marginTop: spacing.md,

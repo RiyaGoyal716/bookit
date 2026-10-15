@@ -2,16 +2,20 @@
 /**
  * NOVA design-system linter (`npm run check:design`, also run from `npm run lint`).
  *
- * Enforces the NOVA conventions on the MIGRATED surface (the "ratchet"): new
- * component library, brand, icon sets, features and migrated screens. As legacy
- * screens are migrated to NOVA they are added to SCAN_DIRS; the goal is for the
- * whole app to eventually be covered. It fails (exit 1) on:
+ * Enforces the NOVA conventions across the WHOLE app — every file under app/ and
+ * src/ (no ratchet, no allowlist). It fails (exit 1) on:
  *   - hex / rgb colours outside src/theme and src/brand
  *   - numeric fontSize outside src/theme
  *   - raw `Text` / `TouchableOpacity` imported from react-native (use ui <Text> / Pressable)
  *   - emoji in source
  *   - icon imports not through the <Icon> wrapper (lucide / @expo/vector-icons)
  *   - references to removed Aurora logo/gradient assets
+ *
+ * The only exceptions are principled, not a ratchet:
+ *   - src/theme/**      — defines the colour + type tokens (hex / fontSize live here)
+ *   - src/brand/**      — the one-colour brand assets (own palette, own <Text>)
+ *   - src/components/ui/Icon.tsx  — the single lucide import point
+ *   - src/components/ui/Text.tsx  — the single raw react-native Text wrapper
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, relative, extname } from 'node:path';
@@ -19,18 +23,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(import.meta.url), '..', '..');
 
-/** Migrated NOVA surface that must obey the rules (grows as screens migrate). */
-const SCAN_DIRS = [
-  'src/components/ui',
-  'src/brand',
-  'src/assets/icons',
-  'src/assets/illustrations',
-  'src/features/search',
-  'app/dev',
-];
-
-/** Individually migrated screens (ratchet grows file by file). */
-const SCAN_FILES = ['app/(tabs)/index.tsx', 'app/(tabs)/explore.tsx', 'app/(tabs)/_layout.tsx'];
+/** The whole app is scanned — the entire app/ and src/ trees. */
+const SCAN_DIRS = ['app', 'src'];
+const SCAN_FILES = [];
 
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const RGB = /\brgba?\(/g;
@@ -137,6 +132,4 @@ if (violations.length) {
   process.exit(1);
 }
 
-console.log(
-  `check:design — OK (${SCAN_DIRS.length} NOVA dirs + ${SCAN_FILES.length} migrated screens clean)`,
-);
+console.log('check:design — OK (NOVA rules clean across the whole app/ and src/)');

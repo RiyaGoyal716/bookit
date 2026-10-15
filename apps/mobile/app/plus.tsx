@@ -1,26 +1,32 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, ConfirmModal } from '../src/components';
+import {
+  Button,
+  Text,
+  Icon,
+  IconButton,
+  PressableScale,
+  type IconName,
+} from '../src/components/ui';
 import { showToast } from '../src/stores/toastStore';
 import { usePlusStore, PLUS_PRICE, type PlusPlan } from '../src/stores/plusStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 import { useMoney } from '../src/i18n';
 
-const BENEFITS: { icon: keyof typeof Ionicons.glyphMap; title: string; sub: string }[] = [
-  { icon: 'pricetag', title: '10% off every booking', sub: 'Applied automatically at checkout' },
-  { icon: 'flash', title: 'Priority matching', sub: 'Get the fastest-responding pros first' },
+const BENEFITS: { icon: IconName; title: string; sub: string }[] = [
+  { icon: 'tag', title: '10% off every booking', sub: 'Applied automatically at checkout' },
+  { icon: 'zap', title: 'Priority matching', sub: 'Get the fastest-responding pros first' },
   {
-    icon: 'shield-checkmark',
+    icon: 'shield-check',
     title: 'Free cancellation',
     sub: 'Cancel up to 2 hours before, any time',
   },
-  { icon: 'headset', title: 'Priority support', sub: 'Skip the queue with a dedicated line' },
+  { icon: 'phone', title: 'Priority support', sub: 'Skip the queue with a dedicated line' },
   { icon: 'gift', title: 'Member perks', sub: 'Seasonal credits and partner offers' },
 ];
 
@@ -38,12 +44,29 @@ export default function PlusScreen() {
   const cancel = usePlusStore((s) => s.cancel);
 
   const [plan, setPlan] = useState<PlusPlan>('yearly');
-  const [cancelOpen, setCancelOpen] = useState(false);
 
   const onSubscribe = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     subscribe(plan);
     showToast('Welcome to Bookit Plus!');
+  };
+
+  const onCancelMembership = () => {
+    Alert.alert(
+      'Cancel Bookit Plus?',
+      "You'll keep your benefits until the end of the current billing period.",
+      [
+        { text: 'Keep membership', style: 'cancel' },
+        {
+          text: 'Cancel membership',
+          style: 'destructive',
+          onPress: () => {
+            cancel();
+            showToast('Membership cancelled');
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -58,21 +81,23 @@ export default function PlusScreen() {
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + spacing.lg }]}
         >
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.back}
-            hitSlop={8}
-            accessibilityRole="button"
+          <IconButton
+            name="chevron-left"
             accessibilityLabel="Go back"
-          >
-            <Ionicons name="chevron-back" size={24} color={c.text.inverse} />
-          </Pressable>
+            onPress={() => router.back()}
+            color={c.text.inverse}
+            style={styles.back}
+          />
           <View style={styles.badge}>
-            <Ionicons name="star" size={14} color={c.text.inverse} />
-            <Text style={styles.badgeText}>BOOKIT PLUS</Text>
+            <Icon name="star" size={16} color={c.text.inverse} />
+            <Text variant="caption" tone="inverse" style={styles.badgeText}>
+              BOOKIT PLUS
+            </Text>
           </View>
-          <Text style={styles.heroTitle}>Save more on every booking</Text>
-          <Text style={styles.heroSub}>
+          <Text variant="display" tone="inverse">
+            Save more on every booking
+          </Text>
+          <Text variant="body" tone="inverse" style={styles.heroSub}>
             {subscribed
               ? `You're a Plus member · renews ${renewsOn ?? ''}`
               : 'Members save an average of £84 a year'}
@@ -80,7 +105,9 @@ export default function PlusScreen() {
         </LinearGradient>
 
         <View style={styles.body}>
-          <Text style={styles.sectionTitle}>Benefits</Text>
+          <Text variant="title2" style={styles.sectionTitle}>
+            Benefits
+          </Text>
           <View style={styles.card}>
             {BENEFITS.map((b, i) => (
               <View
@@ -88,11 +115,13 @@ export default function PlusScreen() {
                 style={[styles.benefitRow, i < BENEFITS.length - 1 && styles.divider]}
               >
                 <View style={styles.benefitIcon}>
-                  <Ionicons name={b.icon} size={18} color={c.brand.tint} />
+                  <Icon name={b.icon} size={20} color={c.brand.tint} />
                 </View>
                 <View style={styles.flex1}>
-                  <Text style={styles.benefitTitle}>{b.title}</Text>
-                  <Text style={styles.benefitSub}>{b.sub}</Text>
+                  <Text variant="headline">{b.title}</Text>
+                  <Text variant="caption" tone="muted">
+                    {b.sub}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -100,11 +129,13 @@ export default function PlusScreen() {
 
           {!subscribed ? (
             <>
-              <Text style={styles.sectionTitle}>Choose a plan</Text>
+              <Text variant="title2" style={styles.sectionTitle}>
+                Choose a plan
+              </Text>
               {(['yearly', 'monthly'] as PlusPlan[]).map((p) => {
                 const active = plan === p;
                 return (
-                  <Pressable
+                  <PressableScale
                     key={p}
                     onPress={() => setPlan(p)}
                     style={[styles.planRow, active && styles.planRowActive]}
@@ -114,32 +145,36 @@ export default function PlusScreen() {
                   >
                     <View style={styles.flex1}>
                       <View style={styles.planTitleRow}>
-                        <Text style={styles.planName}>{p === 'yearly' ? 'Yearly' : 'Monthly'}</Text>
+                        <Text variant="headline">{p === 'yearly' ? 'Yearly' : 'Monthly'}</Text>
                         {p === 'yearly' ? (
                           <View style={styles.saveTag}>
-                            <Text style={styles.saveText}>Best value · 2 months free</Text>
+                            <Text variant="micro" tone="success" style={styles.saveText}>
+                              Best value · 2 months free
+                            </Text>
                           </View>
                         ) : null}
                       </View>
-                      <Text style={styles.planPrice}>
+                      <Text variant="title2" tone="accent" style={styles.planPrice}>
                         {money(PLUS_PRICE[p])}
-                        <Text style={styles.planPer}>
+                        <Text variant="caption" tone="muted">
                           {p === 'yearly' ? ' / year' : ' / month'}
                         </Text>
                       </Text>
                     </View>
-                    <Ionicons
-                      name={active ? 'radio-button-on' : 'radio-button-off'}
-                      size={22}
+                    <Icon
+                      name={active ? 'check-circle' : 'circle'}
+                      size={24}
                       color={active ? c.brand.tint : c.text.muted}
                     />
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </>
           ) : (
             <>
-              <Text style={styles.sectionTitle}>Billing</Text>
+              <Text variant="title2" style={styles.sectionTitle}>
+                Billing
+              </Text>
               <View style={styles.card}>
                 <Row
                   label="Plan"
@@ -160,11 +195,7 @@ export default function PlusScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {subscribed ? (
-          <Button
-            label="Cancel membership"
-            variant="secondary"
-            onPress={() => setCancelOpen(true)}
-          />
+          <Button label="Cancel membership" variant="secondary" onPress={onCancelMembership} />
         ) : (
           <Button
             label={`Subscribe · ${money(PLUS_PRICE[plan])}${plan === 'yearly' ? '/yr' : '/mo'}`}
@@ -173,21 +204,6 @@ export default function PlusScreen() {
           />
         )}
       </View>
-
-      <ConfirmModal
-        visible={cancelOpen}
-        icon="close-circle-outline"
-        title="Cancel Bookit Plus?"
-        message="You'll keep your benefits until the end of the current billing period."
-        confirmLabel="Cancel membership"
-        destructive
-        onConfirm={() => {
-          setCancelOpen(false);
-          cancel();
-          showToast('Membership cancelled');
-        }}
-        onCancel={() => setCancelOpen(false)}
-      />
     </View>
   );
 }
@@ -203,8 +219,12 @@ function Row({
 }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      <Text variant="caption" tone="muted">
+        {label}
+      </Text>
+      <Text variant="footnote" style={styles.rowValue}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -213,15 +233,7 @@ const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
     hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.sm },
-    back: {
-      width: 40,
-      height: 40,
-      borderRadius: radius.pill,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginLeft: -spacing.sm,
-      marginBottom: spacing.sm,
-    },
+    back: { marginLeft: -spacing.sm, marginBottom: spacing.sm },
     badge: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -230,24 +242,12 @@ const makeStyles = (c: Palette) =>
       paddingVertical: 4,
       paddingHorizontal: spacing.md,
       borderRadius: radius.pill,
-      backgroundColor: 'rgba(255,255,255,0.2)',
+      backgroundColor: c.glass,
     },
-    badgeText: {
-      ...typography.scale.caption,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-      letterSpacing: 1,
-    },
-    heroTitle: { ...typography.scale.display, color: c.text.inverse },
-    heroSub: { ...typography.scale.body, color: c.text.inverse, opacity: 0.9 },
+    badgeText: { fontWeight: '700', letterSpacing: 1 },
+    heroSub: { opacity: 0.9 },
     body: { padding: spacing.lg },
-    sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-      marginTop: spacing.lg,
-      marginBottom: spacing.md,
-    },
+    sectionTitle: { marginTop: spacing.lg, marginBottom: spacing.md },
     card: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -270,8 +270,6 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     flex1: { flex: 1 },
-    benefitTitle: { ...typography.scale.bodyMedium, color: c.text.primary },
-    benefitSub: { ...typography.scale.caption, color: c.text.muted },
     divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     planRow: {
       flexDirection: 'row',
@@ -286,25 +284,16 @@ const makeStyles = (c: Palette) =>
     },
     planRowActive: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
     planTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    planName: { ...typography.scale.bodyMedium, color: c.text.primary },
     saveTag: {
       paddingVertical: 2,
       paddingHorizontal: spacing.sm,
       borderRadius: radius.pill,
       backgroundColor: c.status.successSoft,
     },
-    saveText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.status.success,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    planPrice: { ...typography.scale.h2, color: c.brand.tint, marginTop: 2 },
-    planPer: { ...typography.scale.small, color: c.text.muted },
+    saveText: { fontWeight: '700' },
+    planPrice: { marginTop: 2 },
     row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.md },
-    rowLabel: { ...typography.scale.small, color: c.text.secondary },
-    rowValue: { ...typography.scale.smallMedium, color: c.text.primary },
+    rowValue: { fontWeight: '600' },
     footer: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,

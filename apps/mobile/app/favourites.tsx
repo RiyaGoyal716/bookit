@@ -1,15 +1,57 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState, ProviderCard } from '../src/components';
+import {
+  Text,
+  IconButton,
+  Card,
+  Avatar,
+  Rating,
+  PressableScale,
+  EmptyState,
+} from '../src/components/ui';
 import { getProviderById } from '../src/mocks';
 import type { Provider } from '../src/mocks/types';
+import { useMoney } from '../src/i18n';
 import { useFavouritesStore } from '../src/stores/favouritesStore';
-import { useColors, spacing, typography, type Palette } from '../src/theme';
+import { useColors, spacing, type Palette } from '../src/theme';
+
+function FavouriteCard({ provider, onPress }: { provider: Provider; onPress: () => void }) {
+  const money = useMoney();
+  return (
+    <Card variant="outlined" padding={spacing.md}>
+      <PressableScale
+        onPress={onPress}
+        scaleTo={0.99}
+        accessibilityRole="button"
+        accessibilityLabel={provider.name}
+        style={styles.cardRow}
+      >
+        <Avatar uri={provider.photo} name={provider.name} size={56} />
+        <View style={styles.cardBody}>
+          <Text variant="headline" numberOfLines={1}>
+            {provider.name}
+          </Text>
+          <Text variant="footnote" tone="muted" numberOfLines={1}>
+            {provider.tagline ?? provider.category} · {provider.area ?? `${provider.distanceKm} km`}
+          </Text>
+          <View style={styles.metaRow}>
+            <Rating value={provider.rating} count={provider.reviewCount} />
+            <Text variant="footnote" tone="muted">
+              ·
+            </Text>
+            <Text variant="footnote" tabular style={styles.price}>
+              {money(provider.priceFrom)}+
+            </Text>
+          </View>
+        </View>
+      </PressableScale>
+    </Card>
+  );
+}
 
 export default function FavouritesScreen() {
   const router = useRouter();
@@ -26,16 +68,14 @@ export default function FavouritesScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Favourites</Text>
+          variant="subtle"
+          size={24}
+        />
+        <Text variant="title2">Favourites</Text>
         <View style={styles.back} />
       </View>
 
@@ -47,7 +87,7 @@ export default function FavouritesScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <EmptyState
-            icon="heart-outline"
+            art="empty"
             title="No favourites yet"
             message="Tap the heart on any provider to save them here for quick access."
             actionLabel="Explore providers"
@@ -55,12 +95,19 @@ export default function FavouritesScreen() {
           />
         }
         renderItem={({ item }: { item: Provider }) => (
-          <ProviderCard provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
+          <FavouriteCard provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
         )}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  cardBody: { flex: 1, gap: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  price: { fontWeight: '600' },
+});
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
@@ -72,8 +119,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    title: { ...typography.scale.h2, color: c.text.primary },
+    back: { width: 44, height: 44 },
     content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xl },
     separator: { height: spacing.md },
   });

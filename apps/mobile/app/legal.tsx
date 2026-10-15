@@ -1,20 +1,31 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
+import { Text, Icon, IconButton, PressableScale, type IconName } from '../src/components/ui';
 import { route } from '../src/lib/nav';
 import { LEGAL_INDEX } from '../src/content/legal';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
-const TRUST_LINKS: { icon: keyof typeof Ionicons.glyphMap; label: string; href: string }[] = [
-  { icon: 'shield-outline', label: 'Safety centre', href: '/safety' },
-  { icon: 'flag-outline', label: 'Report a problem', href: '/report' },
-  { icon: 'pulse-outline', label: 'Account status', href: '/account-status' },
-  { icon: 'options-outline', label: 'Data & consent', href: '/consent' },
-  { icon: 'time-outline', label: 'Booking policies', href: '/policies' },
-  { icon: 'help-circle-outline', label: 'Help & support', href: '/help' },
+/** Map legacy icon names (from the legal content data) to NOVA icons. */
+const LEGAL_ICON: Record<string, IconName> = {
+  'document-text-outline': 'file-text',
+  'lock-closed-outline': 'lock',
+  'time-outline': 'clock',
+  'people-outline': 'users',
+  'shield-checkmark-outline': 'shield-check',
+  'ribbon-outline': 'award',
+  'cafe-outline': 'book',
+};
+
+const TRUST_LINKS: { icon: IconName; label: string; href: string }[] = [
+  { icon: 'shield', label: 'Safety centre', href: '/safety' },
+  { icon: 'alert-triangle', label: 'Report a problem', href: '/report' },
+  { icon: 'activity', label: 'Account status', href: '/account-status' },
+  { icon: 'sliders', label: 'Data & consent', href: '/consent' },
+  { icon: 'clock', label: 'Booking policies', href: '/policies' },
+  { icon: 'help', label: 'Help & support', href: '/help' },
 ];
 
 export default function LegalScreen() {
@@ -26,16 +37,14 @@ export default function LegalScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.back}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Legal & guidelines</Text>
+          variant="subtle"
+          size={24}
+        />
+        <Text variant="title2">Legal & guidelines</Text>
         <View style={styles.back} />
       </View>
 
@@ -43,10 +52,12 @@ export default function LegalScreen() {
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionLabel}>Policies & documents</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Policies & documents
+        </Text>
         <View style={styles.links}>
           {LEGAL_INDEX.map((l, i) => (
-            <Pressable
+            <PressableScale
               key={l.slug}
               style={[styles.linkRow, i < LEGAL_INDEX.length - 1 && styles.linkDivider]}
               onPress={() => router.push(route(`/legal/${l.slug}`))}
@@ -54,22 +65,22 @@ export default function LegalScreen() {
               accessibilityLabel={l.title}
             >
               <View style={styles.linkIcon}>
-                <Ionicons
-                  name={l.icon as keyof typeof Ionicons.glyphMap}
-                  size={18}
-                  color={c.brand.tint}
-                />
+                <Icon name={LEGAL_ICON[l.icon] ?? 'file-text'} size={20} color={c.brand.tint} />
               </View>
-              <Text style={styles.linkLabel}>{l.title}</Text>
-              <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </Pressable>
+              <Text variant="body" style={styles.linkLabel}>
+                {l.title}
+              </Text>
+              <Icon name="chevron-right" size={20} color={c.text.muted} />
+            </PressableScale>
           ))}
         </View>
 
-        <Text style={styles.sectionLabel}>Trust & safety</Text>
+        <Text variant="footnote" tone="muted" style={styles.sectionLabel}>
+          Trust & safety
+        </Text>
         <View style={styles.links}>
           {TRUST_LINKS.map((l, i) => (
-            <Pressable
+            <PressableScale
               key={l.label}
               style={[styles.linkRow, i < TRUST_LINKS.length - 1 && styles.linkDivider]}
               onPress={() => router.push(route(l.href))}
@@ -77,15 +88,19 @@ export default function LegalScreen() {
               accessibilityLabel={l.label}
             >
               <View style={styles.linkIcon}>
-                <Ionicons name={l.icon} size={18} color={c.brand.tint} />
+                <Icon name={l.icon} size={20} color={c.brand.tint} />
               </View>
-              <Text style={styles.linkLabel}>{l.label}</Text>
-              <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-            </Pressable>
+              <Text variant="body" style={styles.linkLabel}>
+                {l.label}
+              </Text>
+              <Icon name="chevron-right" size={20} color={c.text.muted} />
+            </PressableScale>
           ))}
         </View>
 
-        <Text style={styles.copyright}>© 2026 Bookit Ltd · Made in Leeds</Text>
+        <Text variant="caption" tone="muted" style={styles.copyright}>
+          © 2026 Bookit Ltd · Made in Leeds
+        </Text>
       </ScrollView>
     </View>
   );
@@ -101,11 +116,8 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-    title: { ...typography.scale.h2, color: c.text.primary },
+    back: { width: 44, height: 44 },
     sectionLabel: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginTop: spacing.lg,
       marginBottom: spacing.sm,
     },
@@ -132,10 +144,8 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    linkLabel: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
+    linkLabel: { flex: 1 },
     copyright: {
-      ...typography.scale.caption,
-      color: c.text.muted,
       textAlign: 'center',
       marginTop: spacing.xl,
     },

@@ -1,11 +1,17 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState } from '../src/components';
+import {
+  EmptyState,
+  Icon,
+  PressableScale,
+  ScreenHeader,
+  Text,
+  type IconName,
+} from '../src/components/ui';
 import { route } from '../src/lib/nav';
 import {
   useNotificationsStore,
@@ -13,14 +19,14 @@ import {
   type NotificationDay,
   type NotificationType,
 } from '../src/stores/notificationsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
-const ICON: Record<NotificationType, keyof typeof Ionicons.glyphMap> = {
-  accepted: 'checkmark-circle',
-  reminder: 'alarm',
+const ICON: Record<NotificationType, IconName> = {
+  accepted: 'check-circle',
+  reminder: 'clock',
   review: 'star',
-  promo: 'pricetag',
-  safety: 'shield-checkmark',
+  promo: 'tag',
+  safety: 'shield-check',
 };
 
 const DAY_ORDER: NotificationDay[] = ['Today', 'Yesterday', 'Earlier'];
@@ -50,27 +56,22 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Notifications</Text>
-        <Pressable
-          onPress={markAllRead}
-          disabled={!hasUnread}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Mark all as read"
-        >
-          <Text style={[styles.markAll, !hasUnread && styles.markAllDisabled]}>Mark all</Text>
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title="Notifications"
+        right={
+          <PressableScale
+            onPress={markAllRead}
+            disabled={!hasUnread}
+            accessibilityRole="button"
+            accessibilityLabel="Mark all as read"
+            style={styles.markAll}
+          >
+            <Text variant="footnote" tone={hasUnread ? 'accent' : 'muted'}>
+              Mark all
+            </Text>
+          </PressableScale>
+        }
+      />
 
       <FlashList
         data={rows}
@@ -78,44 +79,52 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <Pressable
+          <PressableScale
             style={styles.prefsRow}
             onPress={() => router.push(route('/notification-preferences'))}
             accessibilityRole="button"
             accessibilityLabel="Notification preferences"
           >
-            <Ionicons name="options-outline" size={18} color={c.brand.tint} />
-            <Text style={styles.prefsText}>Notification preferences</Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
+            <Icon name="sliders" size={20} color={c.brand.tint} />
+            <Text variant="footnote" style={styles.prefsText}>
+              Notification preferences
+            </Text>
+            <Icon name="chevron-right" size={20} color={c.text.muted} />
+          </PressableScale>
         }
         ListEmptyComponent={
           <EmptyState
-            icon="notifications-off-outline"
+            art="empty"
             title="You're all caught up"
             message="New updates about your bookings will appear here."
           />
         }
         renderItem={({ item: row }: { item: Row }) =>
           row.kind === 'header' ? (
-            <Text style={styles.dayHeader}>{row.day}</Text>
+            <Text variant="footnote" tone="muted" style={styles.dayHeader}>
+              {row.day}
+            </Text>
           ) : (
-            <Pressable
+            <PressableScale
               style={[styles.row, !row.item.read && styles.rowUnread]}
               onPress={() => markRead(row.item.id)}
               accessibilityRole="button"
               accessibilityLabel={`${row.item.title}. ${row.item.read ? 'Read' : 'Unread'}`}
             >
               <View style={styles.iconWrap}>
-                <Ionicons name={ICON[row.item.type]} size={18} color={c.brand.tint} />
+                <Icon name={ICON[row.item.type]} size={20} color={c.brand.tint} />
               </View>
               <View style={styles.body}>
-                <Text style={styles.rowTitle}>{row.item.title}</Text>
-                <Text style={styles.rowBody}>{row.item.body}</Text>
-                <Text style={styles.time}>{row.item.time}</Text>
+                <Text variant="headline">{row.item.title}</Text>
+                <Text variant="callout" tone="muted">
+                  {row.item.body}
+                </Text>
+                <Text variant="caption" tone="muted" style={styles.time}>
+                  {row.item.time}
+                </Text>
               </View>
               {!row.item.read ? <View style={styles.dot} /> : null}
-            </Pressable>
+            </PressableScale>
           )
         }
       />
@@ -126,17 +135,7 @@ export default function NotificationsScreen() {
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background.base },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
-    markAll: { ...typography.scale.smallMedium, color: c.brand.tint },
-    markAllDisabled: { color: c.text.muted },
+    markAll: { paddingHorizontal: spacing.sm, minWidth: 44, alignItems: 'flex-end' },
     content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
     prefsRow: {
       flexDirection: 'row',
@@ -149,10 +148,8 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.border,
     },
-    prefsText: { flex: 1, ...typography.scale.smallMedium, color: c.text.primary },
+    prefsText: { flex: 1 },
     dayHeader: {
-      ...typography.scale.smallMedium,
-      color: c.text.muted,
       marginTop: spacing.lg,
       marginBottom: spacing.sm,
     },
@@ -177,9 +174,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
     },
     body: { flex: 1, gap: 2 },
-    rowTitle: { ...typography.scale.bodyMedium, color: c.text.primary },
-    rowBody: { ...typography.scale.small, color: c.text.secondary },
-    time: { ...typography.scale.caption, color: c.text.muted, marginTop: 2 },
+    time: { marginTop: 2 },
     dot: {
       width: 10,
       height: 10,

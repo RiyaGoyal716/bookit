@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
+import { Text } from './ui/Text';
+import { Icon } from './ui/Icon';
 import { useToastStore } from '../stores/toastStore';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../theme';
+import { useColors, radius, shadow, spacing, type Palette } from '../theme';
 
 /**
  * Global toast host. Mount once near the app root. Listens to the toast store
@@ -58,8 +59,8 @@ export function ToastHost() {
       ]}
     >
       <View style={styles.toast} accessibilityLiveRegion="polite" accessibilityRole="alert">
-        <Ionicons name="checkmark-circle" size={18} color={c.brand.tint} />
-        <Text style={styles.text} numberOfLines={2}>
+        <Icon name="check-circle" size={20} color={c.brand.tint} />
+        <Text variant="footnote" numberOfLines={2} style={styles.text}>
           {shown}
         </Text>
       </View>
@@ -90,7 +91,5 @@ const makeStyles = (c: Palette) =>
     },
     text: {
       flexShrink: 1,
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
     },
   });

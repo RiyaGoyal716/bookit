@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
+import { Text, IconButton, PressableScale } from '../../src/components/ui';
 import { showToast } from '../../src/stores/toastStore';
 import { useProviderStore, PRO_DAYS, PRO_SLOTS } from '../../src/stores/providerStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 
 export default function ProAvailability() {
   const router = useRouter();
@@ -20,38 +20,41 @@ export default function ProAvailability() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          accessibilityLabel="Go back"
           onPress={() => router.back()}
           style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Availability</Text>
-        <Pressable
+        />
+        <Text variant="title2" style={styles.title}>
+          Availability
+        </Text>
+        <PressableScale
           onPress={() => showToast('Availability saved')}
-          hitSlop={8}
+          haptic="selection"
           accessibilityRole="button"
           accessibilityLabel="Save"
         >
-          <Text style={styles.save}>Save</Text>
-        </Pressable>
+          <Text variant="footnote" tone="accent">
+            Save
+          </Text>
+        </PressableScale>
       </View>
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.intro}>Tap time slots to toggle when you’re available each day.</Text>
+        <Text variant="caption" tone="muted" style={styles.intro}>
+          Tap time slots to toggle when you’re available each day.
+        </Text>
         {PRO_DAYS.map((day) => {
           const slots = availability[day] ?? [];
           return (
             <View key={day} style={styles.dayCard}>
               <View style={styles.dayHeader}>
-                <Text style={styles.dayName}>{day}</Text>
-                <Text style={styles.dayCount}>
+                <Text variant="headline">{day}</Text>
+                <Text variant="caption" tone="muted">
                   {slots.length === 0 ? 'Day off' : `${slots.length} slots`}
                 </Text>
               </View>
@@ -59,16 +62,19 @@ export default function ProAvailability() {
                 {PRO_SLOTS.map((slot) => {
                   const on = slots.includes(slot);
                   return (
-                    <Pressable
+                    <PressableScale
                       key={slot}
                       style={[styles.slot, on && styles.slotOn]}
                       onPress={() => toggleSlot(day, slot)}
+                      haptic="selection"
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
                       accessibilityLabel={`${day} ${slot} ${on ? 'available' : 'unavailable'}`}
                     >
-                      <Text style={[styles.slotText, on && styles.slotTextOn]}>{slot}</Text>
-                    </Pressable>
+                      <Text variant="footnote" tone={on ? 'accent' : 'muted'}>
+                        {slot}
+                      </Text>
+                    </PressableScale>
                   );
                 })}
               </View>
@@ -91,9 +97,8 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
-    save: { ...typography.scale.smallMedium, color: c.brand.tint },
-    intro: { ...typography.scale.small, color: c.text.secondary, marginBottom: spacing.lg },
+    title: { flex: 1 },
+    intro: { marginBottom: spacing.lg },
     dayCard: {
       padding: spacing.lg,
       borderRadius: radius.lg,
@@ -108,8 +113,6 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'space-between',
       marginBottom: spacing.md,
     },
-    dayName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    dayCount: { ...typography.scale.caption, color: c.text.muted },
     slotWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     slot: {
       minWidth: 68,
@@ -122,6 +125,4 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
     },
     slotOn: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
-    slotText: { ...typography.scale.smallMedium, color: c.text.secondary },
-    slotTextOn: { color: c.brand.tint },
   });

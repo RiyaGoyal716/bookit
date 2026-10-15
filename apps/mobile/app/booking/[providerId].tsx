@@ -1,18 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 
-import { Button, Chip, EmptyState, Input, Screen } from '../../src/components';
+import {
+  Button,
+  Chip,
+  EmptyState,
+  TextField,
+  Screen,
+  Text,
+  Icon,
+  IconButton,
+  PressableScale,
+} from '../../src/components/ui';
 import { getProviderById } from '../../src/mocks';
 import { track } from '../../src/lib/analytics';
 import { computeFees, generateBookingId, useBookingsStore } from '../../src/stores/bookingsStore';
 import { useAddressStore, type Address } from '../../src/stores/addressStore';
 import { showToast } from '../../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 const PROMO_CODE = 'BOOKIT10';
@@ -112,16 +121,15 @@ export default function BookingFlowScreen() {
   if (!provider) {
     return (
       <Screen>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="alert-circle-outline" title="Provider not found" />
+          style={styles.back}
+        />
+        <EmptyState art="error" title="Provider not found" />
       </Screen>
     );
   }
@@ -170,15 +178,14 @@ export default function BookingFlowScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
+          variant="subtle"
           onPress={goBack}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
+          style={styles.back}
+        />
 
         <View style={styles.stepper}>
           {STEPS.map((label, i) => {
@@ -194,17 +201,27 @@ export default function BookingFlowScreen() {
                   ]}
                 >
                   {done ? (
-                    <Ionicons name="checkmark" size={14} color={c.text.inverse} />
+                    <Icon name="check" size={16} color={c.text.inverse} />
                   ) : (
-                    <Text style={[styles.stepNum, current && styles.stepNumActive]}>{i + 1}</Text>
+                    <Text
+                      variant="caption"
+                      tone={current ? 'accent' : 'subtle'}
+                      style={styles.stepNum}
+                    >
+                      {i + 1}
+                    </Text>
                   )}
                 </View>
-                <Text style={[styles.stepLabel, current && styles.stepLabelActive]}>{label}</Text>
+                <Text variant="caption" tone={current ? 'default' : 'subtle'}>
+                  {label}
+                </Text>
               </View>
             );
           })}
         </View>
-        <Text style={styles.providerName}>with {provider.name}</Text>
+        <Text variant="callout" tone="muted">
+          with {provider.name}
+        </Text>
       </View>
 
       <ScrollView
@@ -215,11 +232,13 @@ export default function BookingFlowScreen() {
       >
         {step === 0 ? (
           <View style={styles.list}>
-            <Text style={styles.stepTitle}>Choose a service</Text>
+            <Text variant="title1" style={styles.stepTitle}>
+              Choose a service
+            </Text>
             {provider.services.map((s, i) => {
               const selected = serviceIndex === i;
               return (
-                <Pressable
+                <PressableScale
                   key={s.name}
                   onPress={() => setServiceIndex(i)}
                   accessibilityRole="button"
@@ -227,16 +246,20 @@ export default function BookingFlowScreen() {
                   style={[styles.selectRow, selected && styles.selectRowActive]}
                 >
                   <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceName}>{s.name}</Text>
-                    <Text style={styles.serviceMeta}>{s.durationMin} min</Text>
+                    <Text variant="headline">{s.name}</Text>
+                    <Text variant="caption" tone="subtle">
+                      {s.durationMin} min
+                    </Text>
                   </View>
-                  <Text style={styles.servicePrice}>{money(s.price)}</Text>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={22}
+                  <Text variant="headline" tone="accent">
+                    {money(s.price)}
+                  </Text>
+                  <Icon
+                    name={selected ? 'check-circle' : 'circle'}
+                    size={24}
                     color={selected ? c.brand.tint : c.text.muted}
                   />
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>
@@ -244,8 +267,12 @@ export default function BookingFlowScreen() {
 
         {step === 1 ? (
           <View style={styles.block}>
-            <Text style={styles.stepTitle}>Pick a date & time</Text>
-            <Text style={styles.label}>Date</Text>
+            <Text variant="title1" style={styles.stepTitle}>
+              Pick a date &amp; time
+            </Text>
+            <Text variant="footnote" tone="muted" style={styles.label}>
+              Date
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -255,16 +282,23 @@ export default function BookingFlowScreen() {
                 <Chip
                   key={d.key}
                   label={d.label}
-                  active={date === d.key}
+                  selected={date === d.key}
                   onPress={() => setDate(d.key)}
                 />
               ))}
             </ScrollView>
 
-            <Text style={[styles.label, styles.labelSpaced]}>Time</Text>
+            <Text variant="footnote" tone="muted" style={[styles.label, styles.labelSpaced]}>
+              Time
+            </Text>
             <View style={styles.timeGrid}>
-              {TIME_SLOTS.map((t) => (
-                <Chip key={t} label={t} active={time === t} onPress={() => setTime(t)} />
+              {TIME_SLOTS.map((slot) => (
+                <Chip
+                  key={slot}
+                  label={slot}
+                  selected={time === slot}
+                  onPress={() => setTime(slot)}
+                />
               ))}
             </View>
           </View>
@@ -272,22 +306,26 @@ export default function BookingFlowScreen() {
 
         {step === 2 ? (
           <View style={styles.block}>
-            <Text style={styles.stepTitle}>Where?</Text>
+            <Text variant="title1" style={styles.stepTitle}>
+              Where?
+            </Text>
 
             <Button
               label={locating ? 'Getting location…' : 'Use current location'}
               variant="secondary"
-              icon="navigate"
+              icon="navigation"
               loading={locating}
               onPress={useCurrentLocation}
               style={styles.locBtn}
             />
 
-            <Text style={styles.label}>Saved addresses</Text>
+            <Text variant="footnote" tone="muted" style={styles.label}>
+              Saved addresses
+            </Text>
             {addresses.map((a: Address) => {
               const selected = addressId === a.id;
               return (
-                <Pressable
+                <PressableScale
                   key={a.id}
                   onPress={() => {
                     setAddressId(a.id);
@@ -298,32 +336,35 @@ export default function BookingFlowScreen() {
                   accessibilityLabel={`${a.label}: ${a.line}`}
                   style={[styles.addressRow, selected && styles.addressRowActive]}
                 >
-                  <Ionicons
-                    name={a.fromLocation ? 'navigate' : a.label === 'Work' ? 'briefcase' : 'home'}
-                    size={18}
-                    color={selected ? c.brand.tint : c.text.muted}
-                  />
-                  <View style={styles.addressInfo}>
-                    <Text style={styles.addressLabel}>{a.label}</Text>
-                    <Text style={styles.addressLine} numberOfLines={1}>
-                      {a.line}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
+                  <Icon
+                    name={a.fromLocation ? 'navigation' : a.label === 'Work' ? 'briefcase' : 'home'}
                     size={20}
                     color={selected ? c.brand.tint : c.text.muted}
                   />
-                </Pressable>
+                  <View style={styles.addressInfo}>
+                    <Text variant="headline">{a.label}</Text>
+                    <Text variant="caption" tone="subtle" numberOfLines={1}>
+                      {a.line}
+                    </Text>
+                  </View>
+                  <Icon
+                    name={selected ? 'check-circle' : 'circle'}
+                    size={20}
+                    color={selected ? c.brand.tint : c.text.muted}
+                  />
+                </PressableScale>
               );
             })}
 
-            <Text style={[styles.label, styles.labelSpaced]}>Or enter a new address</Text>
-            <Input
+            <Text variant="footnote" tone="muted" style={[styles.label, styles.labelSpaced]}>
+              Or enter a new address
+            </Text>
+            <TextField
+              label="New address"
               value={customAddress}
-              onChangeText={(t) => {
-                setCustomAddress(t);
-                if (t.length > 0) setAddressId(null);
+              onChangeText={(text) => {
+                setCustomAddress(text);
+                if (text.length > 0) setAddressId(null);
               }}
               placeholder="e.g. 12 Cardigan Road, Headingley, LS6 1LJ"
               multiline
@@ -334,7 +375,9 @@ export default function BookingFlowScreen() {
 
         {step === 3 && service && fees ? (
           <View style={styles.block}>
-            <Text style={styles.stepTitle}>Review & confirm</Text>
+            <Text variant="title1" style={styles.stepTitle}>
+              Review &amp; confirm
+            </Text>
             <View style={styles.reviewCard}>
               <ReviewRow label="Provider" value={provider.name} styles={styles} />
               <ReviewRow label="Service" value={service.name} styles={styles} />
@@ -345,36 +388,44 @@ export default function BookingFlowScreen() {
               <ReviewRow label="Platform fee (12%)" value={money(fees.fee)} styles={styles} />
               {promoApplied ? (
                 <View style={styles.reviewRow}>
-                  <Text style={styles.discountLabel}>Promo {PROMO_CODE} (10% off)</Text>
-                  <Text style={styles.discountValue}>-{money(discount)}</Text>
+                  <Text variant="callout" tone="success">
+                    Promo {PROMO_CODE} (10% off)
+                  </Text>
+                  <Text variant="callout" tone="success">
+                    -{money(discount)}
+                  </Text>
                 </View>
               ) : null}
               <View style={styles.divider} />
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{money(finalTotal)}</Text>
+                <Text variant="headline">Total</Text>
+                <Text variant="title1" tone="accent">
+                  {money(finalTotal)}
+                </Text>
               </View>
             </View>
 
-            <Text style={[styles.label, styles.labelSpaced]}>Promo code</Text>
-            <View style={styles.promoRow}>
-              <Input
-                containerStyle={styles.promoInput}
-                value={promo}
-                onChangeText={(t) => {
-                  setPromo(t);
-                  if (promoApplied) setPromoApplied(false);
-                }}
-                placeholder="Try BOOKIT10"
-                autoCapitalize="characters"
-                autoCorrect={false}
-                editable={!promoApplied}
-              />
+            <View style={[styles.promoRow, styles.labelSpaced]}>
+              <View style={styles.promoInput}>
+                <TextField
+                  label="Promo code"
+                  value={promo}
+                  onChangeText={(text) => {
+                    setPromo(text);
+                    if (promoApplied) setPromoApplied(false);
+                  }}
+                  placeholder="Try BOOKIT10"
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!promoApplied}
+                />
+              </View>
               <Button
                 label={promoApplied ? 'Applied' : 'Apply'}
                 variant="secondary"
                 disabled={promoApplied || promo.trim().length === 0}
                 onPress={applyPromo}
+                fullWidth={false}
                 style={styles.promoBtn}
               />
             </View>
@@ -385,7 +436,7 @@ export default function BookingFlowScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
           label={step === 3 ? 'Confirm booking' : 'Continue'}
-          icon={step === 3 ? 'checkmark' : undefined}
+          icon={step === 3 ? 'check' : undefined}
           loading={confirming}
           disabled={!canContinue}
           onPress={() => (step === 3 ? confirm() : setStep(step + 1))}
@@ -406,8 +457,10 @@ function ReviewRow({
 }) {
   return (
     <View style={styles.reviewRow}>
-      <Text style={styles.reviewLabel}>{label}</Text>
-      <Text style={styles.reviewValue} numberOfLines={2}>
+      <Text variant="callout" tone="muted">
+        {label}
+      </Text>
+      <Text variant="callout" numberOfLines={2} style={styles.reviewValue}>
         {value}
       </Text>
     </View>
@@ -422,7 +475,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    back: { marginBottom: spacing.md, alignSelf: 'flex-start' },
+    back: { marginBottom: spacing.md, alignSelf: 'flex-start', marginLeft: -spacing.xs },
     stepper: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -451,24 +504,7 @@ const makeStyles = (c: Palette) =>
       borderColor: c.brand.primary,
     },
     stepNum: {
-      ...typography.scale.caption,
-      fontFamily: typography.font.bold,
       fontWeight: '700',
-      color: c.text.muted,
-    },
-    stepNumActive: {
-      color: c.brand.tint,
-    },
-    stepLabel: {
-      ...typography.scale.caption,
-      color: c.text.muted,
-    },
-    stepLabelActive: {
-      color: c.text.primary,
-    },
-    providerName: {
-      ...typography.scale.small,
-      color: c.text.secondary,
     },
     scroll: {
       paddingHorizontal: spacing.lg,
@@ -476,8 +512,6 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.xl,
     },
     stepTitle: {
-      ...typography.scale.h1,
-      color: c.text.primary,
       marginBottom: spacing.lg,
     },
     list: { gap: spacing.sm },
@@ -497,22 +531,8 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.primarySoft,
     },
     serviceInfo: { flex: 1, gap: 2 },
-    serviceName: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    serviceMeta: {
-      ...typography.scale.caption,
-      color: c.text.muted,
-    },
-    servicePrice: {
-      ...typography.scale.bodyMedium,
-      color: c.brand.tint,
-    },
     block: { gap: spacing.sm },
     label: {
-      ...typography.scale.smallMedium,
-      color: c.text.secondary,
       marginBottom: spacing.sm,
     },
     labelSpaced: { marginTop: spacing.xl },
@@ -533,29 +553,13 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.primarySoft,
     },
     addressInfo: { flex: 1, gap: 2 },
-    addressLabel: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    addressLine: {
-      ...typography.scale.caption,
-      color: c.text.muted,
-    },
-    discountLabel: {
-      ...typography.scale.small,
-      color: c.status.success,
-    },
-    discountValue: {
-      ...typography.scale.smallMedium,
-      color: c.status.success,
-    },
     promoRow: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'flex-end',
       gap: spacing.sm,
     },
     promoInput: { flex: 1 },
-    promoBtn: { minWidth: 100 },
+    promoBtn: { minWidth: 100, height: 48 },
     chipsRow: { gap: spacing.sm, paddingVertical: spacing.xs },
     timeGrid: {
       flexDirection: 'row',
@@ -575,15 +579,9 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'space-between',
       gap: spacing.lg,
     },
-    reviewLabel: {
-      ...typography.scale.small,
-      color: c.text.secondary,
-    },
     reviewValue: {
       flex: 1,
       textAlign: 'right',
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
     },
     divider: {
       height: 1,
@@ -593,14 +591,6 @@ const makeStyles = (c: Palette) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-    },
-    totalLabel: {
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    totalValue: {
-      ...typography.scale.h1,
-      color: c.brand.tint,
     },
     footer: {
       paddingHorizontal: spacing.lg,

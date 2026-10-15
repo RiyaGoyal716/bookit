@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, EmptyState, Input, MapPlaceholder } from '../../../src/components';
+import {
+  Text,
+  Icon,
+  IconButton,
+  Button,
+  TextField,
+  EmptyState,
+  type IconName,
+} from '../../../src/components/ui';
 import { showToast } from '../../../src/stores/toastStore';
 import { useProviderStore, type ProJobStatus } from '../../../src/stores/providerStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../../src/theme';
 import { useMoney } from '../../../src/i18n';
 
 const STATUS_LABEL: Record<ProJobStatus, string> = {
@@ -39,16 +46,13 @@ export default function ProJobDetail() {
   if (!job) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          accessibilityLabel="Go back"
           onPress={() => router.back()}
           style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="briefcase-outline" title="Job not found" />
+        />
+        <EmptyState art="search" title="Job not found" />
       </View>
     );
   }
@@ -58,7 +62,7 @@ export default function ProJobDetail() {
       return (
         <Button
           label="Start job"
-          icon="play"
+          icon="arrow-right"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
             advanceJob(job.id);
@@ -71,7 +75,7 @@ export default function ProJobDetail() {
       return (
         <Button
           label="Mark complete"
-          icon="checkmark-done"
+          icon="check-all"
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
             advanceJob(job.id);
@@ -81,7 +85,7 @@ export default function ProJobDetail() {
       );
     }
     if (job.status === 'completed') {
-      return <Button label="Completed" icon="checkmark-circle" disabled onPress={() => {}} />;
+      return <Button label="Completed" icon="check-circle" disabled onPress={() => {}} />;
     }
     return null;
   };
@@ -89,16 +93,15 @@ export default function ProJobDetail() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          accessibilityLabel="Go back"
           onPress={() => router.back()}
           style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Job {job.id}</Text>
+        />
+        <Text variant="title2" style={styles.title}>
+          Job {job.id}
+        </Text>
       </View>
 
       <ScrollView
@@ -107,33 +110,42 @@ export default function ProJobDetail() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.statusTag}>
-          <Text style={styles.statusText}>{STATUS_LABEL[job.status]}</Text>
+          <Text variant="caption" tone="accent" style={styles.statusText}>
+            {STATUS_LABEL[job.status]}
+          </Text>
         </View>
 
-        <Text style={styles.service}>{job.service}</Text>
-        <Text style={styles.amount}>
+        <Text variant="title1" style={styles.service}>
+          {job.service}
+        </Text>
+        <Text variant="title2" tone="accent" tabular style={styles.amount}>
           {job.status === 'offer' ? `Budget ${money(job.budget ?? 0)}` : money(job.amount)}
         </Text>
 
-        <MapPlaceholder height={140} style={{ marginVertical: spacing.lg }} caption={job.area} />
+        <View style={styles.mapPlaceholder}>
+          <Icon name="map-pin" size={24} color={c.text.muted} />
+          <Text variant="caption" tone="muted">
+            {job.area}
+          </Text>
+        </View>
 
         <View style={styles.card}>
-          <Row icon="person-outline" label="Customer" value={job.customer} styles={styles} c={c} />
+          <Row icon="user" label="Customer" value={job.customer} styles={styles} c={c} />
           <Row
-            icon="calendar-outline"
+            icon="calendar"
             label="When"
             value={`${job.date} · ${job.time}`}
             styles={styles}
             c={c}
           />
-          <Row icon="location-outline" label="Area" value={job.area} styles={styles} c={c} />
+          <Row icon="map-pin" label="Area" value={job.area} styles={styles} c={c} />
         </View>
 
         <View style={styles.contactRow}>
           <Button
             label="Call"
             variant="secondary"
-            icon="call"
+            icon="phone"
             style={styles.flex1}
             onPress={() =>
               Linking.openURL('tel:+441130000000').catch(() => showToast('Calling unavailable'))
@@ -142,7 +154,7 @@ export default function ProJobDetail() {
           <Button
             label="Message"
             variant="secondary"
-            icon="chatbubble-ellipses"
+            icon="message"
             style={styles.flex1}
             onPress={() => showToast('Opening chat (demo)')}
           />
@@ -150,8 +162,10 @@ export default function ProJobDetail() {
 
         {job.status === 'offer' ? (
           <View style={styles.quoteCard}>
-            <Text style={styles.quoteTitle}>Send a quote</Text>
-            <Input
+            <Text variant="headline" style={styles.quoteTitle}>
+              Send a quote
+            </Text>
+            <TextField
               label="Your price (GBP)"
               value={quote}
               onChangeText={setQuote}
@@ -211,7 +225,7 @@ function Row({
   styles,
   c,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   label: string;
   value: string;
   styles: ReturnType<typeof makeStyles>;
@@ -219,9 +233,13 @@ function Row({
 }) {
   return (
     <View style={styles.row}>
-      <Ionicons name={icon} size={16} color={c.text.muted} />
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      <Icon name={icon} size={16} color={c.text.muted} />
+      <Text variant="caption" tone="muted" style={styles.rowLabel}>
+        {label}
+      </Text>
+      <Text variant="footnote" style={styles.rowValue}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -237,7 +255,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
     statusTag: {
       alignSelf: 'flex-start',
       paddingVertical: 4,
@@ -245,14 +263,20 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.pill,
       backgroundColor: c.brand.primarySoft,
     },
-    statusText: {
-      ...typography.scale.caption,
-      color: c.brand.tint,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
+    statusText: { fontWeight: '700' },
+    service: { marginTop: spacing.md },
+    amount: { marginTop: 2 },
+    mapPlaceholder: {
+      height: 140,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background.muted,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      marginVertical: spacing.lg,
     },
-    service: { ...typography.scale.h1, color: c.text.primary, marginTop: spacing.md },
-    amount: { ...typography.scale.h2, color: c.brand.tint, marginTop: 2 },
     card: {
       borderRadius: radius.lg,
       borderWidth: 1,
@@ -262,12 +286,10 @@ const makeStyles = (c: Palette) =>
       gap: spacing.md,
     },
     row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    rowLabel: { ...typography.scale.small, color: c.text.secondary, width: 80 },
+    rowLabel: { width: 80 },
     rowValue: {
       flex: 1,
       textAlign: 'right',
-      ...typography.scale.smallMedium,
-      color: c.text.primary,
     },
     contactRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
     flex1: { flex: 1 },
@@ -279,7 +301,7 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
-    quoteTitle: { ...typography.scale.bodyMedium, color: c.text.primary, marginBottom: spacing.md },
+    quoteTitle: { marginBottom: spacing.md },
     footer: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,

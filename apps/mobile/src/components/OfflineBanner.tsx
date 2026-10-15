@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Network from 'expo-network';
 
-import { useColors, spacing, typography, type Palette } from '../theme';
+import { Text } from './ui/Text';
+import { Icon } from './ui/Icon';
+import { useColors, spacing, type Palette } from '../theme';
 
 /**
  * Connectivity banner shown while the device is offline.
@@ -55,8 +56,10 @@ export function OfflineBanner() {
 
   return (
     <View style={[styles.banner, { paddingTop: insets.top + spacing.xs }]}>
-      <Ionicons name="cloud-offline-outline" size={16} color={c.text.inverse} />
-      <Text style={styles.text}>No internet connection</Text>
+      <Icon name="cloud-off" size={16} color={c.text.inverse} />
+      <Text variant="footnote" tone="inverse" style={styles.text}>
+        No internet connection
+      </Text>
     </View>
   );
 }
@@ -72,8 +75,5 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       backgroundColor: c.status.danger,
     },
-    text: {
-      ...typography.scale.smallMedium,
-      color: c.text.inverse,
-    },
+    text: {},
   });

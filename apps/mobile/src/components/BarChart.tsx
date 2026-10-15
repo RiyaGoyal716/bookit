@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, type ViewStyle } from 'react-native';
+import { View, StyleSheet, type ViewStyle } from 'react-native';
 import Svg, { Rect, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 
+import { Text } from './ui/Text';
 import { useColors, radius, spacing, typography, type Palette } from '../theme';
 
 export interface BarDatum {
@@ -21,7 +22,7 @@ export interface BarChartProps {
 
 /**
  * Custom bar chart drawn with react-native-svg (no chart library). Bars use the
- * Aurora indigo→cyan gradient; a highlighted bar uses the coral accent. Scales
+ * Aurora indigo-to-cyan gradient; a highlighted bar uses the coral accent. Scales
  * to the container width. Used for weekly earnings and wallet activity.
  */
 export function BarChart({
@@ -84,6 +85,7 @@ export function BarChart({
         {data.map((d, i) => (
           <Text
             key={d.label}
+            variant="micro"
             style={[styles.label, i === highlightIndex && styles.labelActive]}
             numberOfLines={1}
           >
@@ -91,7 +93,9 @@ export function BarChart({
           </Text>
         ))}
       </View>
-      <Text style={styles.max}>{formatValue(max)}</Text>
+      <Text variant="micro" style={styles.max}>
+        {formatValue(max)}
+      </Text>
     </View>
   );
 }
@@ -106,8 +110,6 @@ const makeStyles = (c: Palette) =>
     label: {
       flex: 1,
       textAlign: 'center',
-      ...typography.scale.caption,
-      fontSize: 10,
       color: c.text.muted,
     },
     labelActive: { color: c.brand.accent, fontFamily: typography.font.bold, fontWeight: '700' },
@@ -115,8 +117,6 @@ const makeStyles = (c: Palette) =>
       position: 'absolute',
       top: -2,
       right: 0,
-      ...typography.scale.caption,
-      fontSize: 10,
       color: c.text.muted,
       backgroundColor: c.background.surface,
       paddingHorizontal: 4,

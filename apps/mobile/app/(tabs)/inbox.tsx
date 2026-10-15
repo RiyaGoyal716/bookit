@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { EmptyState } from '../../src/components';
+import { EmptyState, Icon, PressableScale, Text } from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { useChatStore, type Conversation } from '../../src/stores/chatStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 
 export default function InboxScreen() {
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function InboxScreen() {
   const lastOf = (conv: Conversation): string => {
     const m = conv.messages[conv.messages.length - 1];
     if (!m) return 'Start the conversation';
-    if (m.image && !m.text) return '📷 Photo';
+    if (m.image && !m.text) return 'Photo';
     return `${m.from === 'me' ? 'You: ' : ''}${m.text ?? ''}`;
   };
 
@@ -37,23 +36,26 @@ export default function InboxScreen() {
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
         <View style={styles.flex1}>
-          <Text style={styles.heading}>Inbox</Text>
-          <Text style={styles.subtitle}>Chats with your pros and support</Text>
+          <Text variant="title1">Inbox</Text>
+          <Text variant="body" tone="muted" style={styles.subtitle}>
+            Chats with your pros and support
+          </Text>
         </View>
-        <Pressable
+        <PressableScale
           style={styles.bell}
           onPress={() => router.push(route('/notifications'))}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Notifications${notifUnread > 0 ? `, ${notifUnread} unread` : ''}`}
         >
-          <Ionicons name="notifications-outline" size={24} color={c.text.primary} />
+          <Icon name="bell" size={24} color={c.text.primary} />
           {notifUnread > 0 ? (
             <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText}>{notifUnread}</Text>
+              <Text variant="micro" tone="onPrimary" style={styles.badgeText}>
+                {notifUnread}
+              </Text>
             </View>
           ) : null}
-        </Pressable>
+        </PressableScale>
       </View>
 
       <FlashList
@@ -64,7 +66,7 @@ export default function InboxScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <EmptyState
-            icon="chatbubbles-outline"
+            art="empty"
             title="No conversations yet"
             message="Message a pro from a booking to start chatting."
             actionLabel="Find a provider"
@@ -72,15 +74,15 @@ export default function InboxScreen() {
           />
         }
         renderItem={({ item }: { item: Conversation }) => (
-          <Pressable
+          <PressableScale
             onPress={() => router.push(route(`/chat/${item.id}`))}
             accessibilityRole="button"
             accessibilityLabel={`Chat with ${item.name}`}
-            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            style={styles.row}
           >
             {item.kind === 'support' ? (
               <View style={styles.supportAvatar}>
-                <Ionicons name="sparkles" size={20} color={c.text.inverse} />
+                <Icon name="sparkles" size={20} color={c.text.inverse} />
               </View>
             ) : item.avatar ? (
               <Image
@@ -92,28 +94,37 @@ export default function InboxScreen() {
               />
             ) : (
               <View style={styles.avatarFallback}>
-                <Ionicons name="person" size={20} color={c.text.muted} />
+                <Icon name="user" size={20} color={c.text.muted} />
               </View>
             )}
             <View style={styles.body}>
               <View style={styles.titleRow}>
-                <Text style={styles.name} numberOfLines={1}>
+                <Text variant="headline" style={styles.name} numberOfLines={1}>
                   {item.name}
                 </Text>
                 {item.messages.length > 0 ? (
-                  <Text style={styles.time}>{item.messages[item.messages.length - 1].time}</Text>
+                  <Text variant="caption" tone="subtle">
+                    {item.messages[item.messages.length - 1].time}
+                  </Text>
                 ) : null}
               </View>
-              <Text style={[styles.last, item.unread > 0 && styles.lastUnread]} numberOfLines={1}>
+              <Text
+                variant="caption"
+                tone={item.unread > 0 ? 'default' : 'muted'}
+                style={item.unread > 0 ? styles.semibold : undefined}
+                numberOfLines={1}
+              >
                 {lastOf(item)}
               </Text>
             </View>
             {item.unread > 0 ? (
               <View style={styles.unreadBadge}>
-                <Text style={styles.unreadText}>{item.unread}</Text>
+                <Text variant="micro" tone="onPrimary" style={styles.badgeText}>
+                  {item.unread}
+                </Text>
               </View>
             ) : null}
-          </Pressable>
+          </PressableScale>
         )}
       />
     </View>
@@ -131,8 +142,9 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     flex1: { flex: 1 },
-    heading: { ...typography.scale.h1, color: c.text.primary },
-    subtitle: { ...typography.scale.body, color: c.text.secondary, marginTop: 2 },
+    subtitle: { marginTop: 2 },
+    semibold: { fontWeight: '600' },
+    badgeText: { fontWeight: '700' },
     bell: {
       width: 44,
       height: 44,
@@ -155,13 +167,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    bellBadgeText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
     content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xl },
     separator: { height: spacing.sm },
     row: {
@@ -174,7 +179,6 @@ const makeStyles = (c: Palette) =>
       borderColor: c.border,
       backgroundColor: c.background.surface,
     },
-    rowPressed: { opacity: 0.85 },
     avatar: { width: 52, height: 52, borderRadius: radius.pill, backgroundColor: c.skeleton },
     avatarFallback: {
       width: 52,
@@ -199,10 +203,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'space-between',
       gap: spacing.sm,
     },
-    name: { flex: 1, ...typography.scale.bodyMedium, color: c.text.primary },
-    time: { ...typography.scale.caption, color: c.text.muted },
-    last: { ...typography.scale.small, color: c.text.secondary },
-    lastUnread: { color: c.text.primary, fontFamily: typography.font.semibold, fontWeight: '600' },
+    name: { flex: 1 },
     unreadBadge: {
       minWidth: 20,
       height: 20,
@@ -211,12 +212,5 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.primary,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    unreadText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
     },
   });

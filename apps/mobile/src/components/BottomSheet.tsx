@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { Text, StyleSheet, type ViewStyle } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetView,
@@ -7,7 +7,8 @@ import {
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 
-import { useColors, radius, spacing, typography, type Palette } from '../theme';
+import { Text } from './ui/Text';
+import { useColors, radius, spacing, type Palette } from '../theme';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -59,7 +60,11 @@ export function BottomSheet({
       backgroundStyle={styles.sheet}
     >
       <BottomSheetView style={[styles.content, contentStyle]}>
-        {title ? <Text style={styles.title}>{title}</Text> : null}
+        {title ? (
+          <Text variant="title2" style={styles.title}>
+            {title}
+          </Text>
+        ) : null}
         {children}
       </BottomSheetView>
     </BottomSheetModal>
@@ -84,8 +89,6 @@ const makeStyles = (c: Palette) =>
       gap: spacing.sm,
     },
     title: {
-      ...typography.scale.h2,
-      color: c.text.primary,
       marginBottom: spacing.sm,
     },
   });

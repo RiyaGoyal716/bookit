@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Share, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Share, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, ConfirmModal, Input } from '../src/components';
+import { Button, TextField, Text, Icon, PressableScale, IconButton } from '../src/components/ui';
 import { route } from '../src/lib/nav';
 import { showToast } from '../src/stores/toastStore';
 import { useSafetyStore } from '../src/stores/safetyStore';
 import { useBookingsStore } from '../src/stores/bookingsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 export default function SafetyScreen() {
   const router = useRouter();
@@ -25,7 +24,6 @@ export default function SafetyScreen() {
     s.bookings.find((b) => b.status === 'Accepted' || b.status === 'On the way'),
   );
 
-  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -36,6 +34,22 @@ export default function SafetyScreen() {
     Share.share({
       message: `I'm sharing my live Bookit booking with you for safety: ${where}. Track: bookit.app/track`,
     }).catch(() => {});
+  };
+
+  const openEmergency = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    Alert.alert(
+      'Call emergency services?',
+      'This is a demo. In a real emergency, call 999. We’ll also notify your trusted contacts.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Call 999',
+          style: 'destructive',
+          onPress: () => Linking.openURL('tel:999').catch(() => showToast('Calling unavailable')),
+        },
+      ],
+    );
   };
 
   const addNewContact = () => {
@@ -49,16 +63,16 @@ export default function SafetyScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Safety centre</Text>
+          style={styles.back}
+        />
+        <Text variant="title2" style={styles.title}>
+          Safety centre
+        </Text>
       </View>
 
       <ScrollView
@@ -66,74 +80,80 @@ export default function SafetyScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Pressable
+        <PressableScale
           style={styles.emergency}
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-            setEmergencyOpen(true);
-          }}
+          haptic={null}
+          onPress={openEmergency}
           accessibilityRole="button"
           accessibilityLabel="Emergency help"
         >
           <View style={styles.emergencyIcon}>
-            <Ionicons name="alert" size={28} color={c.status.danger} />
+            <Icon name="alert-triangle" size={24} color={c.status.danger} />
           </View>
           <View style={styles.flex1}>
-            <Text style={styles.emergencyTitle}>Emergency</Text>
-            <Text style={styles.emergencySub}>Call for help and alert your trusted contacts</Text>
+            <Text variant="headline" tone="danger">
+              Emergency
+            </Text>
+            <Text variant="caption" tone="muted">
+              Call for help and alert your trusted contacts
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={c.status.danger} />
-        </Pressable>
+          <Icon name="chevron-right" size={20} color={c.status.danger} />
+        </PressableScale>
 
-        <Text style={styles.sectionTitle}>Share your trip</Text>
-        <Pressable
+        <Text variant="title2" style={styles.sectionTitle}>
+          Share your trip
+        </Text>
+        <PressableScale
           style={styles.actionCard}
           onPress={shareLive}
           accessibilityRole="button"
           accessibilityLabel="Share live booking"
         >
           <View style={styles.actionIcon}>
-            <Ionicons name="share-social" size={20} color={c.brand.tint} />
+            <Icon name="share" size={20} color={c.brand.tint} />
           </View>
           <View style={styles.flex1}>
-            <Text style={styles.actionTitle}>Share live booking</Text>
-            <Text style={styles.actionSub}>
+            <Text variant="headline">Share live booking</Text>
+            <Text variant="caption" tone="muted">
               {activeBooking
                 ? `${activeBooking.providerName} · ${activeBooking.time}`
                 : 'Send details to someone you trust'}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-        </Pressable>
+          <Icon name="chevron-right" size={20} color={c.text.muted} />
+        </PressableScale>
 
-        <Text style={styles.sectionTitle}>Trusted contacts</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          Trusted contacts
+        </Text>
         {contacts.map((ct) => (
           <View key={ct.id} style={styles.contactRow}>
             <View style={styles.contactAvatar}>
-              <Ionicons name="person" size={18} color={c.brand.tint} />
+              <Icon name="user" size={20} color={c.brand.tint} />
             </View>
             <View style={styles.flex1}>
-              <Text style={styles.contactName}>{ct.name}</Text>
-              <Text style={styles.contactPhone}>{ct.phone}</Text>
+              <Text variant="headline">{ct.name}</Text>
+              <Text variant="caption" tone="muted">
+                {ct.phone}
+              </Text>
             </View>
-            <Pressable
+            <IconButton
+              name="trash"
+              size={20}
+              color={c.text.muted}
               onPress={() => {
                 removeContact(ct.id);
                 showToast('Contact removed');
               }}
-              hitSlop={8}
-              accessibilityRole="button"
               accessibilityLabel={`Remove ${ct.name}`}
-            >
-              <Ionicons name="trash-outline" size={20} color={c.text.muted} />
-            </Pressable>
+            />
           </View>
         ))}
 
         <View style={styles.addCard}>
-          <Input label="Name" value={name} onChangeText={setName} placeholder="e.g. Sam" />
-          <Input
-            containerStyle={{ marginTop: spacing.md }}
+          <TextField label="Name" value={name} onChangeText={setName} placeholder="e.g. Sam" />
+          <TextField
             label="Phone"
             value={phone}
             onChangeText={setPhone}
@@ -142,39 +162,26 @@ export default function SafetyScreen() {
           />
           <Button
             label="Add contact"
-            icon="add"
+            icon="plus"
             variant="secondary"
-            style={{ marginTop: spacing.md }}
             disabled={name.trim().length < 2 || phone.trim().length < 6}
             onPress={addNewContact}
           />
         </View>
 
-        <Pressable
+        <PressableScale
           style={styles.guideLink}
           onPress={() => router.push(route('/legal/safety-guidelines'))}
           accessibilityRole="button"
           accessibilityLabel="Read safety guidelines"
         >
-          <Ionicons name="shield-checkmark-outline" size={18} color={c.brand.tint} />
-          <Text style={styles.guideText}>Read our safety guidelines</Text>
-          <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-        </Pressable>
+          <Icon name="shield-check" size={20} color={c.brand.tint} />
+          <Text variant="footnote" tone="accent" style={styles.flex1}>
+            Read our safety guidelines
+          </Text>
+          <Icon name="chevron-right" size={20} color={c.text.muted} />
+        </PressableScale>
       </ScrollView>
-
-      <ConfirmModal
-        visible={emergencyOpen}
-        icon="call"
-        title="Call emergency services?"
-        message="This is a demo. In a real emergency, call 999. We’ll also notify your trusted contacts."
-        confirmLabel="Call 999"
-        destructive
-        onConfirm={() => {
-          setEmergencyOpen(false);
-          Linking.openURL('tel:999').catch(() => showToast('Calling unavailable'));
-        }}
-        onCancel={() => setEmergencyOpen(false)}
-      />
     </View>
   );
 }
@@ -190,7 +197,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
     flex1: { flex: 1 },
     emergency: {
       flexDirection: 'row',
@@ -210,16 +217,7 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    emergencyTitle: {
-      ...typography.scale.bodyMedium,
-      color: c.status.danger,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    emergencySub: { ...typography.scale.caption, color: c.text.secondary },
     sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
       marginTop: spacing.xl,
       marginBottom: spacing.sm,
     },
@@ -241,8 +239,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    actionTitle: { ...typography.scale.bodyMedium, color: c.text.primary },
-    actionSub: { ...typography.scale.caption, color: c.text.muted },
     contactRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -262,8 +258,6 @@ const makeStyles = (c: Palette) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    contactName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    contactPhone: { ...typography.scale.caption, color: c.text.muted },
     addCard: {
       marginTop: spacing.sm,
       padding: spacing.lg,
@@ -271,6 +265,7 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.background.surface,
+      gap: spacing.md,
     },
     guideLink: {
       flexDirection: 'row',
@@ -281,5 +276,4 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       backgroundColor: c.brand.primarySoft,
     },
-    guideText: { flex: 1, ...typography.scale.smallMedium, color: c.brand.tint },
   });

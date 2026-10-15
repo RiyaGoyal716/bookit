@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, EmptyState, InlineBanner } from '../../src/components';
+import { Button, EmptyState, Banner, Text, Icon, IconButton } from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { showToast } from '../../src/stores/toastStore';
 import { useSafetyStore } from '../../src/stores/safetyStore';
-import { useColors, spacing, typography, type Palette } from '../../src/theme';
+import { useColors, spacing, type Palette } from '../../src/theme';
 
 export default function ViolationScreen() {
   const router = useRouter();
@@ -23,16 +22,14 @@ export default function ViolationScreen() {
   if (!violation) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <EmptyState icon="shield-outline" title="Notice not found" />
+          style={styles.back}
+        />
+        <EmptyState art="empty" title="Notice not found" />
       </View>
     );
   }
@@ -42,45 +39,53 @@ export default function ViolationScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
+          size={24}
           onPress={() => router.back()}
-          style={styles.back}
-          hitSlop={8}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
-        <Text style={styles.title}>Notice</Text>
+          style={styles.back}
+        />
+        <Text variant="title2" style={styles.title}>
+          Notice
+        </Text>
       </View>
 
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <InlineBanner
-          tone={danger ? 'danger' : 'warning'}
+        <Banner
+          tone={danger ? 'violation' : 'warning'}
           title={violation.title}
           message={`${violation.severity === 'strike' ? 'Strike' : 'Warning'} · ${violation.date}`}
         />
 
-        <Text style={styles.sectionTitle}>What happened</Text>
-        <Text style={styles.body}>{violation.reason}</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          What happened
+        </Text>
+        <Text variant="body" tone="muted" style={styles.body}>
+          {violation.reason}
+        </Text>
 
-        <Text style={styles.sectionTitle}>What this means</Text>
-        <Text style={styles.body}>{violation.detail}</Text>
+        <Text variant="title2" style={styles.sectionTitle}>
+          What this means
+        </Text>
+        <Text variant="body" tone="muted" style={styles.body}>
+          {violation.detail}
+        </Text>
 
         <View style={styles.actions}>
           <Button
             label="Appeal this notice"
             variant="secondary"
-            icon="chatbox-ellipses-outline"
+            icon="message"
             onPress={() => router.push(route('/account-status'))}
           />
           {!violation.acknowledged ? (
             <Button
               label="I understand"
-              icon="checkmark"
+              icon="check"
               onPress={() => {
                 acknowledge(violation.id);
                 showToast('Acknowledged');
@@ -89,8 +94,10 @@ export default function ViolationScreen() {
             />
           ) : (
             <View style={styles.ackRow}>
-              <Ionicons name="checkmark-circle" size={16} color={c.status.success} />
-              <Text style={styles.ackText}>Acknowledged</Text>
+              <Icon name="check-circle" size={16} color={c.status.success} />
+              <Text variant="footnote" tone="success">
+                Acknowledged
+              </Text>
             </View>
           )}
         </View>
@@ -110,14 +117,12 @@ const makeStyles = (c: Palette) =>
       paddingBottom: spacing.md,
     },
     back: { marginLeft: -spacing.xs },
-    title: { flex: 1, ...typography.scale.h2, color: c.text.primary },
+    title: { flex: 1 },
     sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
       marginTop: spacing.xl,
       marginBottom: spacing.sm,
     },
-    body: { ...typography.scale.body, color: c.text.secondary, lineHeight: 24 },
+    body: { lineHeight: 24 },
     actions: { marginTop: spacing.xl, gap: spacing.md },
     ackRow: {
       flexDirection: 'row',
@@ -125,5 +130,4 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       gap: spacing.xs,
     },
-    ackText: { ...typography.scale.smallMedium, color: c.status.success },
   });

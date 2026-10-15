@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Share } from 'react-native';
+import { View, StyleSheet, Animated, Easing, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Confetti, Screen } from '../src/components';
+import { Confetti } from '../src/components';
+import { Button, Screen, Text, Icon, type IconName } from '../src/components/ui';
 import { useBookingsStore } from '../src/stores/bookingsStore';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 import { useMoney } from '../src/i18n';
 
 export default function SuccessScreen() {
@@ -40,36 +40,26 @@ export default function SuccessScreen() {
     <Screen>
       <View style={styles.container}>
         <Animated.View style={[styles.iconCircle, { transform: [{ scale }] }]}>
-          <Ionicons name="checkmark" size={52} color={c.text.inverse} />
+          <Icon name="check" size={24} color={c.text.inverse} />
         </Animated.View>
         <Animated.View style={{ opacity: fade, alignItems: 'center', gap: spacing.md }}>
-          <Text style={styles.title}>Booking confirmed!</Text>
-          <Text style={styles.subtitle}>
+          <Text variant="title1">Booking confirmed!</Text>
+          <Text variant="body" tone="muted" center style={styles.subtitle}>
             Your provider will confirm shortly. We&apos;ve saved the details to your bookings.
           </Text>
 
           {booking ? (
             <View style={styles.summaryCard}>
+              <SummaryRow icon="store" label={booking.providerName} styles={styles} c={c} />
+              <SummaryRow icon="hammer" label={booking.serviceName} styles={styles} c={c} />
               <SummaryRow
-                icon="storefront-outline"
-                label={booking.providerName}
-                styles={styles}
-                c={c}
-              />
-              <SummaryRow
-                icon="construct-outline"
-                label={booking.serviceName}
-                styles={styles}
-                c={c}
-              />
-              <SummaryRow
-                icon="calendar-outline"
+                icon="calendar"
                 label={`${booking.date} · ${booking.time}`}
                 styles={styles}
                 c={c}
               />
               <SummaryRow
-                icon="pricetag-outline"
+                icon="tag"
                 label={`${money(booking.total)} total`}
                 styles={styles}
                 c={c}
@@ -78,8 +68,12 @@ export default function SuccessScreen() {
           ) : null}
 
           <View style={styles.idCard}>
-            <Text style={styles.idLabel}>Booking reference</Text>
-            <Text style={styles.idValue}>{bookingId ?? 'BK------'}</Text>
+            <Text variant="caption" tone="muted">
+              Booking reference
+            </Text>
+            <Text variant="title2" tone="accent" style={styles.idValue}>
+              {bookingId ?? 'BK------'}
+            </Text>
           </View>
         </Animated.View>
       </View>
@@ -89,14 +83,14 @@ export default function SuccessScreen() {
           <Button
             label="Add to calendar"
             variant="secondary"
-            icon="calendar-outline"
+            icon="calendar"
             style={styles.flex1}
             onPress={() => showToast('Added to your calendar')}
           />
           <Button
             label="Share"
             variant="secondary"
-            icon="share-outline"
+            icon="share"
             style={styles.flex1}
             onPress={() => {
               const when = booking ? `${booking.date} at ${booking.time}` : 'soon';
@@ -108,14 +102,14 @@ export default function SuccessScreen() {
         </View>
         <Button
           label="View booking"
-          icon="receipt-outline"
+          icon="receipt"
           onPress={() =>
             bookingId
               ? router.replace({ pathname: '/booking-detail/[id]', params: { id: bookingId } })
               : router.replace('/(tabs)/bookings')
           }
         />
-        <Button label="Back to home" variant="ghost" onPress={() => router.replace('/(tabs)')} />
+        <Button label="Back to home" variant="tertiary" onPress={() => router.replace('/(tabs)')} />
       </View>
 
       <Confetti run={confetti} />
@@ -129,15 +123,15 @@ function SummaryRow({
   styles,
   c,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   label: string;
   styles: ReturnType<typeof makeStyles>;
   c: Palette;
 }) {
   return (
     <View style={styles.summaryRow}>
-      <Ionicons name={icon} size={16} color={c.brand.tint} />
-      <Text style={styles.summaryText} numberOfLines={1}>
+      <Icon name={icon} size={16} color={c.brand.tint} />
+      <Text variant="footnote" style={styles.flex1} numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -161,11 +155,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       marginBottom: spacing.sm,
     },
-    title: { ...typography.scale.h1, color: c.text.primary },
     subtitle: {
-      ...typography.scale.body,
-      color: c.text.secondary,
-      textAlign: 'center',
       paddingHorizontal: spacing.lg,
     },
     summaryCard: {
@@ -179,7 +169,6 @@ const makeStyles = (c: Palette) =>
       gap: spacing.sm,
     },
     summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    summaryText: { flex: 1, ...typography.scale.smallMedium, color: c.text.primary },
     idCard: {
       marginTop: spacing.sm,
       alignItems: 'center',
@@ -189,8 +178,7 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.lg,
       backgroundColor: c.brand.primarySoft,
     },
-    idLabel: { ...typography.scale.caption, color: c.text.secondary },
-    idValue: { ...typography.scale.h2, color: c.brand.tint, letterSpacing: 1 },
+    idValue: { letterSpacing: 1 },
     footer: { gap: spacing.sm },
     footerRow: { flexDirection: 'row', gap: spacing.sm },
     flex1: { flex: 1 },

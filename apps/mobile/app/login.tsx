@@ -1,10 +1,17 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Modal, FlatList } from 'react-native';
+import { View, StyleSheet, Pressable, TextInput, Modal, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronDown, Search, Check, Apple, Smartphone } from 'lucide-react-native';
 
-import { Input, Screen, GradientButton } from '../src/components';
+import {
+  Button,
+  Icon,
+  IconButton,
+  PressableScale,
+  Screen,
+  Text,
+  type IconName,
+} from '../src/components/ui';
 import { useT, useDirectionalStyles } from '../src/i18n';
 import { useRegionStore } from '../src/stores/regionStore';
 import { useAuthStore } from '../src/stores/authStore';
@@ -77,43 +84,57 @@ export default function LoginScreen() {
 
   return (
     <Screen keyboardAvoiding>
-      <Pressable
+      <IconButton
+        name="chevron-left"
+        size={24}
         onPress={() => router.back()}
-        style={styles.back}
-        hitSlop={8}
-        accessibilityRole="button"
         accessibilityLabel={t('common.back')}
-      >
-        <ChevronLeft size={26} color={c.text.primary} />
-      </Pressable>
+        style={styles.back}
+      />
 
       <View style={styles.flex}>
-        <Text style={[styles.title, dir.textAlign]}>{t('auth.phoneTitle')}</Text>
-        <Text style={[styles.subtitle, dir.textAlign]}>{t('auth.phoneSubtitle')}</Text>
+        <Text variant="title1" style={dir.textAlign}>
+          {t('auth.phoneTitle')}
+        </Text>
+        <Text variant="body" tone="muted" style={[styles.subtitle, dir.textAlign]}>
+          {t('auth.phoneSubtitle')}
+        </Text>
 
-        <Input
-          label={t('auth.phonePlaceholder')}
-          value={national}
-          onChangeText={onChange}
-          placeholder="7123 456789"
-          keyboardType="phone-pad"
-          autoFocus
-          error={showError ? 'Enter a valid mobile number' : undefined}
-          left={
-            <Pressable
+        <View style={styles.fieldWrap}>
+          <Text variant="footnote" tone={showError ? 'danger' : 'muted'} style={styles.fieldLabel}>
+            {t('auth.phonePlaceholder')}
+          </Text>
+          <View style={[styles.fieldRow, dir.row, showError && styles.fieldRowError]}>
+            <PressableScale
               onPress={() => setPickerOpen(true)}
               style={[styles.prefix, dir.row]}
-              hitSlop={8}
+              haptic="selection"
               accessibilityRole="button"
+              accessibilityLabel={t('auth.phonePlaceholder')}
             >
-              <Text style={styles.prefixFlag}>{flagEmoji(country.code)}</Text>
-              <Text style={styles.prefixText}>+{dialCodeFor(country.code)}</Text>
-              <ChevronDown size={14} color={c.text.muted} />
-            </Pressable>
-          }
-        />
+              <Text variant="title2">{flagEmoji(country.code)}</Text>
+              <Text variant="headline">+{dialCodeFor(country.code)}</Text>
+              <Icon name="chevron-down" size={16} color={c.text.muted} />
+            </PressableScale>
+            <TextInput
+              style={[styles.input, dir.textAlign]}
+              value={national}
+              onChangeText={onChange}
+              placeholder="7123 456789"
+              placeholderTextColor={c.text.muted}
+              keyboardType="phone-pad"
+              autoFocus
+              accessibilityLabel={t('auth.phonePlaceholder')}
+            />
+          </View>
+          {showError ? (
+            <Text variant="caption" tone="danger">
+              Enter a valid mobile number
+            </Text>
+          ) : null}
+        </View>
 
-        <GradientButton
+        <Button
           label={t('auth.sendCode')}
           disabled={!validation.valid}
           onPress={onContinue}
@@ -122,12 +143,14 @@ export default function LoginScreen() {
 
         <View style={[styles.divider, dir.row]}>
           <View style={styles.line} />
-          <Text style={styles.or}>{t('auth.or')}</Text>
+          <Text variant="footnote" tone="muted">
+            {t('auth.or')}
+          </Text>
           <View style={styles.line} />
         </View>
 
         <SocialRow
-          Icon={Apple}
+          icon="user"
           label={t('auth.continueApple')}
           onPress={onSocial}
           styles={styles}
@@ -135,7 +158,7 @@ export default function LoginScreen() {
           c={c}
         />
         <SocialRow
-          Icon={Smartphone}
+          icon="smartphone"
           label={t('auth.continueGoogle')}
           onPress={onSocial}
           styles={styles}
@@ -144,9 +167,11 @@ export default function LoginScreen() {
         />
       </View>
 
-      <Pressable onPress={onGuest} style={styles.guest} accessibilityRole="button">
-        <Text style={styles.guestText}>{t('auth.guest')}</Text>
-      </Pressable>
+      <PressableScale onPress={onGuest} style={styles.guest} accessibilityRole="button">
+        <Text variant="headline" tone="accent">
+          {t('auth.guest')}
+        </Text>
+      </PressableScale>
 
       <Modal
         visible={pickerOpen}
@@ -164,7 +189,7 @@ export default function LoginScreen() {
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.handle} />
             <View style={[styles.searchBar, dir.row]}>
-              <Search size={18} color={c.text.muted} />
+              <Icon name="search" size={20} color={c.text.muted} />
               <TextInput
                 style={[styles.searchInput, dir.textAlign]}
                 value={search}
@@ -184,19 +209,22 @@ export default function LoginScreen() {
               renderItem={({ item }) => {
                 const selected = item.code === country.code;
                 return (
-                  <Pressable
+                  <PressableScale
                     style={[styles.countryRow, dir.row]}
                     onPress={() => onPickCountry(item)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
+                    accessibilityLabel={item.name}
                   >
-                    <Text style={styles.countryFlag}>{flagEmoji(item.code)}</Text>
-                    <Text style={[styles.countryName, dir.textAlign]} numberOfLines={1}>
+                    <Text variant="title1">{flagEmoji(item.code)}</Text>
+                    <Text variant="body" style={styles.countryName} numberOfLines={1}>
                       {item.name}
                     </Text>
-                    <Text style={styles.countryDial}>+{dialCodeFor(item.code)}</Text>
-                    {selected ? <Check size={18} color={c.brand.tint} /> : null}
-                  </Pressable>
+                    <Text variant="footnote" tone="muted">
+                      +{dialCodeFor(item.code)}
+                    </Text>
+                    {selected ? <Icon name="check" size={20} color={c.brand.tint} /> : null}
+                  </PressableScale>
                 );
               }}
             />
@@ -208,14 +236,14 @@ export default function LoginScreen() {
 }
 
 function SocialRow({
-  Icon,
+  icon,
   label,
   onPress,
   styles,
   dir,
   c,
 }: {
-  Icon: typeof Apple;
+  icon: IconName;
   label: string;
   onPress: () => void;
   styles: ReturnType<typeof makeStyles>;
@@ -223,44 +251,51 @@ function SocialRow({
   c: Palette;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       style={[styles.social, dir.row]}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Icon size={20} color={c.text.primary} />
-      <Text style={styles.socialText}>{label}</Text>
-    </Pressable>
+      <Icon name={icon} size={20} color={c.text.primary} />
+      <Text variant="headline">{label}</Text>
+    </PressableScale>
   );
 }
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     flex: { flex: 1 },
-    back: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
-    title: { ...typography.scale.h1, color: c.text.primary },
+    back: { marginBottom: spacing.lg, alignSelf: 'flex-start', marginLeft: -spacing.sm },
     subtitle: {
-      ...typography.scale.body,
-      color: c.text.secondary,
       marginTop: spacing.sm,
       marginBottom: spacing.xl,
     },
+    fieldWrap: { gap: spacing.xs },
+    fieldLabel: { fontWeight: '600' },
+    fieldRow: {
+      alignItems: 'center',
+      minHeight: 56,
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.background.surface,
+      paddingHorizontal: spacing.md,
+    },
+    fieldRowError: { borderColor: c.status.danger },
     prefix: {
       alignItems: 'center',
       gap: spacing.xs,
       borderRightWidth: 1.5,
       borderRightColor: c.border,
       paddingRight: spacing.md,
-      marginRight: spacing.xs,
+      marginRight: spacing.sm,
       minHeight: 44,
     },
-    prefixFlag: { fontSize: 20 },
-    prefixText: { ...typography.scale.bodyMedium, color: c.text.primary },
+    input: { flex: 1, ...typography.scale.body, color: c.text.primary, padding: 0 },
     cta: { marginTop: spacing.lg },
     divider: { alignItems: 'center', gap: spacing.md, marginVertical: spacing.xl },
     line: { flex: 1, height: 1, backgroundColor: c.border },
-    or: { ...typography.scale.smallMedium, color: c.text.muted },
     social: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -272,9 +307,7 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.background.surface,
       marginBottom: spacing.md,
     },
-    socialText: { ...typography.scale.bodyMedium, color: c.text.primary },
     guest: { alignItems: 'center', paddingVertical: spacing.lg },
-    guestText: { ...typography.scale.bodyMedium, color: c.brand.tint },
     modalRoot: { flex: 1, justifyContent: 'flex-end' },
     backdrop: {
       position: 'absolute',
@@ -314,7 +347,5 @@ const makeStyles = (c: Palette) =>
     list: { maxHeight: 400 },
     rowSeparator: { height: 1, backgroundColor: c.border, opacity: 0.5 },
     countryRow: { alignItems: 'center', gap: spacing.md, minHeight: 52 },
-    countryFlag: { fontSize: 24 },
-    countryName: { flex: 1, ...typography.scale.body, color: c.text.primary },
-    countryDial: { ...typography.scale.smallMedium, color: c.text.secondary },
+    countryName: { flex: 1 },
   });

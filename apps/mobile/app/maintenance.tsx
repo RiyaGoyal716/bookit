@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Button, Logo, Screen } from '../src/components';
+import { Button, Icon, Screen, Text } from '../src/components/ui';
+import { Logo } from '../src/brand';
 import { showToast } from '../src/stores/toastStore';
-import { useColors, radius, spacing, typography, type Palette } from '../src/theme';
+import { useColors, radius, spacing, type Palette } from '../src/theme';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -17,16 +17,20 @@ export default function MaintenanceScreen() {
       <View style={styles.center}>
         <Logo size={56} />
         <View style={styles.iconWrap}>
-          <Ionicons name="construct" size={40} color={c.brand.tint} />
+          <Icon name="hammer" size={24} color={c.brand.tint} />
         </View>
-        <Text style={styles.title}>We’ll be right back</Text>
-        <Text style={styles.body}>
-          Bookit is down for scheduled maintenance. We’re making things better and expect to be back
-          within an hour. Thanks for your patience!
+        <Text variant="title1" style={styles.title}>
+          We&apos;ll be right back
+        </Text>
+        <Text variant="body" tone="muted" style={styles.body}>
+          Bookit is down for scheduled maintenance. We&apos;re making things better and expect to be
+          back within an hour. Thanks for your patience!
         </Text>
         <View style={styles.statusPill}>
           <View style={styles.dot} />
-          <Text style={styles.statusText}>Estimated back by 14:00 BST</Text>
+          <Text variant="footnote" tone="warning">
+            Estimated back by 14:00 BST
+          </Text>
         </View>
       </View>
       <View style={styles.footer}>
@@ -55,10 +59,8 @@ const makeStyles = (c: Palette) =>
       justifyContent: 'center',
       marginTop: spacing.lg,
     },
-    title: { ...typography.scale.h1, color: c.text.primary, marginTop: spacing.sm },
+    title: { marginTop: spacing.sm },
     body: {
-      ...typography.scale.body,
-      color: c.text.secondary,
       textAlign: 'center',
       paddingHorizontal: spacing.lg,
     },
@@ -73,6 +75,5 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.sm,
     },
     dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.status.warning },
-    statusText: { ...typography.scale.smallMedium, color: c.status.warning },
     footer: { paddingBottom: spacing.md },
   });
