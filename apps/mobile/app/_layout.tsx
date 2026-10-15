@@ -20,6 +20,7 @@ import { initMonitoring } from '../src/lib/monitoring';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { OfflineBanner } from '../src/components/OfflineBanner';
 import { ToastHost } from '../src/components/Toast';
+import { ToastQueueHost, BiometricLock } from '../src/components/ui';
 import { useColors, useColorSchemeName } from '../src/theme';
 import { DirectionProvider } from '../src/i18n';
 
@@ -74,6 +75,7 @@ function ThemedStack() {
         <Stack.Screen name="success" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack>
       <ToastHost />
+      <ToastQueueHost />
     </ErrorBoundary>
   );
 }
@@ -104,7 +106,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
             <DirectionProvider>
-              <ThemedStack />
+              <BiometricLock>
+                <ThemedStack />
+              </BiometricLock>
             </DirectionProvider>
           </BottomSheetModalProvider>
         </QueryClientProvider>

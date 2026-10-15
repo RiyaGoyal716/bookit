@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { providers as allProviders, categories } from '../../src/mocks';
+import { providers as allProviders, categories, getProviderById } from '../../src/mocks';
 import type { Provider } from '../../src/mocks/types';
 import { useMoney } from '../../src/i18n';
 import { useColors, useTokens, spacing, radius } from '../../src/theme';
@@ -22,6 +22,8 @@ import {
   StatusPill,
   PressableScale,
   SectionHeader,
+  LiveActivityPill,
+  Coachmark,
 } from '../../src/components/ui';
 import { CategoryIcon } from '../../src/assets/icons/categories';
 import { BottomSheet } from '../../src/components/BottomSheet';
@@ -88,6 +90,8 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
 
   const active = useMemo(() => bookings.find((b) => ACTIVE.includes(b.status)), [bookings]);
+  const activeProvider = active ? getProviderById(active.providerId) : undefined;
+  const onTheWay = active?.status === 'On the way';
   const bookAgain = useMemo(() => allProviders.filter((p) => p.mostBooked).slice(0, 6), []);
   const topRated = useMemo(
     () => [...allProviders].sort((a, b) => b.rating - a.rating).slice(0, 6),
@@ -282,6 +286,28 @@ export default function Home() {
         </View>
       </ScrollView>
 
+      {onTheWay && active && (
+        <View
+          style={[styles.liveActivity, { bottom: insets.bottom + 86 }]}
+          pointerEvents="box-none"
+        >
+          <LiveActivityPill
+            providerName={active.providerName}
+            avatarUri={activeProvider?.photo}
+            eta="8 min"
+            progress={0.6}
+            onPress={() => router.push(`/booking-detail/${active.id}`)}
+          />
+        </View>
+      )}
+
+      <Coachmark
+        coachKey="home"
+        title="Find help, fast"
+        message="Search in plain English — like “deep clean tomorrow under £80”. Tap a category to browse."
+        top={insets.top + 120}
+      />
+
       <BottomSheet visible={pickArea} onClose={() => setPickArea(false)}>
         <View style={{ padding: spacing.lg, gap: spacing.xs }}>
           <Text variant="title2" style={{ marginBottom: spacing.sm }}>
@@ -394,4 +420,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   areaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48 },
+  liveActivity: { position: 'absolute', left: spacing.lg, right: spacing.lg },
 });

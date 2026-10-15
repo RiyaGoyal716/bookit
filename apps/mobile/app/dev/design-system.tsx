@@ -27,7 +27,9 @@ import {
   Divider,
   SectionHeader,
   EmptyState,
+  LiveActivityPill,
 } from '../../src/components/ui';
+import { toast } from '../../src/lib/toast';
 import { CategoryIcon } from '../../src/assets/icons/categories';
 
 const CATS = [
@@ -224,6 +226,30 @@ export default function DesignSystem() {
             actionLabel="Appeal"
             onAction={() => {}}
           />
+        </Row>
+
+        <Row title="Live & feedback">
+          <LiveActivityPill
+            providerName="Sam Rivera"
+            eta="8 min"
+            progress={0.6}
+            status="On the way"
+            onPress={() => {}}
+          />
+          <View style={styles.inline}>
+            <Button
+              label="Show toast"
+              variant="secondary"
+              fullWidth={false}
+              onPress={() => toast.success('Saved')}
+            />
+            <Button
+              label="Undo toast"
+              variant="secondary"
+              fullWidth={false}
+              onPress={() => toast.undo('Deleted item', () => toast.show('Restored'))}
+            />
+          </View>
         </Row>
 
         <Row title="Empty state">

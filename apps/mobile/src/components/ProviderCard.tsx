@@ -10,6 +10,7 @@ import { Avatar } from './Avatar';
 import type { Provider } from '../mocks/types';
 import { getAvailability } from '../mocks/availability';
 import { useFavouritesStore } from '../stores/favouritesStore';
+import { toast } from '../lib/toast';
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
   cleaning: 'Cleaning',
@@ -45,7 +46,11 @@ export function ProviderCard({
 
   const onHeart = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    const wasFavourite = isFavourite;
     toggle(provider.id);
+    if (wasFavourite) {
+      toast.undo(`Removed ${provider.name}`, () => toggle(provider.id));
+    }
   };
 
   return (
