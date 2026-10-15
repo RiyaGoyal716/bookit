@@ -12,6 +12,7 @@ import { useColors, useTokens, spacing, radius } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
 import { useBookingsStore, type BookingStatus } from '../../src/stores/bookingsStore';
+import { useOnboardingStore } from '../../src/stores/onboardingStore';
 import {
   Text,
   Icon,
@@ -24,7 +25,10 @@ import {
   SectionHeader,
   LiveActivityPill,
   Coachmark,
+  ContextMenu,
+  LogoRefresh,
 } from '../../src/components/ui';
+import { useProviderCardActions } from '../../src/lib/providerActions';
 import { CategoryIcon } from '../../src/assets/icons/categories';
 import { BottomSheet } from '../../src/components/BottomSheet';
 
@@ -42,11 +46,11 @@ const STATUS_TONE: Record<BookingStatus, 'info' | 'success' | 'warning' | 'neutr
 function RailCard({ provider, onPress }: { provider: Provider; onPress: () => void }) {
   const t = useTokens();
   const money = useMoney();
+  const actions = useProviderCardActions(provider);
   return (
-    <PressableScale
+    <ContextMenu
       onPress={onPress}
-      scaleTo={0.98}
-      accessibilityRole="button"
+      actions={actions}
       accessibilityLabel={provider.name}
       style={styles.railCard}
     >
@@ -72,7 +76,7 @@ function RailCard({ provider, onPress }: { provider: Provider; onPress: () => vo
           {money(provider.priceFrom)}+
         </Text>
       </View>
-    </PressableScale>
+    </ContextMenu>
   );
 }
 
@@ -98,6 +102,15 @@ export default function Home() {
     [],
   );
 
+  // Personalised category order: the needs picked in onboarding float to the top.
+  const needs = useOnboardingStore((s) => s.needs);
+  const orderedCategories = useMemo(() => {
+    if (needs.length === 0) return categories;
+    const picked = categories.filter((cat) => needs.includes(cat.slug));
+    const rest = categories.filter((cat) => !needs.includes(cat.slug));
+    return [...picked, ...rest];
+  }, [needs]);
+
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 700);
@@ -105,6 +118,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <LogoRefresh refreshing={refreshing} topInset={insets.top} />
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + spacing.sm, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
@@ -184,7 +198,7 @@ export default function Home() {
         <View style={styles.block}>
           <SectionHeader title="Categories" onSeeAll={() => router.push('/(tabs)/explore')} />
           <View style={styles.grid}>
-            {categories.map((cat) => (
+            {orderedCategories.map((cat) => (
               <PressableScale
                 key={cat.slug}
                 onPress={() => router.push(`/category/${cat.slug}`)}

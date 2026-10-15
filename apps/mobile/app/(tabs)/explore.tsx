@@ -20,23 +20,25 @@ import {
   Avatar,
   Rating,
   Button,
-  PressableScale,
   EmptyState,
   AnimatedListItem,
+  ContextMenu,
 } from '../../src/components/ui';
+import { useProviderCardActions } from '../../src/lib/providerActions';
 
 function ProviderRow({ provider, onPress }: { provider: Provider; onPress: () => void }) {
   const t = useTokens();
   const money = useMoney();
   const compare = useCompareStore();
   const selected = compare.has(provider.id);
+  const actions = useProviderCardActions(provider);
 
   return (
     <Card variant="outlined" padding={spacing.md} style={styles.card}>
-      <PressableScale
+      <ContextMenu
         onPress={onPress}
+        actions={actions}
         scaleTo={0.99}
-        accessibilityRole="button"
         accessibilityLabel={provider.name}
         style={styles.cardRow}
       >
@@ -58,7 +60,7 @@ function ProviderRow({ provider, onPress }: { provider: Provider; onPress: () =>
             </Text>
           </View>
         </View>
-      </PressableScale>
+      </ContextMenu>
       <IconButton
         name={selected ? 'check-circle' : 'plus'}
         accessibilityLabel={selected ? 'Remove from compare' : 'Add to compare'}

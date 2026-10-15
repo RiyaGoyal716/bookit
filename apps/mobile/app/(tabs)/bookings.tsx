@@ -1,14 +1,26 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Share } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { Badge, Card, EmptyState } from '../../src/components';
+import {
+  Card,
+  ContextMenu,
+  EmptyState,
+  Icon,
+  LogoRefresh,
+  PressableScale,
+  StatusPill,
+  Text,
+  type StatusTone,
+  type ContextMenuAction,
+} from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
-import { useBookingsStore, type Booking } from '../../src/stores/bookingsStore';
-import { useColors, radius, spacing, typography, type Palette } from '../../src/theme';
+import { useBookingsStore, type Booking, type BookingStatus } from '../../src/stores/bookingsStore';
+import { useCartStore } from '../../src/stores/cartStore';
+import { showToast } from '../../src/stores/toastStore';
+import { useColors, radius, spacing, type Palette } from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 type Segment = 'upcoming' | 'completed' | 'cancelled';
@@ -19,6 +31,14 @@ const SEGMENTS: { key: Segment; label: string }[] = [
   { key: 'cancelled', label: 'Cancelled' },
 ];
 
+const STATUS_TONE: Record<BookingStatus, StatusTone> = {
+  Requested: 'info',
+  Accepted: 'accent',
+  'On the way': 'warning',
+  Completed: 'success',
+  Cancelled: 'danger',
+};
+
 export default function BookingsScreen() {
   const router = useRouter();
   const c = useColors();
@@ -26,12 +46,52 @@ export default function BookingsScreen() {
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
   const bookings = useBookingsStore((s) => s.bookings);
+  const addItem = useCartStore((s) => s.addItem);
+  const clearCart = useCartStore((s) => s.clear);
   const [segment, setSegment] = useState<Segment>('upcoming');
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 900);
+  };
+
+  // Smart rebook: same pro + service (+ address via the default), straight to checkout.
+  const rebook = (b: Booking) => {
+    clearCart();
+    addItem({
+      key: b.serviceName,
+      providerId: b.providerId,
+      providerName: b.providerName,
+      name: b.serviceName,
+      price: b.price,
+      durationMin: 60,
+    });
+    showToast(`Rebooking ${b.serviceName}`);
+    router.push(route('/checkout'));
+  };
+
+  const actionsFor = (b: Booking): ContextMenuAction[] => {
+    const list: ContextMenuAction[] = [
+      {
+        icon: 'calendar',
+        label: 'View details',
+        onPress: () => router.push(route(`/booking-detail/${b.id}`)),
+      },
+      {
+        icon: 'share',
+        label: 'Share',
+        onPress: () => {
+          Share.share({
+            message: `My Bookit booking with ${b.providerName}: ${b.serviceName}`,
+          }).catch(() => {});
+        },
+      },
+    ];
+    if (b.status === 'Completed') {
+      list.unshift({ icon: 'repeat', label: 'Rebook (same pro)', onPress: () => rebook(b) });
+    }
+    return list;
   };
 
   const filtered = useMemo(
@@ -46,26 +106,34 @@ export default function BookingsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+      <LogoRefresh refreshing={refreshing} topInset={insets.top} />
       <View style={styles.headerBlock}>
-        <Text style={styles.heading}>Your bookings</Text>
-        <Text style={styles.subtitle}>Track every job in one place</Text>
+        <Text variant="title1">Your bookings</Text>
+        <Text variant="body" tone="muted" style={styles.subtitle}>
+          Track every job in one place
+        </Text>
 
         <View style={styles.segment}>
           {SEGMENTS.map((s) => {
             const active = segment === s.key;
             return (
-              <Pressable
+              <PressableScale
                 key={s.key}
                 onPress={() => setSegment(s.key)}
+                haptic="selection"
                 style={[styles.segmentBtn, active && styles.segmentBtnActive]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={`${s.label} bookings`}
               >
-                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                <Text
+                  variant="footnote"
+                  tone={active ? 'default' : 'subtle'}
+                  style={styles.semibold}
+                >
                   {s.label}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -100,47 +168,69 @@ export default function BookingsScreen() {
           />
         }
         renderItem={({ item }: { item: Booking }) => (
-          <Pressable
+          <ContextMenu
             onPress={() => router.push(route(`/booking-detail/${item.id}`))}
-            accessibilityRole="button"
+            actions={actionsFor(item)}
             accessibilityLabel={`${item.providerName}, ${item.serviceName}, ${item.status}`}
-            style={({ pressed }) => pressed && styles.cardPressed}
           >
             <Card style={styles.card}>
               <View style={styles.rowTop}>
-                <Text style={styles.provider} numberOfLines={1}>
+                <Text variant="headline" style={styles.provider} numberOfLines={1}>
                   {item.providerName}
                 </Text>
-                <Badge status={item.status} />
+                <StatusPill label={item.status} tone={STATUS_TONE[item.status]} />
               </View>
-              <Text style={styles.service}>{item.serviceName}</Text>
+              <Text variant="caption" tone="muted">
+                {item.serviceName}
+              </Text>
               <View style={styles.metaRow}>
-                <Ionicons name="calendar-outline" size={14} color={c.text.muted} />
-                <Text style={styles.meta}>
+                <Icon name="calendar" size={16} color={c.text.muted} />
+                <Text variant="caption" tone="muted">
                   {item.date} · {item.time}
                 </Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.price}>{money(item.total)}</Text>
+                <Text variant="caption" tone="subtle" style={styles.dot}>
+                  ·
+                </Text>
+                <Text variant="footnote" tone="accent" tabular style={styles.semibold}>
+                  {money(item.total)}
+                </Text>
                 <View style={styles.chevronWrap}>
-                  <Ionicons name="chevron-forward" size={16} color={c.text.muted} />
+                  <Icon name="chevron-right" size={16} color={c.text.muted} />
                 </View>
               </View>
               <View style={styles.cardFooter}>
-                <Text style={styles.bookingId}>{item.id}</Text>
+                <Text variant="caption" tone="subtle" style={styles.bookingId}>
+                  {item.id}
+                </Text>
                 {item.status === 'Accepted' || item.status === 'On the way' ? (
-                  <Pressable
+                  <PressableScale
                     style={styles.trackPill}
                     onPress={() => router.push(route(`/tracking/${item.id}`))}
                     accessibilityRole="button"
                     accessibilityLabel={`Track ${item.providerName} live`}
                   >
-                    <Ionicons name="navigate" size={13} color={c.text.inverse} />
-                    <Text style={styles.trackPillText}>Track live</Text>
-                  </Pressable>
+                    <Icon name="navigation" size={16} color={c.text.inverse} />
+                    <Text variant="caption" tone="onPrimary" style={styles.trackPillText}>
+                      Track live
+                    </Text>
+                  </PressableScale>
+                ) : null}
+                {item.status === 'Completed' ? (
+                  <PressableScale
+                    style={[styles.trackPill, { backgroundColor: c.brand.primarySoft }]}
+                    onPress={() => rebook(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rebook ${item.serviceName} with ${item.providerName}`}
+                  >
+                    <Icon name="repeat" size={16} color={c.brand.tint} />
+                    <Text variant="caption" tone="accent" style={styles.trackPillText}>
+                      Rebook
+                    </Text>
+                  </PressableScale>
                 ) : null}
               </View>
             </Card>
-          </Pressable>
+          </ContextMenu>
         )}
       />
     </View>
@@ -157,13 +247,8 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
-    heading: {
-      ...typography.scale.h1,
-      color: c.text.primary,
-    },
+    semibold: { fontWeight: '600' },
     subtitle: {
-      ...typography.scale.body,
-      color: c.text.secondary,
       marginTop: 2,
       marginBottom: spacing.lg,
     },
@@ -184,20 +269,12 @@ const makeStyles = (c: Palette) =>
     segmentBtnActive: {
       backgroundColor: c.background.surface,
     },
-    segmentText: {
-      ...typography.scale.smallMedium,
-      color: c.text.muted,
-    },
-    segmentTextActive: {
-      color: c.text.primary,
-    },
     content: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
       paddingBottom: spacing.xl,
     },
     separator: { height: spacing.md },
-    cardPressed: { opacity: 0.85 },
     card: {
       gap: spacing.xs,
     },
@@ -213,12 +290,6 @@ const makeStyles = (c: Palette) =>
     },
     provider: {
       flex: 1,
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    service: {
-      ...typography.scale.small,
-      color: c.text.secondary,
     },
     metaRow: {
       flexDirection: 'row',
@@ -226,17 +297,8 @@ const makeStyles = (c: Palette) =>
       gap: 4,
       marginTop: spacing.xs,
     },
-    meta: {
-      ...typography.scale.small,
-      color: c.text.secondary,
-    },
     dot: {
-      color: c.text.muted,
       marginHorizontal: 2,
-    },
-    price: {
-      ...typography.scale.smallMedium,
-      color: c.brand.tint,
     },
     cardFooter: {
       flexDirection: 'row',
@@ -245,8 +307,6 @@ const makeStyles = (c: Palette) =>
       marginTop: spacing.xs,
     },
     bookingId: {
-      ...typography.scale.caption,
-      color: c.text.muted,
       letterSpacing: 0.5,
     },
     trackPill: {
@@ -259,9 +319,6 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.primary,
     },
     trackPillText: {
-      ...typography.scale.caption,
-      color: c.text.inverse,
-      fontFamily: typography.font.bold,
       fontWeight: '700',
     },
   });

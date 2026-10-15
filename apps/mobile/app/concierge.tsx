@@ -1,16 +1,22 @@
 import { useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Send, Sparkles, Star } from 'lucide-react-native';
 
-import { Screen } from '../src/components';
+import { Screen, Text, Icon, IconButton, PressableScale, Chip } from '../src/components/ui';
 import { useT, useMoney, useDirectionalStyles } from '../src/i18n';
 import { providers as allProviders } from '../src/mocks';
 import type { Provider } from '../src/mocks/types';
 import { route } from '../src/lib/nav';
-import { useColors, radius, spacing, typography, shadow, type Palette } from '../src/theme';
+import { parseSmartQuery } from '../src/features/search/parser';
+import { useColors, radius, spacing, shadow, type Palette } from '../src/theme';
+
+const SUGGESTIONS: { label: string; query: string }[] = [
+  { label: 'Cheapest…', query: 'cheapest cleaning' },
+  { label: 'Soonest…', query: 'soonest available' },
+  { label: 'Top rated', query: 'top rated pros' },
+];
 
 interface Message {
   id: string;
@@ -22,11 +28,19 @@ interface Message {
 let counter = 0;
 const nextId = () => `m${counter++}`;
 
-/** Pick mock matches by keyword, falling back to top-rated. */
+/** Pick mock matches by keyword, applying the smart-parser sort when present. */
 function matchProviders(query: string): Provider[] {
+  const parsed = parseSmartQuery(query);
   const q = query.toLowerCase();
   const byCat = allProviders.filter((p) => q.includes(p.category));
-  const pool = byCat.length > 0 ? byCat : [...allProviders].sort((a, b) => b.rating - a.rating);
+  const pool = byCat.length > 0 ? [...byCat] : [...allProviders];
+  if (parsed.sort === 'cheapest') {
+    pool.sort((a, b) => a.priceFrom - b.priceFrom);
+  } else if (parsed.sort === 'soonest') {
+    pool.sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99));
+  } else {
+    pool.sort((a, b) => b.rating - a.rating);
+  }
   return pool.slice(0, 3);
 }
 
@@ -45,8 +59,8 @@ export default function ConciergeScreen() {
   ]);
   const [draft, setDraft] = useState('');
 
-  const send = () => {
-    const text = draft.trim();
+  const send = (preset?: string) => {
+    const text = (preset ?? draft).trim();
     if (!text) return;
     const userMsg: Message = { id: nextId(), role: 'user', text };
     setMessages((prev) => [...prev, userMsg]);
@@ -76,10 +90,12 @@ export default function ConciergeScreen() {
             { alignSelf: isUser ? 'flex-end' : 'flex-start' },
           ]}
         >
-          <Text style={[styles.bubbleText, isUser && styles.userText]}>{item.text}</Text>
+          <Text variant="body" tone={isUser ? 'onPrimary' : 'default'}>
+            {item.text}
+          </Text>
         </View>
         {item.providers?.map((p) => (
-          <Pressable
+          <PressableScale
             key={p.id}
             style={[styles.card, dir.row]}
             onPress={() => router.push(`/provider/${p.id}`)}
@@ -93,25 +109,31 @@ export default function ConciergeScreen() {
               cachePolicy="memory-disk"
             />
             <View style={styles.flex}>
-              <Text style={styles.cardName} numberOfLines={1}>
+              <Text variant="footnote" numberOfLines={1}>
                 {p.name}
               </Text>
               <View style={styles.cardMeta}>
-                <Star size={12} color={c.brand.star} fill={c.brand.star} />
-                <Text style={styles.cardRating}>{p.rating.toFixed(1)}</Text>
-                <Text style={styles.cardDot}>·</Text>
-                <Text style={styles.cardPrice}>{money(p.priceFrom)}</Text>
+                <Icon name="star" size={16} color={c.brand.star} />
+                <Text variant="caption">{p.rating.toFixed(1)}</Text>
+                <Text variant="caption" tone="muted">
+                  ·
+                </Text>
+                <Text variant="caption" tone="accent">
+                  {money(p.priceFrom)}
+                </Text>
               </View>
             </View>
-            <Pressable
+            <PressableScale
               style={styles.bookBtn}
               onPress={() => router.push(route(`/booking/${p.id}`))}
               accessibilityRole="button"
               accessibilityLabel={t('common.bookThis')}
             >
-              <Text style={styles.bookText}>{t('common.bookThis')}</Text>
-            </Pressable>
-          </Pressable>
+              <Text variant="caption" tone="onPrimary" style={styles.bookText}>
+                {t('common.bookThis')}
+              </Text>
+            </PressableScale>
+          </PressableScale>
         ))}
       </View>
     );
@@ -120,20 +142,21 @@ export default function ConciergeScreen() {
   return (
     <Screen padded={false} keyboardAvoiding>
       <View style={[styles.header, dir.row]}>
-        <Pressable
+        <IconButton
+          name="chevron-left"
           onPress={() => router.back()}
-          hitSlop={10}
-          accessibilityRole="button"
           accessibilityLabel={t('common.back')}
-        >
-          <ChevronLeft size={26} color={c.text.primary} />
-        </Pressable>
+          variant="subtle"
+          size={24}
+        />
         <View style={styles.headerTitleWrap}>
           <View style={[styles.headerTitleRow, dir.row]}>
-            <Sparkles size={16} color={c.brand.primary} />
-            <Text style={styles.headerTitle}>{t('concierge.title')}</Text>
+            <Icon name="sparkles" size={16} color={c.brand.primary} />
+            <Text variant="title2">{t('concierge.title')}</Text>
           </View>
-          <Text style={styles.headerSub}>{t('concierge.subtitle')}</Text>
+          <Text variant="caption" tone="muted">
+            {t('concierge.subtitle')}
+          </Text>
         </View>
         <View style={styles.headerSpacer} />
       </View>
@@ -148,6 +171,12 @@ export default function ConciergeScreen() {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       />
 
+      <View style={styles.suggestRow}>
+        {SUGGESTIONS.map((s) => (
+          <Chip key={s.label} label={s.label} onPress={() => send(s.query)} />
+        ))}
+      </View>
+
       <View style={[styles.inputBar, dir.row, { paddingBottom: insets.bottom + spacing.sm }]}>
         <TextInput
           value={draft}
@@ -155,17 +184,17 @@ export default function ConciergeScreen() {
           placeholder={t('concierge.placeholder')}
           placeholderTextColor={c.text.muted}
           style={[styles.input, dir.textAlign]}
-          onSubmitEditing={send}
+          onSubmitEditing={() => send()}
           returnKeyType="send"
         />
-        <Pressable
+        <PressableScale
           style={styles.sendBtn}
-          onPress={send}
+          onPress={() => send()}
           accessibilityRole="button"
           accessibilityLabel={t('common.continue')}
         >
-          <Send size={20} color={c.text.onBrand} />
-        </Pressable>
+          <Icon name="send" size={20} color={c.text.onBrand} />
+        </PressableScale>
       </View>
     </Screen>
   );
@@ -184,10 +213,15 @@ const makeStyles = (c: Palette) =>
     },
     headerTitleWrap: { flex: 1 },
     headerTitleRow: { alignItems: 'center', gap: spacing.xs },
-    headerTitle: { ...typography.scale.h2, color: c.text.primary },
-    headerSub: { ...typography.scale.caption, color: c.text.muted },
-    headerSpacer: { width: 26 },
+    headerSpacer: { width: 44 },
     list: { padding: spacing.lg },
+    suggestRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.sm,
+    },
     bubble: {
       maxWidth: '82%',
       paddingHorizontal: spacing.lg,
@@ -201,8 +235,6 @@ const makeStyles = (c: Palette) =>
       borderBottomLeftRadius: radius.sm,
     },
     user: { backgroundColor: c.brand.primary, borderBottomRightRadius: radius.sm },
-    bubbleText: { ...typography.scale.body, color: c.text.primary },
-    userText: { color: c.text.onBrand },
     card: {
       alignItems: 'center',
       gap: spacing.md,
@@ -214,11 +246,7 @@ const makeStyles = (c: Palette) =>
       ...shadow.soft,
     },
     cardPhoto: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: c.skeleton },
-    cardName: { ...typography.scale.smallMedium, color: c.text.primary },
     cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-    cardRating: { ...typography.scale.caption, color: c.text.primary },
-    cardDot: { color: c.text.muted },
-    cardPrice: { ...typography.scale.caption, color: c.brand.tint },
     bookBtn: {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
@@ -226,9 +254,6 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.brand.primary,
     },
     bookText: {
-      ...typography.scale.caption,
-      color: c.text.onBrand,
-      fontFamily: typography.font.bold,
       fontWeight: '700',
     },
     inputBar: {
@@ -246,7 +271,6 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: spacing.lg,
       borderRadius: radius.pill,
       backgroundColor: c.background.muted,
-      ...typography.scale.body,
       color: c.text.primary,
     },
     sendBtn: {
