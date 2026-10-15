@@ -1,41 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  Pressable,
   Share,
   useWindowDimensions,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import {
-  Accordion,
+  Text,
+  Icon,
+  IconButton,
   Button,
+  PressableScale,
+  Card,
+  Chip,
+  Rating,
+  StatusPill,
+  SegmentedControl,
   EmptyState,
-  ImageGalleryViewer,
-  RatingStars,
   Screen,
-} from '../../src/components';
+} from '../../src/components/ui';
+import type { IconName } from '../../src/components/ui';
 import { getProviderById, getProvidersByCategory } from '../../src/mocks';
 import type { Provider, ProviderBadge, Service } from '../../src/mocks/types';
 import { getSlotsForDay } from '../../src/mocks/availability';
 import { track } from '../../src/lib/analytics';
 import { route } from '../../src/lib/nav';
+import { haptics } from '../../src/lib/haptics';
 import { useCompareStore, COMPARE_LIMIT } from '../../src/stores/compareStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useReviewsStore, type Review } from '../../src/stores/reviewsStore';
 import { useCartStore } from '../../src/stores/cartStore';
 import { showToast } from '../../src/stores/toastStore';
 import { useT, useMoney } from '../../src/i18n';
-import { useColors, radius, shadow, spacing, typography, type Palette } from '../../src/theme';
+import { useTokens, useColorSchemeName, radius, spacing, shadow } from '../../src/theme';
+
+const HERO_H = 300;
 
 const CATEGORY_LABEL: Record<Provider['category'], string> = {
   cleaning: 'Cleaning',
@@ -43,12 +57,12 @@ const CATEGORY_LABEL: Record<Provider['category'], string> = {
   tutoring: 'Tutoring',
 };
 
-const BADGE_META: Record<ProviderBadge, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  'verified-id': { label: 'Verified ID', icon: 'person-circle' },
-  'background-checked': { label: 'Background checked', icon: 'shield-checkmark' },
-  'top-rated': { label: 'Top rated', icon: 'ribbon' },
-  insured: { label: 'Insured', icon: 'umbrella' },
-  'fast-responder': { label: 'Fast responder', icon: 'flash' },
+const BADGE_META: Record<ProviderBadge, { label: string; icon: IconName }> = {
+  'verified-id': { label: 'Verified ID', icon: 'badge-check' },
+  'background-checked': { label: 'Background checked', icon: 'shield-check' },
+  'top-rated': { label: 'Top rated', icon: 'award' },
+  insured: { label: 'Insured', icon: 'shield' },
+  'fast-responder': { label: 'Fast responder', icon: 'zap' },
 };
 
 const FAQS = [
@@ -70,14 +84,15 @@ const FAQS = [
 ];
 
 type ReviewFilter = 'all' | 'five' | 'photos';
+const TABS = ['Services', 'Reviews', 'About', 'Work'];
 
 export default function ProviderProfileScreen() {
   const router = useRouter();
-  const c = useColors();
-  const t = useT();
+  const t = useTokens();
+  const scheme = useColorSchemeName();
+  const tr = useT();
   const money = useMoney();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => makeStyles(c), [c]);
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const provider = getProviderById(id);
@@ -95,10 +110,19 @@ export default function ProviderProfileScreen() {
   const cartTotal = useCartStore((s) => s.breakdown().total);
 
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerStart, setViewerStart] = useState(0);
+  const [tab, setTab] = useState(0);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [selectedDay, setSelectedDay] = useState(0);
+  const [faqOpen, setFaqOpen] = useState<number | null>(null);
+
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [HERO_H - 120, HERO_H - 40], [0, 1], Extrapolation.CLAMP),
+  }));
 
   const providerReviews = useMemo(
     () => (id ? reviews.filter((r) => r.providerId === id) : []),
@@ -128,17 +152,13 @@ export default function ProviderProfileScreen() {
   if (!provider) {
     return (
       <Screen>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.backPlain}
-          hitSlop={8}
-          accessibilityRole="button"
+        <IconButton
+          name="chevron-left"
           accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={26} color={c.text.primary} />
-        </Pressable>
+          onPress={() => router.back()}
+        />
         <EmptyState
-          icon="alert-circle-outline"
+          art="error"
           title="Provider not found"
           message="This provider may no longer be available."
         />
@@ -155,17 +175,17 @@ export default function ProviderProfileScreen() {
   const onShare = () => {
     track('share_provider', { providerId: provider.id });
     Share.share({
-      message: `Check out ${provider.name} on Bookit — ${provider.rating.toFixed(1)}★, ${t('money.from')} ${money(provider.priceFrom)}.`,
+      message: `Check out ${provider.name} on Bookit — ${provider.rating.toFixed(1)} stars, ${tr('money.from')} ${money(provider.priceFrom)}.`,
     }).catch(() => {});
   };
 
   const onToggleFavourite = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptics.light();
     toggleFavourite(provider.id);
   };
 
   const onToggleCompare = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptics.light();
     const ok = toggleCompare(provider.id);
     if (!ok) {
       showToast(`You can compare up to ${COMPARE_LIMIT} providers`);
@@ -184,7 +204,7 @@ export default function ProviderProfileScreen() {
   };
 
   const addService = (service: Service) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptics.medium();
     addItem({
       key: service.id ?? service.name,
       providerId: provider.id,
@@ -199,18 +219,12 @@ export default function ProviderProfileScreen() {
     setGalleryIndex(Math.round(e.nativeEvent.contentOffset.x / width));
   };
 
-  const openViewer = (index: number) => {
-    setViewerStart(index);
-    setViewerOpen(true);
-  };
-
   const bookNow = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    haptics.medium();
     if (cartCount > 0 && sameProviderCart) {
       router.push(route('/cart'));
       return;
     }
-    // Seed the cart with the most popular (or cheapest) service, then open it.
     const seed =
       provider.services.find((s) => s.popular) ??
       [...provider.services].sort((a, b) => a.price - b.price)[0];
@@ -227,14 +241,32 @@ export default function ProviderProfileScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[]}
+    <View style={[styles.root, { backgroundColor: t.bg }]}>
+      {/* Collapsing blurred header */}
+      <Animated.View
+        style={[
+          styles.stickyHeader,
+          { paddingTop: insets.top, height: insets.top + 52 },
+          headerStyle,
+        ]}
+        pointerEvents="none"
       >
-        {/* Gallery */}
-        <View style={styles.galleryWrap}>
+        <BlurView intensity={40} tint={scheme} style={StyleSheet.absoluteFill} />
+        <View style={[styles.stickyInner, { borderBottomColor: t.border }]}>
+          <Text variant="headline" numberOfLines={1}>
+            {provider.name}
+          </Text>
+        </View>
+      </Animated.View>
+
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: 160 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Gallery hero */}
+        <View style={[styles.galleryWrap, { backgroundColor: t.bgSubtle }]}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -242,410 +274,181 @@ export default function ProviderProfileScreen() {
             onMomentumScrollEnd={onGalleryScroll}
           >
             {gallery.map((uri, i) => (
-              <Pressable
+              <Image
                 key={`${uri}-${i}`}
-                onPress={() => openViewer(i)}
-                accessibilityLabel={`Photo ${i + 1}`}
-              >
-                <Image
-                  source={{ uri }}
-                  style={{ width, height: 300 }}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              </Pressable>
+                source={{ uri }}
+                style={{ width, height: HERO_H }}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
             ))}
           </ScrollView>
 
-          <Pressable
-            style={[styles.back, { top: insets.top + spacing.sm }]}
-            onPress={() => router.back()}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="chevron-back" size={24} color={c.text.primary} />
-          </Pressable>
-          <View style={[styles.topActions, { top: insets.top + spacing.sm }]}>
-            <Pressable
-              style={styles.roundBtn}
-              onPress={onToggleCompare}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={inCompare ? 'Remove from compare' : 'Add to compare'}
-              accessibilityState={{ selected: inCompare }}
-            >
-              <Ionicons
-                name="git-compare"
-                size={22}
-                color={inCompare ? c.brand.tint : c.text.primary}
+          <View style={[styles.heroTop, { top: insets.top + spacing.sm }]}>
+            <IconButton
+              name="chevron-left"
+              accessibilityLabel="Go back"
+              variant="surface"
+              onPress={() => router.back()}
+            />
+            <View style={styles.heroActions}>
+              <IconButton
+                name="compare"
+                accessibilityLabel={inCompare ? 'Remove from compare' : 'Add to compare'}
+                variant="surface"
+                color={inCompare ? t.accent : t.text}
+                onPress={onToggleCompare}
               />
-            </Pressable>
-            <Pressable
-              style={styles.roundBtn}
-              onPress={onShare}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`Share ${provider.name}`}
-            >
-              <Ionicons name="share-outline" size={22} color={c.text.primary} />
-            </Pressable>
-            <Pressable
-              style={styles.roundBtn}
-              onPress={onToggleFavourite}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
-              accessibilityState={{ selected: isFavourite }}
-            >
-              <Ionicons
-                name={isFavourite ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavourite ? c.status.danger : c.text.primary}
+              <IconButton
+                name="share"
+                accessibilityLabel={`Share ${provider.name}`}
+                variant="surface"
+                onPress={onShare}
               />
-            </Pressable>
+              <IconButton
+                name="heart"
+                accessibilityLabel={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+                variant="surface"
+                color={isFavourite ? t.danger : t.text}
+                onPress={onToggleFavourite}
+              />
+            </View>
           </View>
+
           {gallery.length > 1 ? (
-            <View style={styles.galleryDots}>
+            <View style={styles.dots}>
               {gallery.map((g, i) => (
                 <View
                   key={g}
-                  style={[styles.galleryDot, i === galleryIndex && styles.galleryDotActive]}
+                  style={[
+                    styles.dot,
+                    { backgroundColor: t.onPrimary, opacity: i === galleryIndex ? 1 : 0.5 },
+                    i === galleryIndex && styles.dotActive,
+                  ]}
                 />
               ))}
             </View>
           ) : null}
         </View>
 
+        {/* Identity + stats + badges */}
         <View style={styles.body}>
-          <Text style={styles.name}>{provider.name}</Text>
-          <Text style={styles.category}>
+          <Text variant="title1">{provider.name}</Text>
+          <Text variant="footnote" tone="muted">
             {CATEGORY_LABEL[provider.category]}
             {provider.area ? ` · ${provider.area}` : ''}
           </Text>
-          {provider.tagline ? <Text style={styles.tagline}>{provider.tagline}</Text> : null}
 
-          {/* Stats row */}
-          <View style={styles.statsRow}>
+          <Card variant="outlined" padding={spacing.md} style={styles.statsCard}>
             <Stat
               value={provider.rating.toFixed(1)}
               label={`${provider.reviewCount} reviews`}
               icon="star"
-              styles={styles}
-              c={c}
+              tint={t.warning}
             />
             {stats ? (
               <>
-                <View style={styles.statDivider} />
-                <Stat
-                  value={`${stats.jobsDone}`}
-                  label="jobs done"
-                  icon="checkmark-done"
-                  styles={styles}
-                  c={c}
-                />
-                <View style={styles.statDivider} />
+                <View style={[styles.vLine, { backgroundColor: t.border }]} />
+                <Stat value={`${stats.jobsDone}`} label="jobs" icon="check-all" tint={t.accent} />
+                <View style={[styles.vLine, { backgroundColor: t.border }]} />
                 <Stat
                   value={`${stats.yearsExperience}y`}
                   label="experience"
                   icon="briefcase"
-                  styles={styles}
-                  c={c}
+                  tint={t.accent}
                 />
-                <View style={styles.statDivider} />
+                <View style={[styles.vLine, { backgroundColor: t.border }]} />
                 <Stat
                   value={stats.responseTime.replace('within ', '')}
                   label="responds"
-                  icon="time"
-                  styles={styles}
-                  c={c}
+                  icon="clock"
+                  tint={t.accent}
                 />
               </>
             ) : null}
-          </View>
+          </Card>
 
-          {/* Badges */}
           {badges.length > 0 ? (
             <View style={styles.badges}>
               {badges.map((b) => (
-                <View key={b} style={styles.badge}>
-                  <Ionicons name={BADGE_META[b].icon} size={14} color={c.brand.tint} />
-                  <Text style={styles.badgeText}>{BADGE_META[b].label}</Text>
+                <View key={b} style={[styles.badgeChip, { backgroundColor: t.accentSoft }]}>
+                  <Icon name={BADGE_META[b].icon} size={16} color={t.accent} />
+                  <Text variant="caption" tone="accent">
+                    {BADGE_META[b].label}
+                  </Text>
                 </View>
               ))}
             </View>
           ) : null}
 
-          {/* About */}
-          <SectionTitle title="About" styles={styles} />
-          <Text style={styles.bio}>{provider.bio}</Text>
+          <View style={styles.tabs}>
+            <SegmentedControl options={TABS} value={tab} onChange={setTab} />
+          </View>
 
-          {/* Services with add-to-cart */}
-          <SectionTitle title="Services" styles={styles} />
-          {!sameProviderCart && cartCount > 0 ? (
-            <View style={styles.cartNotice}>
-              <Ionicons name="information-circle-outline" size={16} color={c.status.info} />
-              <Text style={styles.cartNoticeText}>
-                Adding a service here will start a new cart.
-              </Text>
-            </View>
+          {tab === 0 ? (
+            <ServicesTab
+              provider={provider}
+              sameProviderCart={sameProviderCart}
+              cartCount={cartCount}
+              qtyFor={qtyFor}
+              addService={addService}
+              decrement={decrement}
+              money={money}
+              selectedDay={selectedDay}
+              setSelectedDay={setSelectedDay}
+              slots={slots}
+            />
           ) : null}
-          <View style={styles.services}>
-            {provider.services.map((s) => {
-              const qty = qtyFor(s);
-              return (
-                <View key={s.name} style={styles.serviceRow}>
-                  <View style={styles.serviceInfo}>
-                    <View style={styles.serviceNameRow}>
-                      <Text style={styles.serviceName}>{s.name}</Text>
-                      {s.popular ? (
-                        <View style={styles.popularTag}>
-                          <Text style={styles.popularText}>Popular</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    {s.description ? <Text style={styles.serviceDesc}>{s.description}</Text> : null}
-                    <Text style={styles.serviceMeta}>
-                      {s.durationMin} min · {money(s.price)}
-                    </Text>
-                  </View>
-                  {qty > 0 ? (
-                    <View style={styles.stepper}>
-                      <Pressable
-                        style={styles.stepBtn}
-                        onPress={() => decrement(s.id ?? s.name)}
-                        hitSlop={6}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Remove one ${s.name}`}
-                      >
-                        <Ionicons name="remove" size={18} color={c.brand.tint} />
-                      </Pressable>
-                      <Text style={styles.stepQty}>{qty}</Text>
-                      <Pressable
-                        style={styles.stepBtn}
-                        onPress={() => addService(s)}
-                        hitSlop={6}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Add one ${s.name}`}
-                      >
-                        <Ionicons name="add" size={18} color={c.brand.tint} />
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Pressable
-                      style={styles.addBtn}
-                      onPress={() => addService(s)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Add ${s.name} to cart`}
-                    >
-                      <Ionicons name="add" size={16} color={c.brand.tint} />
-                      <Text style={styles.addBtnText}>Add</Text>
-                    </Pressable>
-                  )}
-                </View>
-              );
-            })}
-          </View>
 
-          {/* Photos of work */}
-          <SectionTitle title="Photos of work" styles={styles} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.photosRow}
-          >
-            {gallery.map((uri, i) => (
-              <Pressable
-                key={`photo-${i}`}
-                onPress={() => openViewer(i)}
-                accessibilityRole="button"
-                accessibilityLabel={`Open photo ${i + 1}`}
-              >
-                <Image
-                  source={{ uri }}
-                  style={styles.workPhoto}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              </Pressable>
-            ))}
-          </ScrollView>
+          {tab === 1 ? (
+            <ReviewsTab
+              providerReviews={providerReviews}
+              filteredReviews={filteredReviews}
+              reviewFilter={reviewFilter}
+              setReviewFilter={setReviewFilter}
+            />
+          ) : null}
 
-          {/* Reviews */}
-          <View style={styles.reviewsHeader}>
-            <SectionTitle title="Reviews" styles={styles} noMargin />
-            <Text style={styles.reviewTotal}>{providerReviews.length} total</Text>
-          </View>
-          <View style={styles.reviewFilters}>
-            {(
-              [
-                { key: 'all', label: 'All' },
-                { key: 'five', label: '5★' },
-                { key: 'photos', label: 'With photos' },
-              ] as { key: ReviewFilter; label: string }[]
-            ).map((f) => {
-              const active = reviewFilter === f.key;
-              return (
-                <Pressable
-                  key={f.key}
-                  style={[styles.reviewChip, active && styles.reviewChipActive]}
-                  onPress={() => setReviewFilter(f.key)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={`Filter reviews: ${f.label}`}
-                >
-                  <Text style={[styles.reviewChipText, active && styles.reviewChipTextActive]}>
-                    {f.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {filteredReviews.length === 0 ? (
-            <Text style={styles.noReviews}>No reviews in this filter yet.</Text>
-          ) : (
-            <View style={styles.reviews}>
-              {filteredReviews.map((r: Review) => (
-                <View key={r.id} style={styles.reviewCard}>
-                  <View style={styles.reviewTop}>
-                    <Text style={styles.reviewAuthor}>{r.author}</Text>
-                    <Text style={styles.reviewDate}>{r.date}</Text>
-                  </View>
-                  <RatingStars value={r.rating} size={13} />
-                  <Text style={styles.reviewText}>{r.text}</Text>
-                  {r.photo ? (
-                    <Pressable onPress={() => openViewer(0)} accessibilityLabel="Review photo">
-                      <Image
-                        source={{ uri: r.photo }}
-                        style={styles.reviewPhoto}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                      />
-                    </Pressable>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          )}
+          {tab === 2 ? (
+            <AboutTab
+              provider={provider}
+              faqOpen={faqOpen}
+              setFaqOpen={setFaqOpen}
+              onPolicy={() => router.push(route('/policies'))}
+            />
+          ) : null}
 
-          {/* Availability */}
-          <SectionTitle title="Availability" styles={styles} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dayRow}
-          >
-            {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-              const active = selectedDay === d;
-              const label = dayLabel(d);
-              return (
-                <Pressable
-                  key={d}
-                  style={[styles.dayChip, active && styles.dayChipActive]}
-                  onPress={() => setSelectedDay(d)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={label.full}
-                >
-                  <Text style={[styles.dayWeekday, active && styles.dayTextActive]}>
-                    {label.weekday}
-                  </Text>
-                  <Text style={[styles.dayNum, active && styles.dayTextActive]}>{label.day}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <View style={styles.slotGrid}>
-            {slots.map((slot) => (
-              <View
-                key={slot.time}
-                style={[styles.slot, !slot.available && styles.slotOff]}
-                accessibilityLabel={`${slot.time} ${slot.available ? 'available' : 'unavailable'}`}
-              >
-                <Text style={[styles.slotText, !slot.available && styles.slotTextOff]}>
-                  {slot.time}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Cancellation policy */}
-          <SectionTitle title="Cancellation policy" styles={styles} />
-          <Pressable
-            style={styles.policyCard}
-            onPress={() => router.push(route('/policies'))}
-            accessibilityRole="button"
-            accessibilityLabel="Read the full cancellation policy"
-          >
-            <Ionicons name="shield-checkmark-outline" size={20} color={c.brand.tint} />
-            <Text style={styles.policyText}>
-              Free cancellation up to 24 hours before your appointment. Read the full policy.
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={c.text.muted} />
-          </Pressable>
-
-          {/* FAQ */}
-          <SectionTitle title="FAQ" styles={styles} />
-          <Accordion items={FAQS} />
-
-          {/* Pros like this */}
-          {similar.length > 0 ? (
-            <>
-              <SectionTitle title="Pros like this" styles={styles} />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.photosRow}
-              >
-                {similar.map((p) => (
-                  <Pressable
-                    key={p.id}
-                    style={styles.simCard}
-                    onPress={() => router.push(`/provider/${p.id}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${p.name}, rated ${p.rating.toFixed(1)}`}
-                  >
-                    <Image
-                      source={{ uri: p.photo }}
-                      style={styles.simPhoto}
-                      contentFit="cover"
-                      transition={200}
-                      cachePolicy="memory-disk"
-                    />
-                    <Text style={styles.simName} numberOfLines={1}>
-                      {p.name}
-                    </Text>
-                    <View style={styles.simMeta}>
-                      <Ionicons name="star" size={12} color={c.brand.star} />
-                      <Text style={styles.simRating}>{p.rating.toFixed(1)}</Text>
-                      <Text style={styles.simPrice}>
-                        · {t('money.from')} {money(p.priceFrom)}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </>
+          {tab === 3 ? (
+            <WorkTab
+              gallery={gallery}
+              similar={similar}
+              money={money}
+              tr={tr}
+              onOpen={(pid) => router.push(`/provider/${pid}`)}
+            />
           ) : null}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={styles.priceBlock}>
-          {cartCount > 0 && sameProviderCart ? (
-            <>
-              <Text style={styles.priceLabel}>{cartCount} in cart</Text>
-              <Text style={styles.priceValue}>{money(cartTotal)}</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.priceLabel}>from</Text>
-              <Text style={styles.priceValue}>{money(fromPrice)}</Text>
-            </>
-          )}
+      {/* Sticky book bar */}
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: t.surface,
+            borderTopColor: t.border,
+            paddingBottom: insets.bottom + spacing.md,
+          },
+        ]}
+      >
+        <View>
+          <Text variant="caption" tone="muted">
+            {cartCount > 0 && sameProviderCart ? `${cartCount} in cart` : 'from'}
+          </Text>
+          <Text variant="title2" tabular>
+            {money(cartCount > 0 && sameProviderCart ? cartTotal : fromPrice)}
+          </Text>
         </View>
         <Button
           label={cartCount > 0 && sameProviderCart ? 'View cart' : 'Book now'}
@@ -654,13 +457,6 @@ export default function ProviderProfileScreen() {
           onPress={bookNow}
         />
       </View>
-
-      <ImageGalleryViewer
-        visible={viewerOpen}
-        images={gallery}
-        initialIndex={viewerStart}
-        onClose={() => setViewerOpen(false)}
-      />
     </View>
   );
 }
@@ -669,35 +465,379 @@ function Stat({
   value,
   label,
   icon,
-  styles,
-  c,
+  tint,
 }: {
   value: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  styles: ReturnType<typeof makeStyles>;
-  c: Palette;
+  icon: IconName;
+  tint: string;
 }) {
   return (
     <View style={styles.stat}>
-      <Ionicons name={icon} size={16} color={c.brand.tint} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Icon name={icon} size={16} color={tint} />
+      <Text variant="headline">{value}</Text>
+      <Text variant="micro" tone="muted" center>
+        {label}
+      </Text>
     </View>
   );
 }
 
-function SectionTitle({
-  title,
-  styles,
-  noMargin,
+function ServicesTab({
+  provider,
+  sameProviderCart,
+  cartCount,
+  qtyFor,
+  addService,
+  decrement,
+  money,
+  selectedDay,
+  setSelectedDay,
+  slots,
 }: {
-  title: string;
-  styles: ReturnType<typeof makeStyles>;
-  noMargin?: boolean;
+  provider: Provider;
+  sameProviderCart: boolean;
+  cartCount: number;
+  qtyFor: (s: Service) => number;
+  addService: (s: Service) => void;
+  decrement: (key: string) => void;
+  money: (n: number) => string;
+  selectedDay: number;
+  setSelectedDay: (d: number) => void;
+  slots: { time: string; available: boolean }[];
 }) {
+  const t = useTokens();
   return (
-    <Text style={[styles.sectionTitle, noMargin && styles.sectionTitleNoMargin]}>{title}</Text>
+    <View style={styles.section}>
+      {!sameProviderCart && cartCount > 0 ? (
+        <View style={[styles.notice, { backgroundColor: t.bgSubtle }]}>
+          <Icon name="info" size={16} color={t.info} />
+          <Text variant="caption" tone="muted" style={styles.flex1}>
+            Adding a service here will start a new cart.
+          </Text>
+        </View>
+      ) : null}
+
+      {provider.services.map((s) => {
+        const qty = qtyFor(s);
+        return (
+          <Card key={s.name} variant="outlined" padding={spacing.md} style={styles.serviceRow}>
+            <View style={styles.flex1}>
+              <View style={styles.serviceNameRow}>
+                <Text variant="headline" numberOfLines={1}>
+                  {s.name}
+                </Text>
+                {s.popular ? <StatusPill label="Popular" tone="accent" /> : null}
+              </View>
+              {s.description ? (
+                <Text variant="caption" tone="muted">
+                  {s.description}
+                </Text>
+              ) : null}
+              <Text variant="footnote" tone="muted" tabular>
+                {s.durationMin} min · {money(s.price)}
+              </Text>
+            </View>
+            {qty > 0 ? (
+              <View style={styles.stepper}>
+                <IconButton
+                  name="minus"
+                  size={16}
+                  diameter={36}
+                  variant="surface"
+                  accessibilityLabel={`Remove one ${s.name}`}
+                  onPress={() => decrement(s.id ?? s.name)}
+                />
+                <Text variant="headline" tabular style={styles.qty}>
+                  {qty}
+                </Text>
+                <IconButton
+                  name="plus"
+                  size={16}
+                  diameter={36}
+                  variant="surface"
+                  accessibilityLabel={`Add one ${s.name}`}
+                  onPress={() => addService(s)}
+                />
+              </View>
+            ) : (
+              <Button
+                label="Add"
+                variant="secondary"
+                size="sm"
+                icon="plus"
+                fullWidth={false}
+                onPress={() => addService(s)}
+              />
+            )}
+          </Card>
+        );
+      })}
+
+      <Text variant="headline" style={styles.subhead}>
+        Availability
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.dayRow}
+      >
+        {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+          const label = dayLabel(d);
+          const active = selectedDay === d;
+          return (
+            <PressableScale
+              key={d}
+              haptic="selection"
+              onPress={() => setSelectedDay(d)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={label.full}
+              style={[
+                styles.dayChip,
+                {
+                  borderColor: active ? t.primary : t.border,
+                  backgroundColor: active ? t.accentSoft : t.surface,
+                },
+              ]}
+            >
+              <Text variant="micro" tone={active ? 'accent' : 'muted'}>
+                {label.weekday}
+              </Text>
+              <Text variant="headline" tone={active ? 'accent' : 'default'} tabular>
+                {label.day}
+              </Text>
+            </PressableScale>
+          );
+        })}
+      </ScrollView>
+      <View style={styles.slotGrid}>
+        {slots.map((slot) => (
+          <View
+            key={slot.time}
+            style={[
+              styles.slot,
+              { borderColor: t.border, backgroundColor: slot.available ? t.surface : t.bgSubtle },
+            ]}
+            accessibilityLabel={`${slot.time} ${slot.available ? 'available' : 'unavailable'}`}
+          >
+            <Text
+              variant="footnote"
+              tone={slot.available ? 'default' : 'subtle'}
+              tabular
+              style={!slot.available && styles.strike}
+            >
+              {slot.time}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function ReviewsTab({
+  providerReviews,
+  filteredReviews,
+  reviewFilter,
+  setReviewFilter,
+}: {
+  providerReviews: Review[];
+  filteredReviews: Review[];
+  reviewFilter: ReviewFilter;
+  setReviewFilter: (f: ReviewFilter) => void;
+}) {
+  const t = useTokens();
+  const filters: { key: ReviewFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'five', label: '5 star' },
+    { key: 'photos', label: 'With photos' },
+  ];
+  return (
+    <View style={styles.section}>
+      <View style={styles.reviewFilters}>
+        {filters.map((f) => (
+          <Chip
+            key={f.key}
+            label={f.label}
+            selected={reviewFilter === f.key}
+            onPress={() => setReviewFilter(f.key)}
+          />
+        ))}
+      </View>
+      {filteredReviews.length === 0 ? (
+        <Text variant="footnote" tone="muted">
+          No reviews in this filter yet.
+        </Text>
+      ) : (
+        filteredReviews.map((r) => (
+          <Card key={r.id} variant="outlined" style={styles.reviewCard}>
+            <View style={styles.reviewTop}>
+              <Text variant="headline">{r.author}</Text>
+              <Text variant="caption" tone="muted">
+                {r.date}
+              </Text>
+            </View>
+            <Rating value={r.rating} size={16} />
+            <Text variant="footnote" tone="muted">
+              {r.text}
+            </Text>
+            {r.photo ? (
+              <Image
+                source={{ uri: r.photo }}
+                style={[styles.reviewPhoto, { backgroundColor: t.bgSubtle }]}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+            ) : null}
+          </Card>
+        ))
+      )}
+      <Text variant="caption" tone="muted" center style={styles.subhead}>
+        {providerReviews.length} reviews total
+      </Text>
+    </View>
+  );
+}
+
+function AboutTab({
+  provider,
+  faqOpen,
+  setFaqOpen,
+  onPolicy,
+}: {
+  provider: Provider;
+  faqOpen: number | null;
+  setFaqOpen: (n: number | null) => void;
+  onPolicy: () => void;
+}) {
+  const t = useTokens();
+  return (
+    <View style={styles.section}>
+      <Text variant="body" tone="muted">
+        {provider.bio}
+      </Text>
+
+      <Text variant="headline" style={styles.subhead}>
+        Cancellation policy
+      </Text>
+      <PressableScale
+        onPress={onPolicy}
+        accessibilityRole="button"
+        accessibilityLabel="Read the full cancellation policy"
+        style={[styles.policyCard, { borderColor: t.border, backgroundColor: t.surface }]}
+      >
+        <Icon name="shield-check" size={20} color={t.accent} />
+        <Text variant="footnote" tone="muted" style={styles.flex1}>
+          Free cancellation up to 24 hours before your appointment. Read the full policy.
+        </Text>
+        <Icon name="chevron-right" size={16} color={t.textMuted} />
+      </PressableScale>
+
+      <Text variant="headline" style={styles.subhead}>
+        FAQ
+      </Text>
+      {FAQS.map((f, i) => {
+        const open = faqOpen === i;
+        return (
+          <View key={f.question} style={[styles.faq, { borderColor: t.border }]}>
+            <PressableScale
+              onPress={() => setFaqOpen(open ? null : i)}
+              accessibilityRole="button"
+              accessibilityLabel={f.question}
+              accessibilityState={{ expanded: open }}
+              style={styles.faqHead}
+            >
+              <Text variant="footnote" style={styles.flex1}>
+                {f.question}
+              </Text>
+              <Icon name={open ? 'chevron-up' : 'chevron-down'} size={20} color={t.textMuted} />
+            </PressableScale>
+            {open ? (
+              <Text variant="footnote" tone="muted" style={styles.faqBody}>
+                {f.answer}
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function WorkTab({
+  gallery,
+  similar,
+  money,
+  tr,
+  onOpen,
+}: {
+  gallery: string[];
+  similar: Provider[];
+  money: (n: number) => string;
+  tr: (k: string) => string;
+  onOpen: (id: string) => void;
+}) {
+  const t = useTokens();
+  return (
+    <View style={styles.section}>
+      <View style={styles.workGrid}>
+        {gallery.map((uri, i) => (
+          <Image
+            key={`w-${i}`}
+            source={{ uri }}
+            style={[styles.workPhoto, { backgroundColor: t.bgSubtle }]}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
+        ))}
+      </View>
+
+      {similar.length > 0 ? (
+        <>
+          <Text variant="headline" style={styles.subhead}>
+            Pros like this
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.simRow}
+          >
+            {similar.map((p) => (
+              <PressableScale
+                key={p.id}
+                onPress={() => onOpen(p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${p.name}, rated ${p.rating.toFixed(1)}`}
+                style={styles.simCard}
+              >
+                <Image
+                  source={{ uri: p.photo }}
+                  style={[styles.simPhoto, { backgroundColor: t.bgSubtle }]}
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+                <Text variant="footnote" numberOfLines={1}>
+                  {p.name}
+                </Text>
+                <View style={styles.simMeta}>
+                  <Icon name="star" size={16} color={t.warning} />
+                  <Text variant="caption" tabular>
+                    {p.rating.toFixed(1)}
+                  </Text>
+                  <Text variant="caption" tone="muted" tabular>
+                    · {tr('money.from')} {money(p.priceFrom)}
+                  </Text>
+                </View>
+              </PressableScale>
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
+    </View>
   );
 }
 
@@ -709,279 +849,114 @@ function dayLabel(offset: number): { weekday: string; day: string; full: string 
   return { weekday, day: `${d.getDate()}`, full: `${weekday} ${d.getDate()}` };
 }
 
-const makeStyles = (c: Palette) =>
-  StyleSheet.create({
-    root: { flex: 1, backgroundColor: c.background.base },
-    scroll: { paddingBottom: spacing.xl },
-    backPlain: { marginBottom: spacing.lg, alignSelf: 'flex-start' },
-    galleryWrap: { height: 300, backgroundColor: c.skeleton },
-    back: {
-      position: 'absolute',
-      left: spacing.lg,
-      width: 40,
-      height: 40,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...shadow.card,
-    },
-    topActions: { position: 'absolute', right: spacing.lg, flexDirection: 'row', gap: spacing.sm },
-    roundBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: radius.pill,
-      backgroundColor: c.background.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...shadow.card,
-    },
-    galleryDots: {
-      position: 'absolute',
-      bottom: spacing.md,
-      alignSelf: 'center',
-      flexDirection: 'row',
-      gap: spacing.xs,
-    },
-    galleryDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: 'rgba(255,255,255,0.6)',
-    },
-    galleryDotActive: { width: 18, backgroundColor: '#FFFFFF' },
-    body: { padding: spacing.lg },
-    name: { ...typography.scale.h1, color: c.text.primary },
-    category: { ...typography.scale.smallMedium, color: c.text.muted, marginTop: 2 },
-    tagline: { ...typography.scale.body, color: c.text.secondary, marginTop: spacing.xs },
-    statsRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: spacing.lg,
-      padding: spacing.md,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    stat: { flex: 1, alignItems: 'center', gap: 2 },
-    statDivider: { width: 1, height: 32, backgroundColor: c.border },
-    statValue: { ...typography.scale.bodyMedium, color: c.text.primary },
-    statLabel: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.text.muted,
-      textAlign: 'center',
-    },
-    badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
-    badge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingVertical: spacing.xs,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.pill,
-      backgroundColor: c.brand.primarySoft,
-    },
-    badgeText: {
-      ...typography.scale.caption,
-      color: c.brand.tint,
-      fontFamily: typography.font.semibold,
-      fontWeight: '600',
-    },
-    sectionTitle: {
-      ...typography.scale.h2,
-      color: c.text.primary,
-      marginTop: spacing.xl,
-      marginBottom: spacing.sm,
-    },
-    sectionTitleNoMargin: { marginTop: 0, marginBottom: 0 },
-    bio: { ...typography.scale.body, color: c.text.secondary },
-    cartNotice: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      backgroundColor: c.status.infoSoft,
-      marginBottom: spacing.md,
-    },
-    cartNoticeText: { flex: 1, ...typography.scale.caption, color: c.status.info },
-    services: { gap: spacing.sm },
-    serviceRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    serviceInfo: { flex: 1, gap: 2 },
-    serviceNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    serviceName: { ...typography.scale.bodyMedium, color: c.text.primary },
-    serviceDesc: { ...typography.scale.caption, color: c.text.secondary },
-    serviceMeta: { ...typography.scale.caption, color: c.text.muted },
-    popularTag: {
-      paddingVertical: 1,
-      paddingHorizontal: spacing.sm,
-      borderRadius: radius.pill,
-      backgroundColor: c.brand.accentSoft,
-    },
-    popularText: {
-      ...typography.scale.caption,
-      fontSize: 10,
-      color: c.brand.accent,
-      fontFamily: typography.font.bold,
-      fontWeight: '700',
-    },
-    addBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.brand.primary,
-      minHeight: 40,
-    },
-    addBtnText: { ...typography.scale.smallMedium, color: c.brand.tint },
-    stepper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
-    stepBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.brand.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    stepQty: {
-      minWidth: 20,
-      textAlign: 'center',
-      ...typography.scale.bodyMedium,
-      color: c.text.primary,
-    },
-    photosRow: { gap: spacing.sm, paddingVertical: spacing.xs },
-    workPhoto: {
-      width: 140,
-      height: 100,
-      borderRadius: radius.md,
-      backgroundColor: c.skeleton,
-    },
-    simCard: { width: 140, gap: 4 },
-    simPhoto: {
-      width: 140,
-      height: 100,
-      borderRadius: radius.md,
-      backgroundColor: c.skeleton,
-    },
-    simName: { ...typography.scale.smallMedium, color: c.text.primary },
-    simMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    simRating: { ...typography.scale.caption, color: c.text.primary },
-    simPrice: { ...typography.scale.caption, color: c.text.muted },
-    reviewsHeader: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'space-between',
-      marginTop: spacing.xl,
-      marginBottom: spacing.sm,
-    },
-    reviewTotal: { ...typography.scale.small, color: c.text.muted },
-    reviewFilters: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-    reviewChip: {
-      minHeight: 36,
-      justifyContent: 'center',
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    reviewChipActive: { backgroundColor: c.brand.primary, borderColor: c.brand.primary },
-    reviewChipText: { ...typography.scale.smallMedium, color: c.text.secondary },
-    reviewChipTextActive: { color: c.text.inverse },
-    noReviews: { ...typography.scale.small, color: c.text.muted },
-    reviews: { gap: spacing.sm },
-    reviewCard: {
-      padding: spacing.lg,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      gap: spacing.xs,
-    },
-    reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    reviewAuthor: { ...typography.scale.bodyMedium, color: c.text.primary },
-    reviewDate: { ...typography.scale.caption, color: c.text.muted },
-    reviewText: { ...typography.scale.small, color: c.text.secondary, marginTop: 2 },
-    reviewPhoto: {
-      width: 120,
-      height: 120,
-      borderRadius: radius.md,
-      marginTop: spacing.sm,
-      backgroundColor: c.skeleton,
-    },
-    dayRow: { gap: spacing.sm, paddingVertical: spacing.xs },
-    dayChip: {
-      width: 56,
-      paddingVertical: spacing.sm,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      alignItems: 'center',
-      gap: 2,
-    },
-    dayChipActive: { borderColor: c.brand.primary, backgroundColor: c.brand.primarySoft },
-    dayWeekday: { ...typography.scale.caption, color: c.text.muted },
-    dayNum: { ...typography.scale.bodyMedium, color: c.text.primary },
-    dayTextActive: { color: c.brand.tint },
-    slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-    slot: {
-      minWidth: 72,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      alignItems: 'center',
-    },
-    slotOff: { backgroundColor: c.background.muted, borderColor: c.background.muted },
-    slotText: { ...typography.scale.smallMedium, color: c.text.primary },
-    slotTextOff: { color: c.text.muted, textDecorationLine: 'line-through' },
-    policyCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      padding: spacing.lg,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    policyText: { flex: 1, ...typography.scale.small, color: c.text.secondary },
-    footer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.lg,
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    priceBlock: { justifyContent: 'center' },
-    priceLabel: { ...typography.scale.caption, color: c.text.muted },
-    priceValue: { ...typography.scale.h2, color: c.text.primary },
-    bookBtn: { flex: 1 },
-  });
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  stickyHeader: { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 10 },
+  stickyInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  galleryWrap: { height: HERO_H },
+  heroTop: {
+    position: 'absolute',
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroActions: { flexDirection: 'row', gap: spacing.sm },
+  dots: {
+    position: 'absolute',
+    bottom: spacing.md,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive: { width: 18 },
+  body: { padding: spacing.lg, gap: spacing.xs },
+  statsCard: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md },
+  stat: { flex: 1, alignItems: 'center', gap: 2 },
+  vLine: { width: StyleSheet.hairlineWidth, height: 32 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  badgeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  tabs: { marginTop: spacing.lg },
+  section: { marginTop: spacing.lg, gap: spacing.sm },
+  subhead: { marginTop: spacing.md },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+  },
+  flex1: { flex: 1 },
+  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  serviceNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  qty: { minWidth: 20, textAlign: 'center' },
+  dayRow: { gap: spacing.sm, paddingVertical: spacing.xs },
+  dayChip: {
+    width: 56,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    gap: 2,
+  },
+  slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  slot: {
+    minWidth: 72,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  strike: { textDecorationLine: 'line-through' },
+  reviewFilters: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  reviewCard: { gap: spacing.xs },
+  reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  reviewPhoto: { width: 120, height: 120, borderRadius: radius.md, marginTop: spacing.sm },
+  policyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  faq: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm },
+  faqHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  faqBody: { marginTop: spacing.xs },
+  workGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  workPhoto: { width: '48%', height: 120, borderRadius: radius.md },
+  simRow: { gap: spacing.sm, paddingVertical: spacing.xs },
+  simCard: { width: 140, gap: 4 },
+  simPhoto: { width: 140, height: 100, borderRadius: radius.md },
+  simMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    ...shadow.floating,
+  },
+  bookBtn: { flex: 1 },
+});
