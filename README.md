@@ -11,27 +11,31 @@ fee** on each booking.
 
 ## Screenshots
 
-The **Aurora** redesign spans 40+ screens across the customer app, a full
-provider ("pro") side, and trust & safety — all Expo Go compatible with light,
-dark and RTL support. Drop image files into `docs/screenshots/` and uncomment
-the rows below.
+The **NOVA** redesign (2026) is a complete visual/UX rebuild to current industry
+standard — content-first, neutral surfaces, one accent (`#6D5BFF`), a geometric
+"b" brand mark, a single `<Icon>` system and a token-only component library.
+Every screen supports **light, dark and RTL (en/hi/ar)** and stays Expo Go
+compatible. Drop image files into `docs/screenshots/` and uncomment the rows
+below (capture each in **light and dark**).
 
 | Area | Screens |
 | ---- | ------- |
-| Discovery & provider | Home, category (packages + map toggle), provider profile, compare |
-| Booking & payments | Cart, checkout (slot/address/recurring/payment), confetti success |
-| Bookings | Upcoming/Completed/Cancelled, live tracking, invoice, rate |
-| Inbox | Conversations, chat with pro, support bot, notifications |
-| Account | Wallet, Bookit Plus, security (PIN), profile, settings |
-| Provider mode | Onboarding, dashboard, job requests, earnings, availability |
-| Trust & safety | Safety centre, account status, report/tickets, legal docs |
+| Home & Explore | 6-block Home, smart search/concierge, Explore (list/map, compare) |
+| Discovery & provider | Categories, provider profile (tabs), compare tray |
+| Booking & payments | Checkout sheet flow, slide-to-confirm, confetti success |
+| Bookings | Upcoming/Past/Cancelled, live-activity pill, tracking, invoice, rate |
+| Inbox | Conversations, chat with pro, grouped notification centre |
+| Account | Inset grouped lists, Bookit Plus, biometric lock (PIN), settings |
+| Provider mode | Today (KPIs, requests), jobs, earnings |
+| Design system | `app/dev/design-system` — every token & component, light/dark |
 
-<!--
-![Home](docs/screenshots/home.png)
-![Live tracking](docs/screenshots/tracking.png)
-![Pro dashboard](docs/screenshots/pro-dashboard.png)
-![Wallet](docs/screenshots/wallet.png)
-![Safety centre](docs/screenshots/safety.png)
+<!-- Light / dark pairs:
+| Screen | Light | Dark |
+| ------ | ----- | ---- |
+| Home | ![Home light](docs/screenshots/home-light.png) | ![Home dark](docs/screenshots/home-dark.png) |
+| Explore | ![Explore light](docs/screenshots/explore-light.png) | ![Explore dark](docs/screenshots/explore-dark.png) |
+| Design system | ![DS light](docs/screenshots/ds-light.png) | ![DS dark](docs/screenshots/ds-dark.png) |
+| App icon | ![Icon](apps/mobile/assets/icon.png) | |
 -->
 
 ## Documentation

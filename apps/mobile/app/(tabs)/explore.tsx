@@ -22,6 +22,7 @@ import {
   Button,
   PressableScale,
   EmptyState,
+  AnimatedListItem,
 } from '../../src/components/ui';
 
 function ProviderRow({ provider, onPress }: { provider: Provider; onPress: () => void }) {
@@ -144,8 +145,10 @@ export default function Explore() {
           ListEmptyComponent={
             <EmptyState art="search" title="No pros here yet" message="Try another category." />
           }
-          renderItem={({ item }) => (
-            <ProviderRow provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
+          renderItem={({ item, index }) => (
+            <AnimatedListItem index={index}>
+              <ProviderRow provider={item} onPress={() => router.push(`/provider/${item.id}`)} />
+            </AnimatedListItem>
           )}
         />
       )}

@@ -44,3 +44,4 @@ export type { CoachmarkProps } from './Coachmark';
 export { BiometricLock } from './BiometricLock';
 export { StatusScreen } from './StatusScreen';
 export type { StatusKind, StatusScreenProps } from './StatusScreen';
+export { AnimatedListItem } from './AnimatedListItem';

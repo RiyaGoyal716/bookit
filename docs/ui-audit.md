@@ -81,4 +81,38 @@ Evidence gathered by static inspection of `app/` (57 route files, ~15.6k LOC) an
 | `src/components/AuroraBackground.tsx`, `GradientButton.tsx`, `HeroCarousel.tsx` | Remove (Aurora gradient) |
 | Sora font registration | Remove |
 
-_After-state is appended in Phase 7._
+## After-state (Phase 7)
+
+What the NOVA rebuild delivered against the audit above:
+
+- **Theme** rewritten to flat semantic tokens (single source of truth) + derived legacy
+  palette → the whole app re-skins to NOVA neutrals + one accent (`#6D5BFF`). Sora removed;
+  Inter Tight titles + compact type scale; 4pt spacing; NOVA radius (≤20 except pills);
+  one soft shadow level; motion + haptics tokens. WCAG contrast unit test added.
+- **Brand**: new geometric "b" mark + wordmark (`src/brand`), regenerated app icon /
+  adaptive (foreground + monochrome) / splash / favicon via `scripts/generate-brand-assets.mjs`,
+  new in-app animated splash, NOVA minimal-line illustrations and a duotone category icon set.
+  Old logo/gradient assets removed.
+- **Component library** (`src/components/ui`): single `<Icon>` wrapper (lucide), `Text`,
+  `PressableScale`, `Button`, `IconButton`, `Card`, `ListRow`, `InsetGroupedList`, `Chip`,
+  `SegmentedControl`, `Toggle`, `Stepper`, `Badge`, `StatusPill`, `Rating`, `PriceTag`,
+  `Skeleton`, `Avatar(+Stack)`, `SearchField`, `TextField`, `Banner`, `EmptyState`,
+  `FloatingTabBar`, `LiveActivityPill`, `ToastQueueHost`, `Coachmark`, `BiometricLock`,
+  `StatusScreen`, `AnimatedListItem`. Design-system gallery at `app/dev/design-system`
+  (long-press the version in Settings).
+- **IA**: 5-tab shell with a blurred FloatingTabBar; Home rebuilt to the compact 6-block
+  layout; new Explore tab (categories, list/map, compare tray).
+- **Modern features**: Live-Activity pill, stacked Undo toasts, first-run coachmarks,
+  biometric app lock (+ PIN), unified StatusScreen/Banner notices, staggered list entrances.
+- **QA**: `npm run check:design` (ratchet) wired into `npm run lint`; new tests for contrast,
+  haptics map, PriceTag formatting, toast queue, smart-search parser and the check-design gate.
+
+### Remaining migration (tracked ratchet)
+
+The legacy screens below still use the pre-NOVA presentation (raw `Text`, Ionicons via
+`@expo/vector-icons`) but render correctly on the NOVA theme (colours, type, spacing). They
+are migrated to the `<Icon>`/`Text` primitives screen-by-screen and added to the
+`check:design` scan set as they land: the account/settings cluster, provider & booking
+flow (`provider/[id]`, `booking/*`, `checkout`, `tracking`, `invoice`), discovery
+(`search`, `concierge`, `category/[slug]`, `compare`, `favourites`, `offers`), pro mode,
+bookings/inbox tabs, and the status/notice screens.

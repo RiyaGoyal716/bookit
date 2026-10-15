@@ -20,7 +20,15 @@ export { spacing, radius, shadow } from './spacing';
 export type { Spacing, Radius, Shadow } from './spacing';
 export { typography, font, tabular } from './typography';
 export type { Typography } from './typography';
-export { motion, duration, spring, easingPoints, getEasing, timingConfig } from './motion';
+export {
+  motion,
+  duration,
+  spring,
+  easingPoints,
+  getEasing,
+  timingConfig,
+  listStagger,
+} from './motion';
 export type { Motion } from './motion';
 
 export type ColorScheme = 'light' | 'dark';
