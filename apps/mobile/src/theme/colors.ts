@@ -1,17 +1,23 @@
 /**
- * NOVA colour system.
+ * NOVA v2 colour system — bright, colourful, Blinkit-direction.
  *
- * Content-first, neutral surfaces, ONE accent colour. Depth comes from layering
- * (hairline borders + raised surfaces), not shadows. Gradients are reserved for
- * two hero moments only (app icon, Bookit Plus).
+ * Neutral surfaces (white / near-black). Colour comes from content: category
+ * tiles, banners, 3D illustrations and status. Each colour has one job:
+ *   ink     — primary actions (Book, ADD, cart bar, Confirm, Pay). In dark mode
+ *             actions are white with ink text.
+ *   green   — booked / success / live + the logo tick only (never a UI fill)
+ *   coral   — offers / discounts / hearts / alerts / "Popular"
+ *   sunshine— Bookit Plus / ratings / promo
+ *   sky     — links / info / live tracking / verified
+ * Category colours live only inside that category's tiles/cards/header
+ * (see src/theme/categories.ts). No colour exceeds ~15% of a screen (promo
+ * banners excepted). No gradients except the app icon + the Bookit Plus card.
  *
- * The flat semantic tokens below (`NovaTokens`) are the single source of truth.
- * New code reads them through `useTokens()`. The legacy nested `Palette` (used by
- * the pre-NOVA screens) is *derived* from the same tokens, so the whole app
- * re-skins to NOVA at once while existing `useColors()` consumers keep compiling.
+ * The flat semantic tokens (`NovaTokens`) are the single source of truth; the
+ * legacy nested `Palette` is derived from them so every `useColors()` consumer
+ * keeps compiling while new code reads `useTokens()`.
  *
- * Every essential text/background pair is >= 4.5:1 (see colors.test.ts). Status
- * and `textSubtle` colours meet the 3:1 non-text / graphical threshold.
+ * Every essential text/background pair is >= 4.5:1 (see colors.test.ts).
  */
 
 /** Flat NOVA semantic tokens — the single source of truth. */
@@ -24,55 +30,103 @@ export interface NovaTokens {
   text: string;
   textMuted: string;
   textSubtle: string;
+  inverse: string;
+  onInverse: string;
   primary: string;
   onPrimary: string;
-  accent: string;
-  accentSoft: string;
+  primaryPressed: string;
+  primarySoft: string;
+  /** Logo / illustration green only — never a UI fill. */
+  brandGreen: string;
+  coral: string;
+  coralStrong: string;
+  coralSoft: string;
+  sunshine: string;
+  sunshineSoft: string;
+  sky: string;
+  skySoft: string;
+  star: string;
   success: string;
+  successSoft: string;
   warning: string;
   danger: string;
+  // --- Back-compat aliases (map onto the new palette; kept so legacy screens
+  // and tests that read accent/info/overlay keep compiling). ---
+  /** Alias of `primary` (green) — legacy accent consumers. */
+  accent: string;
+  /** Alias of `primarySoft` — legacy soft-accent consumers. */
+  accentSoft: string;
+  /** Alias of `sky` — legacy info consumers. */
   info: string;
   overlay: string;
 }
 
 export const lightTokens: NovaTokens = {
   bg: '#FFFFFF',
-  bgSubtle: '#F5F5F7',
+  bgSubtle: '#F5F6F8',
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
-  border: 'rgba(10,10,20,0.08)',
-  text: '#0A0A0F',
-  textMuted: '#5E5E6A',
-  textSubtle: '#9898A3',
-  primary: '#0A0A0F',
+  border: '#E8EAEE',
+  text: '#111315',
+  textMuted: '#4B5058',
+  textSubtle: '#6B717A',
+  inverse: '#111315',
+  onInverse: '#FFFFFF',
+  primary: '#111315',
   onPrimary: '#FFFFFF',
-  accent: '#6D5BFF',
-  accentSoft: '#6D5BFF14',
-  success: '#16A34A',
-  warning: '#D97706',
-  danger: '#DC2626',
-  info: '#1D4ED8',
-  overlay: 'rgba(10,10,20,0.40)',
+  primaryPressed: '#2A2D33',
+  primarySoft: '#EBECEF',
+  brandGreen: '#12B76A',
+  coral: '#FF5A36',
+  coralStrong: '#D9381E',
+  coralSoft: '#FFEDE8',
+  sunshine: '#FFC83D',
+  sunshineSoft: '#FFF6D1',
+  sky: '#1570EF',
+  skySoft: '#E5F0FF',
+  star: '#F5A800',
+  success: '#0B7F48',
+  successSoft: '#E3F7EC',
+  warning: '#B54708',
+  danger: '#D9381E',
+  accent: '#111315',
+  accentSoft: '#EBECEF',
+  info: '#1570EF',
+  overlay: 'rgba(17,19,21,0.45)',
 };
 
 export const darkTokens: NovaTokens = {
-  bg: '#09090B',
-  bgSubtle: '#111114',
-  surface: '#141418',
-  surfaceRaised: '#1C1C22',
-  border: 'rgba(255,255,255,0.08)',
-  text: '#F5F5F7',
-  textMuted: '#A1A1AA',
-  textSubtle: '#71717A',
-  primary: '#FFFFFF',
-  onPrimary: '#0A0A0F',
-  accent: '#8B7DFF',
-  accentSoft: '#8B7DFF1F',
-  success: '#22C55E',
-  warning: '#F59E0B',
-  danger: '#F87171',
-  info: '#60A5FA',
-  overlay: 'rgba(0,0,0,0.60)',
+  bg: '#0E0F11',
+  bgSubtle: '#141518',
+  surface: '#17191C',
+  surfaceRaised: '#202328',
+  border: '#2A2D33',
+  text: '#F4F5F7',
+  textMuted: '#A4A9B1',
+  textSubtle: '#8C929B',
+  inverse: '#F4F5F7',
+  onInverse: '#111315',
+  primary: '#F4F5F7',
+  onPrimary: '#111315',
+  primaryPressed: '#D5D8DD',
+  primarySoft: '#202328',
+  brandGreen: '#12B76A',
+  coral: '#FF7A59',
+  coralStrong: '#FF7A59',
+  coralSoft: '#2C1A14',
+  sunshine: '#FFC83D',
+  sunshineSoft: '#2B2610',
+  sky: '#5AA9FF',
+  skySoft: '#132238',
+  star: '#FFC83D',
+  success: '#2BD47F',
+  successSoft: '#13281D',
+  warning: '#F79009',
+  danger: '#FF6B5A',
+  accent: '#F4F5F7',
+  accentSoft: '#202328',
+  info: '#5AA9FF',
+  overlay: 'rgba(0,0,0,0.62)',
 };
 
 /**
@@ -127,42 +181,41 @@ function paletteFrom(t: NovaTokens, scheme: 'light' | 'dark'): Palette {
   return {
     brand: {
       primary: t.primary,
-      primaryDark: dark ? '#E5E5EA' : '#000000',
-      primarySoft: t.accentSoft,
-      tint: t.accent,
-      cyan: t.accent,
-      // Single soft accent gradient, used only for the Bookit Plus hero.
-      gradient: dark ? ['#8B7DFF', '#A99DFF'] : ['#6D5BFF', '#8B7DFF'],
-      accent: t.accent,
-      accentSoft: t.accentSoft,
-      star: t.warning,
+      primaryDark: t.primaryPressed,
+      primarySoft: t.primarySoft,
+      tint: t.primary,
+      cyan: t.sky,
+      // The one allowed gradient (Bookit Plus hero).
+      gradient: dark ? ['#2BD47F', '#12B76A'] : ['#12B76A', '#0B7F48'],
+      accent: t.primary,
+      accentSoft: t.primarySoft,
+      star: t.star,
     },
     text: {
       primary: t.text,
       secondary: t.textMuted,
-      // readable secondary (>= 4.5:1); `textSubtle` is reserved for the flat token.
-      muted: dark ? '#9A9AA3' : '#6B6B76',
-      inverse: t.onPrimary,
+      muted: t.textSubtle,
+      inverse: t.onInverse,
       onBrand: '#FFFFFF',
     },
     background: {
       base: t.bgSubtle,
       surface: t.surface,
-      muted: dark ? '#1C1C22' : '#EFEFF2',
+      muted: t.bgSubtle,
       elevated: t.surfaceRaised,
     },
     border: t.border,
-    skeleton: dark ? '#1C1C22' : '#ECECEF',
-    glass: dark ? 'rgba(20,20,24,0.55)' : 'rgba(255,255,255,0.65)',
+    skeleton: dark ? '#202328' : '#ECEEF1',
+    glass: dark ? 'rgba(23,25,28,0.55)' : 'rgba(255,255,255,0.65)',
     status: {
       success: t.success,
-      successSoft: dark ? '#13311F' : '#E7F6EC',
-      info: t.info,
-      infoSoft: dark ? '#152339' : '#E7EEFC',
+      successSoft: t.successSoft,
+      info: t.sky,
+      infoSoft: t.skySoft,
       warning: t.warning,
-      warningSoft: dark ? '#3A2A0B' : '#FBEFD9',
+      warningSoft: t.sunshineSoft,
       danger: t.danger,
-      dangerSoft: dark ? '#3A1618' : '#FBE7E7',
+      dangerSoft: t.coralSoft,
     },
     overlay: t.overlay,
     nova: t,

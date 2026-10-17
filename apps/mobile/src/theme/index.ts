@@ -16,6 +16,8 @@ import { motion } from './motion';
 
 export { lightColors, darkColors, colors, lightTokens, darkTokens } from './colors';
 export type { Colors, Palette, NovaTokens } from './colors';
+export { categoryStyle, categoryTint, ALL_TINT } from './categories';
+export type { CategoryStyle, CategoryKey } from './categories';
 export { spacing, radius, shadow } from './spacing';
 export type { Spacing, Radius, Shadow } from './spacing';
 export { typography, font, tabular } from './typography';

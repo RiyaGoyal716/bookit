@@ -11,12 +11,16 @@ describe('StatusPill', () => {
 });
 
 describe('theme tokens', () => {
-  it('exposes the NOVA ink primary colour', () => {
-    expect(colors.nova.primary).toBe('#0A0A0F');
+  it('exposes the v3 ink primary colour (green is success/logo only)', () => {
+    expect(colors.nova.primary).toBe('#111315');
+    expect(colors.nova.success).toBe('#0B7F48');
+    expect(colors.nova.brandGreen).toBe('#12B76A');
   });
 
-  it('exposes the single NOVA accent colour', () => {
-    expect(colors.nova.accent).toBe('#6D5BFF');
+  it('exposes the v3 content colours (coral / sunshine / sky)', () => {
+    expect(colors.nova.coral).toBe('#FF5A36');
+    expect(colors.nova.sunshine).toBe('#FFC83D');
+    expect(colors.nova.sky).toBe('#1570EF');
   });
 
   it('uses a 4pt spacing base', () => {

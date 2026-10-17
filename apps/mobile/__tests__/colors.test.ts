@@ -61,7 +61,18 @@ describe.each([
     expect(contrast(t.textSubtle, t.bg)).toBeLessThan(contrast(t.textMuted, t.bg));
   });
 
-  it('white text is legible on the accent fill', () => {
-    expect(contrast('#FFFFFF', t.accent)).toBeGreaterThanOrEqual(3);
+  it('onPrimary text is legible on the primary / accent fill', () => {
+    // v2: light uses white on green, dark uses ink on bright green. Both via onPrimary.
+    expect(contrast(t.onPrimary, t.primary)).toBeGreaterThanOrEqual(3);
+    expect(contrast(t.onPrimary, t.accent)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('NOVA v2 known-good pairs', () => {
+  it('meets the documented ratios', () => {
+    expect(contrast('#FFFFFF', '#0B7F48')).toBeGreaterThanOrEqual(4.5); // white on green
+    expect(contrast('#FFFFFF', '#D9381E')).toBeGreaterThanOrEqual(4.5); // white on coralStrong
+    expect(contrast('#111315', '#FFC83D')).toBeGreaterThanOrEqual(4.5); // ink on sunshine
+    expect(contrast('#6B717A', '#FFFFFF')).toBeGreaterThanOrEqual(4.5); // textSubtle on white
   });
 });
