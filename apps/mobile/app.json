@@ -14,7 +14,7 @@
     "android": {
       "package": "com.bookit.app",
       "adaptiveIcon": {
-        "backgroundColor": "#6D5BFF",
+        "backgroundColor": "#111315",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -33,7 +33,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "dark": {
-            "backgroundColor": "#09090B",
+            "backgroundColor": "#0E0F11",
             "image": "./assets/splash-icon.png",
             "imageWidth": 160
           }

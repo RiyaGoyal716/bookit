@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useTokens, font } from '../theme';
 
@@ -10,47 +11,44 @@ export interface WordmarkProps {
 }
 
 /**
- * NOVA wordmark — "bookit", lowercase, Inter Tight 700, tight tracking, with
- * the dot of the "i" in the accent colour.
+ * Bookit wordmark — "bookit", lowercase, Bricolage Grotesque 800, −3% tracking,
+ * with the second "o" replaced by the green check circle (x-height diameter).
  */
 export function Wordmark({ size = 24, color }: WordmarkProps) {
   const t = useTokens();
   const textColor = color ?? t.text;
-  const dot = size * 0.13;
+  const d = size * 0.6; // x-height circle diameter
+
+  const word = (chars: string) => (
+    <Text
+      allowFontScaling={false}
+      style={[styles.word, { color: textColor, fontSize: size, letterSpacing: -size * 0.03 }]}
+    >
+      {chars}
+    </Text>
+  );
 
   return (
     <View style={styles.row} accessibilityRole="header" accessibilityLabel="bookit">
-      <Text
-        allowFontScaling={false}
-        style={[styles.word, { color: textColor, fontSize: size, letterSpacing: -size * 0.04 }]}
-      >
-        booki
-      </Text>
-      <View>
-        <Text
-          allowFontScaling={false}
-          style={[styles.word, { color: textColor, fontSize: size, letterSpacing: -size * 0.04 }]}
-        >
-          t
-        </Text>
-      </View>
-      {/* Accent dot sitting over the dotless-looking "i" junction */}
-      <View
-        style={{
-          position: 'absolute',
-          left: size * 2.33,
-          top: size * 0.08,
-          width: dot,
-          height: dot,
-          borderRadius: dot / 2,
-          backgroundColor: t.accent,
-        }}
-      />
+      {word('bo')}
+      <Svg width={d} height={d} viewBox="0 0 24 24" style={styles.o}>
+        <Circle cx={12} cy={12} r={11} fill={t.brandGreen} />
+        <Path
+          d="M7 12.5l3.2 3.2 6.4-6.6"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+      {word('kit')}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-end' },
-  word: { fontFamily: font.titleBold, fontWeight: '700' },
+  word: { fontFamily: font.titleBold, fontWeight: '800' },
+  o: { marginHorizontal: 1, marginBottom: 1 },
 });

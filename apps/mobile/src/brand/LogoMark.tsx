@@ -5,41 +5,39 @@ import { useTokens } from '../theme';
 export interface LogoMarkProps {
   /** Rendered square size in px. Default 32. */
   size?: number;
-  /** Override the one-colour mark fill. Defaults to the current text colour. */
+  /** Override the stem colour. Defaults to the themed ink (light) / #F4F5F7 (dark). */
   color?: string;
   accessibilityLabel?: string;
 }
 
 /**
- * NOVA brand mark — a geometric lowercase "b" on a 24-unit grid: a rounded
- * stem + a circular bowl whose counter is cut as a check mark ("booked").
- * One colour, legible down to 16px, works in light and dark.
+ * Bookit brand mark — a lowercase "b" whose bowl is a green "booked" check,
+ * with a coral notification dot. Stem is ink in light mode, #F4F5F7 in dark.
+ * Geometry matches src/assets/brand/mark.svg exactly (48-unit grid).
  */
 export function LogoMark({ size = 32, color, accessibilityLabel = 'Bookit' }: LogoMarkProps) {
   const t = useTokens();
-  const fill = color ?? t.text;
+  const stem = color ?? t.inverse;
 
   return (
     <Svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 48 48"
       accessibilityRole="image"
       accessibilityLabel={accessibilityLabel}
     >
-      {/* Stem */}
-      <Rect x={4.5} y={2.5} width={3.5} height={19} rx={1.75} fill={fill} />
-      {/* Bowl as a ring so the counter stays transparent */}
-      <Circle cx={13} cy={15} r={6.2} stroke={fill} strokeWidth={3.5} fill="none" />
-      {/* Check cut into the bowl's counter */}
+      <Rect x={7} y={4} width={11} height={40} rx={5.5} fill={stem} />
+      <Circle cx={28.5} cy={29} r={15} fill={t.brandGreen} />
       <Path
-        d="M10.3 15.2 L12.3 17.2 L16 13"
-        stroke={fill}
-        strokeWidth={2.2}
+        d="M21.6 29.4l4.7 4.7 9.1-9.4"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={4.2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill="none"
       />
+      <Circle cx={39.5} cy={8.5} r={4.5} fill={t.coral} />
     </Svg>
   );
 }
