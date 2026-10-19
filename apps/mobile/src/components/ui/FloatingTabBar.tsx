@@ -100,8 +100,8 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
                 <Icon
                   name={iconName}
                   size={24}
-                  color={focused ? t.accent : t.textMuted}
-                  strokeWidth={focused ? 2 : 1.75}
+                  color={focused ? t.primary : t.textMuted}
+                  weight={focused ? 'fill' : 'bold'}
                 />
                 {badge != null && (
                   <View
