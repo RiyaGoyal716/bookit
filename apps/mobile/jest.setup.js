@@ -17,6 +17,6 @@ jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
 }));
 
-// lucide ships ESM-only (.mjs) icons that Jest won't transform; every icon the
-// <Icon> wrapper references becomes a no-op component for unit tests.
-jest.mock('lucide-react-native', () => new Proxy({}, { get: () => () => null }));
+// phosphor-react-native ships ESM/SVG icons that Jest won't transform; every
+// icon the <Icon> wrapper references becomes a no-op component for unit tests.
+jest.mock('phosphor-react-native', () => new Proxy({}, { get: () => () => null }));

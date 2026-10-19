@@ -8,13 +8,14 @@
  *   - numeric fontSize outside src/theme
  *   - raw `Text` / `TouchableOpacity` imported from react-native (use ui <Text> / Pressable)
  *   - emoji in source
- *   - icon imports not through the <Icon> wrapper (lucide / @expo/vector-icons)
+ *   - banned legacy purple/indigo/cyan values (#6D5BFF etc.) anywhere
+ *   - icon imports not through the <Icon> wrapper (lucide / @expo/vector-icons / phosphor)
  *   - references to removed Aurora logo/gradient assets
  *
  * The only exceptions are principled, not a ratchet:
  *   - src/theme/**      — defines the colour + type tokens (hex / fontSize live here)
  *   - src/brand/**      — the one-colour brand assets (own palette, own <Text>)
- *   - src/components/ui/Icon.tsx  — the single lucide import point
+ *   - src/components/ui/Icon.tsx  — the single phosphor import point
  *   - src/components/ui/Text.tsx  — the single raw react-native Text wrapper
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -30,6 +31,12 @@ const SCAN_FILES = [];
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const RGB = /\brgba?\(/g;
 const ALLOWED_HEX = new Set(['#fff', '#ffffff', '#000', '#000000']);
+/**
+ * Banned legacy accent values — the old purple / indigo / cyan Nova palette.
+ * These must not appear ANYWHERE (theme and brand included); v3 has no purple
+ * except the Wellness category tint (#F0EBFF / #211B33), which is not listed.
+ */
+const BANNED_VALUES = /#(6D5BFF|8B7DFF|A99DFF|4F46E5|6366F1|818CF8|06B6D4|22D3EE)\b/i;
 const EMOJI =
   /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/u;
 const OLD_ASSETS = /(logo\.svg|logo-glow|AuroraBackground|GradientButton|tabIcons)/;
@@ -72,9 +79,11 @@ function checkFile(abs) {
   // Import-level checks
   if (!isIconWrapper) {
     if (/from\s+['"]lucide-react-native['"]/.test(src))
-      add(rel, 0, 'icon-import', 'imports lucide directly (use <Icon>)');
+      add(rel, 0, 'icon-import', 'imports lucide directly (removed — use <Icon>)');
     if (/from\s+['"]@expo\/vector-icons['"]/.test(src))
-      add(rel, 0, 'icon-import', 'imports @expo/vector-icons (use <Icon>)');
+      add(rel, 0, 'icon-import', 'imports @expo/vector-icons (removed — use <Icon>)');
+    if (/from\s+['"]phosphor-react-native['"]/.test(src))
+      add(rel, 0, 'icon-import', 'imports phosphor directly (use <Icon>)');
   }
   if (!isTextPrimitive && !inBrand) {
     const rn = rnImports(src);
@@ -95,6 +104,8 @@ function checkFile(abs) {
     if (!inTheme && /fontSize:\s*\d/.test(code)) add(rel, n, 'font-size', ln);
     if (EMOJI.test(ln)) add(rel, n, 'emoji', ln);
     if (OLD_ASSETS.test(ln)) add(rel, n, 'old-asset', ln);
+    // The banned legacy purple/indigo/cyan values must not appear anywhere.
+    if (BANNED_VALUES.test(code)) add(rel, n, 'banned-color', ln);
   });
 }
 
