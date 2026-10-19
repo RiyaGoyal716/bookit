@@ -118,6 +118,12 @@ export const useCartStore = create<CartState>((set, get) => ({
       const baseItems = sameProvider ? state.items : [];
       const existing = baseItems.find((i) => i.key === key);
       track('cart_add', { providerId: input.providerId, service: input.name });
+      // NOVA v3 basket analytics (ServiceCard "+" / BookingBar flow).
+      track('add_to_basket', {
+        providerId: input.providerId,
+        service: input.name,
+        price: input.price,
+      });
       if (existing) {
         return {
           providerId: input.providerId,
