@@ -1,86 +1,147 @@
-import { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Image } from 'expo-image';
-import { FlashList } from '@shopify/flash-list';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, StyleSheet, Alert } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
 import {
   Button,
-  EmptyState,
   Icon,
+  Icon3D,
   PressableScale,
   Text,
-  type IconName,
+  Avatar,
+  CollapsingHeader,
+  LargeTitle,
+  useScreenScroll,
+  useTabBarInset,
 } from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
-import { getProviderById } from '../../src/mocks';
-import type { Provider } from '../../src/mocks/types';
+import { haptics } from '../../src/lib/haptics';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
+import { usePlusStore } from '../../src/stores/plusStore';
 import { useWalletStore } from '../../src/stores/walletStore';
-import {
-  useColors,
-  useTokens,
-  radius,
-  spacing,
-  type Palette,
-  type NovaTokens,
-} from '../../src/theme';
-import { useMoney } from '../../src/i18n';
+import { useTokens, radius, spacing, type NovaTokens } from '../../src/theme';
+import { useMoney, useT } from '../../src/i18n';
+import type { Fluent3DKey } from '../../src/assets/3d';
 
-const MENU: { icon: IconName; label: string; href: string }[] = [
-  { icon: 'wallet', label: 'Wallet & transactions', href: '/wallet' },
-  { icon: 'card', label: 'Payment methods', href: '/payments' },
-  { icon: 'map-pin', label: 'Saved addresses', href: '/addresses' },
-  { icon: 'star', label: 'Bookit Plus', href: '/plus' },
-  { icon: 'briefcase', label: 'Become a pro', href: '/pro' },
-  { icon: 'gift', label: 'Refer & earn', href: '/referrals' },
-  { icon: 'bell', label: 'Notifications', href: '/notifications' },
-  { icon: 'shield', label: 'Safety centre', href: '/safety' },
-  { icon: 'file-text', label: 'Booking & cancellation policy', href: '/policies' },
-  { icon: 'settings', label: 'Settings', href: '/settings' },
-  { icon: 'help', label: 'Help & support', href: '/help' },
-  { icon: 'shield-check', label: 'Legal & guidelines', href: '/legal' },
-];
+type TintKey = 'coral' | 'sky' | 'success' | 'sunshine' | 'primary';
 
-/** Distinct IconChip tints — cycled so no two adjacent rows share a colour. */
-function chipTints(t: NovaTokens): { bg: string; fg: string }[] {
-  return [
-    { bg: t.coralSoft, fg: t.coral },
-    { bg: t.skySoft, fg: t.sky },
-    { bg: t.successSoft, fg: t.success },
-    { bg: t.sunshineSoft, fg: t.warning },
-    { bg: t.primarySoft, fg: t.text },
-  ];
+function tintColor(t: NovaTokens, key: TintKey): string {
+  switch (key) {
+    case 'coral':
+      return t.coral;
+    case 'sky':
+      return t.sky;
+    case 'success':
+      return t.success;
+    case 'sunshine':
+      return t.sunshine;
+    default:
+      return t.primary;
+  }
 }
+
+interface MoreRow {
+  icon: Fluent3DKey;
+  tint: TintKey;
+  label: string;
+  sub: string;
+  href: string;
+}
+
+const AnimatedScrollView = Animated.ScrollView;
 
 export default function AccountScreen() {
   const router = useRouter();
-  const c = useColors();
   const t = useTokens();
   const money = useMoney();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(() => makeStyles(c), [c]);
+  const tr = useT();
+  const tabInset = useTabBarInset();
+  const { scrollY, onScroll } = useScreenScroll();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const favouriteIds = useFavouritesStore((s) => s.ids);
+  const favCount = useFavouritesStore((s) => s.ids.length);
   const bookingCount = useBookingsStore((s) => s.bookings.length);
   const walletBalance = useWalletStore((s) => s.balance());
+  const isPlus = usePlusStore((s) => s.subscribed);
 
-  const favourites = useMemo(
-    () => favouriteIds.map((id) => getProviderById(id)).filter((p): p is Provider => Boolean(p)),
-    [favouriteIds],
-  );
+  const version = Constants.expoConfig?.version ?? '1.0.0';
 
-  const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
+  const quickTiles: {
+    icon: Fluent3DKey;
+    tint: TintKey;
+    label: string;
+    href: string;
+    badge?: number;
+  }[] = [
+    { icon: 'credit_card', tint: 'sky', label: tr('account.payments'), href: '/payments' },
+    { icon: 'round_pushpin', tint: 'coral', label: tr('account.addresses'), href: '/addresses' },
+    {
+      icon: 'red_heart',
+      tint: 'coral',
+      label: tr('account.favourites'),
+      href: '/favourites',
+      badge: favCount,
+    },
+    { icon: 'shield', tint: 'success', label: tr('account.safety'), href: '/safety' },
+  ];
+
+  const moreRows: MoreRow[] = [
+    {
+      icon: 'briefcase',
+      tint: 'sunshine',
+      label: tr('account.becomePro'),
+      sub: tr('account.becomeProSub'),
+      href: '/pro',
+    },
+    {
+      icon: 'bell',
+      tint: 'coral',
+      label: tr('account.notifications'),
+      sub: tr('account.notificationsSub'),
+      href: '/notifications',
+    },
+    {
+      icon: 'page_facing_up',
+      tint: 'sky',
+      label: tr('account.policy'),
+      sub: tr('account.policySub'),
+      href: '/policies',
+    },
+    {
+      icon: 'gear',
+      tint: 'primary',
+      label: tr('account.settings'),
+      sub: tr('account.settingsSub'),
+      href: '/settings',
+    },
+    {
+      icon: 'speech_balloon',
+      tint: 'success',
+      label: tr('account.help'),
+      sub: tr('account.helpSub'),
+      href: '/help',
+    },
+    {
+      icon: 'balance_scale',
+      tint: 'sky',
+      label: tr('account.legal'),
+      sub: tr('account.legalSub'),
+      href: '/legal',
+    },
+  ];
 
   const confirmLogout = () => {
-    Alert.alert('Log out?', "You'll need to sign in again to manage your bookings.", [
-      { text: 'Cancel', style: 'cancel' },
+    haptics.warning();
+    Alert.alert(tr('account.logoutConfirmTitle'), tr('account.logoutConfirmBody'), [
+      { text: tr('common.cancel'), style: 'cancel' },
       {
-        text: 'Log out',
+        text: tr('account.logout'),
         style: 'destructive',
         onPress: () => {
           logout();
@@ -91,164 +152,197 @@ export default function AccountScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topBar}>
-        <Text variant="title1">Account</Text>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}
+    <View style={styles.container}>
+      <CollapsingHeader title={tr('account.title')} scrollY={scrollY} />
+      <AnimatedScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: tabInset }}
       >
-        <PressableScale
-          style={styles.userCard}
-          onPress={() => router.push(route('/profile'))}
-          accessibilityRole="button"
-          accessibilityLabel="Edit profile"
-        >
-          <View style={styles.avatar}>
-            <Text variant="title2" tone="onPrimary">
-              {initial}
-            </Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text variant="title2">{user?.name ?? 'Guest'}</Text>
-            <Text variant="caption" tone="muted">
-              {user?.phone ?? '—'}
-            </Text>
-          </View>
-          <Icon name="chevron-right" size={20} color={c.brand.tint} />
-        </PressableScale>
+        <View style={styles.topSpace}>
+          <LargeTitle title={tr('account.title')} />
+        </View>
 
-        <View style={styles.statsRow}>
-          <Stat value={`${bookingCount}`} label="Bookings" styles={styles} />
-          <View style={styles.statDivider} />
-          <Stat value={`${favourites.length}`} label="Favourites" styles={styles} />
-          <View style={styles.statDivider} />
+        <View style={styles.body}>
+          {/* 2. Profile hero */}
           <PressableScale
-            style={styles.stat}
-            onPress={() => router.push(route('/wallet'))}
+            style={styles.hero}
+            onPress={() => router.push(route('/profile'))}
             accessibilityRole="button"
-            accessibilityLabel="Wallet"
+            accessibilityLabel={tr('account.editProfile')}
           >
-            <Text variant="title2" tone="accent" tabular>
-              {money(walletBalance)}
+            <View style={styles.heroTop}>
+              <View>
+                <Avatar name={user?.name ?? tr('account.guest')} uri={user?.avatar} size={64} />
+                <View
+                  style={[styles.editBadge, { backgroundColor: t.primary, borderColor: t.surface }]}
+                >
+                  <Icon name="edit" size={16} color={t.onPrimary} weight="fill" />
+                </View>
+              </View>
+              <View style={styles.heroInfo}>
+                <Text variant="title2">{user?.name ?? tr('account.guest')}</Text>
+                <Text variant="footnote" tone="muted" tabular>
+                  {user?.phone ?? '—'}
+                </Text>
+                <View
+                  style={[
+                    styles.plusChip,
+                    { backgroundColor: isPlus ? t.sunshineSoft : t.primarySoft },
+                  ]}
+                >
+                  <Icon
+                    name="crown"
+                    size={16}
+                    color={isPlus ? t.star : t.textMuted}
+                    weight="fill"
+                  />
+                  <Text variant="micro" style={styles.chipText}>
+                    {isPlus ? tr('account.plusMember') : tr('account.joinPlus')}
+                  </Text>
+                </View>
+              </View>
+              <Icon name="chevron-right" size={20} color={t.textMuted} />
+            </View>
+            <View style={[styles.statsRow, { borderTopColor: t.border }]}>
+              <Stat value={`${bookingCount}`} label={tr('account.bookings')} />
+              <View style={[styles.statDivider, { backgroundColor: t.border }]} />
+              <Stat value={`${favCount}`} label={tr('account.saved')} />
+              <View style={[styles.statDivider, { backgroundColor: t.border }]} />
+              <Stat value={tr('account.memberSinceValue')} label={tr('account.memberSince')} />
+            </View>
+          </PressableScale>
+
+          {/* 3. Wallet strip */}
+          <View style={[styles.wallet, { backgroundColor: t.surface, borderColor: t.border }]}>
+            <Icon3D name="coin" size={40} tint={t.sunshine} />
+            <View style={styles.flex1}>
+              <Text variant="footnote" tone="muted">
+                {tr('account.walletBalance')}
+              </Text>
+              <AnimatedMoney value={walletBalance} format={money} />
+            </View>
+            <Button
+              label={tr('account.topUp')}
+              size="sm"
+              fullWidth={false}
+              onPress={() => router.push(route('/wallet'))}
+            />
+          </View>
+
+          {/* 4. Quick tiles */}
+          <View style={styles.tiles}>
+            {quickTiles.map((q) => (
+              <PressableScale
+                key={q.label}
+                style={styles.tile}
+                onPress={() => router.push(route(q.href))}
+                accessibilityRole="button"
+                accessibilityLabel={q.label}
+              >
+                <View>
+                  <Icon3D name={q.icon} size={40} tint={tintColor(t, q.tint)} />
+                  {q.badge != null && q.badge > 0 ? (
+                    <View
+                      style={[styles.tileBadge, { backgroundColor: t.coral, borderColor: t.bg }]}
+                    >
+                      <Text variant="micro" style={styles.badgeText}>
+                        {q.badge}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text variant="caption" numberOfLines={1}>
+                  {q.label}
+                </Text>
+              </PressableScale>
+            ))}
+          </View>
+
+          {/* 5. Promo cards */}
+          <View style={styles.promos}>
+            <PressableScale
+              style={[styles.promo, { backgroundColor: t.sunshineSoft }]}
+              onPress={() => router.push(route('/plus'))}
+              accessibilityRole="button"
+              accessibilityLabel={tr('account.plusTitle')}
+            >
+              <Icon3D name="crown" size={40} tint={t.sunshine} />
+              <Text variant="headline">{tr('account.plusTitle')}</Text>
+              <Text variant="caption" tone="muted">
+                {tr('account.plusBody')}
+              </Text>
+            </PressableScale>
+            <PressableScale
+              style={[styles.promo, { backgroundColor: t.coralSoft }]}
+              onPress={() => router.push(route('/referrals'))}
+              accessibilityRole="button"
+              accessibilityLabel={tr('account.referTitle')}
+            >
+              <Icon3D name="wrapped_gift" size={40} tint={t.coral} />
+              <Text variant="headline">{tr('account.referTitle')}</Text>
+              <Text variant="caption" tone="muted">
+                {tr('account.referBody')}
+              </Text>
+            </PressableScale>
+          </View>
+
+          {/* 6. Grouped "More" */}
+          <Text variant="footnote" tone="muted" style={styles.groupLabel}>
+            {tr('account.more')}
+          </Text>
+          <View style={[styles.group, { backgroundColor: t.surface, borderColor: t.border }]}>
+            {moreRows.map((row, i) => (
+              <MoreRowItem
+                key={row.href}
+                row={row}
+                last={i === moreRows.length - 1}
+                tint={tintColor(t, row.tint)}
+                onPress={() => router.push(route(row.href))}
+              />
+            ))}
+          </View>
+
+          {/* 7. Log out */}
+          <PressableScale
+            style={[styles.logoutRow, { backgroundColor: t.surface, borderColor: t.border }]}
+            onPress={confirmLogout}
+            haptic={null}
+            accessibilityRole="button"
+            accessibilityLabel={tr('account.logout')}
+          >
+            <Icon3D name="door" size={32} tint={t.coral} />
+            <Text variant="headline" style={[styles.flex1, { color: t.danger }]}>
+              {tr('account.logout')}
             </Text>
+          </PressableScale>
+
+          {/* 8. Version footer */}
+          <PressableScale
+            onLongPress={() => {
+              haptics.medium();
+              router.push(route('/dev/design-system'));
+            }}
+            haptic={null}
+            style={styles.footer}
+            accessibilityRole="button"
+            accessibilityLabel={tr('account.version', { version })}
+          >
             <Text variant="caption" tone="subtle">
-              Wallet
+              {tr('account.version', { version })}
             </Text>
           </PressableScale>
         </View>
-
-        <View style={styles.favHeader}>
-          <Text variant="title2">Favourites</Text>
-          {favourites.length > 0 ? (
-            <PressableScale
-              onPress={() => router.push(route('/favourites'))}
-              accessibilityRole="button"
-              accessibilityLabel="See all favourites"
-            >
-              <Text variant="footnote" tone="accent" style={styles.semibold}>
-                See all
-              </Text>
-            </PressableScale>
-          ) : null}
-        </View>
-        {favourites.length === 0 ? (
-          <View style={styles.favEmpty}>
-            <EmptyState
-              art="empty"
-              title="No favourites yet"
-              message="Tap the heart on a provider to save them here."
-            />
-          </View>
-        ) : (
-          <View style={styles.favList}>
-            <FlashList
-              data={favourites}
-              horizontal
-              keyExtractor={(p: Provider) => p.id}
-              showsHorizontalScrollIndicator={false}
-              ItemSeparatorComponent={() => <View style={styles.favSeparator} />}
-              renderItem={({ item }: { item: Provider }) => (
-                <PressableScale
-                  style={styles.favCard}
-                  onPress={() => router.push(`/provider/${item.id}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.name}, favourite`}
-                >
-                  <Image
-                    source={{ uri: item.photo }}
-                    style={styles.favPhoto}
-                    contentFit="cover"
-                    transition={200}
-                    cachePolicy="memory-disk"
-                  />
-                  <Text variant="footnote" style={styles.semibold} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <View style={styles.favMeta}>
-                    <Icon name="star" size={16} color={c.brand.star} />
-                    <Text variant="caption" tabular>
-                      {item.rating.toFixed(1)}
-                    </Text>
-                    <Text variant="caption" tone="subtle">
-                      · from {money(item.priceFrom)}
-                    </Text>
-                  </View>
-                </PressableScale>
-              )}
-            />
-          </View>
-        )}
-
-        <View style={styles.menu}>
-          {MENU.map((item, i) => {
-            const tint = chipTints(t)[i % chipTints(t).length];
-            return (
-              <PressableScale
-                key={item.label}
-                onPress={() => router.push(route(item.href))}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-                style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
-              >
-                <View style={[styles.menuIcon, { backgroundColor: tint.bg }]}>
-                  <Icon name={item.icon} size={20} color={tint.fg} />
-                </View>
-                <Text variant="headline" style={styles.menuLabel}>
-                  {item.label}
-                </Text>
-                <Icon name="chevron-right" size={20} color={c.text.muted} />
-              </PressableScale>
-            );
-          })}
-        </View>
-
-        <Button
-          label="Log out"
-          variant="secondary"
-          icon="logout"
-          onPress={confirmLogout}
-          style={styles.logout}
-        />
-      </ScrollView>
+      </AnimatedScrollView>
     </View>
   );
 }
 
-function Stat({
-  value,
-  label,
-  styles,
-}: {
-  value: string;
-  label: string;
-  styles: ReturnType<typeof makeStyles>;
-}) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.stat}>
-      <Text variant="title2" tone="accent" tabular>
+    <View style={statStyles.stat}>
+      <Text variant="headline" tabular>
         {value}
       </Text>
       <Text variant="caption" tone="subtle">
@@ -258,97 +352,169 @@ function Stat({
   );
 }
 
-const makeStyles = (c: Palette) =>
+function MoreRowItem({
+  row,
+  last,
+  tint,
+  onPress,
+}: {
+  row: MoreRow;
+  last: boolean;
+  tint: string;
+  onPress: () => void;
+}) {
+  const t = useTokens();
+  return (
+    <PressableScale
+      style={[
+        rowStyles.row,
+        !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border },
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={row.label}
+    >
+      <Icon3D name={row.icon} size={32} tint={tint} />
+      <View style={rowStyles.rowText}>
+        <Text variant="callout">{row.label}</Text>
+        <Text variant="caption" tone="muted" numberOfLines={1}>
+          {row.sub}
+        </Text>
+      </View>
+      <Icon name="chevron-right" size={20} color={t.textMuted} />
+    </PressableScale>
+  );
+}
+
+/** Lightweight count-up for the wallet balance (respects formatting). */
+function AnimatedMoney({ value, format }: { value: number; format: (n: number) => string }) {
+  const [display, setDisplay] = useState(0);
+  const raf = useRef<number | null>(null);
+  useEffect(() => {
+    const start = performance.now();
+    const from = 0;
+    const duration = 600;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - p) ** 3;
+      setDisplay(from + (value - from) * eased);
+      if (p < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => {
+      if (raf.current) cancelAnimationFrame(raf.current);
+    };
+  }, [value]);
+  return (
+    <Text variant="title2" tabular>
+      {format(display)}
+    </Text>
+  );
+}
+
+const makeStyles = (t: NovaTokens) =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.background.base },
-    topBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.sm,
-    },
-    semibold: { fontWeight: '600' },
-    content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-    userCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      padding: spacing.lg,
+    container: { flex: 1, backgroundColor: t.bg },
+    topSpace: { paddingTop: spacing.xxl + spacing.lg },
+    body: { paddingHorizontal: spacing.lg, gap: spacing.lg },
+    flex1: { flex: 1 },
+    badgeText: { color: '#FFFFFF', fontWeight: '700' },
+    hero: {
       borderRadius: radius.lg,
-      backgroundColor: c.brand.primarySoft,
+      backgroundColor: t.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.border,
+      padding: spacing.lg,
+      gap: spacing.md,
     },
-    avatar: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.pill,
-      backgroundColor: c.brand.primary,
+    heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    heroInfo: { flex: 1, gap: 3 },
+    editBadge: {
+      position: 'absolute',
+      right: -2,
+      bottom: -2,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
+      borderWidth: 2,
     },
-    userInfo: { flex: 1, gap: 2 },
+    plusChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      alignSelf: 'flex-start',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+      marginTop: 2,
+    },
+    chipText: { fontWeight: '700' },
     statsRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginTop: spacing.lg,
-      padding: spacing.lg,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      paddingTop: spacing.md,
     },
-    stat: { flex: 1, alignItems: 'center', gap: 2 },
-    statDivider: { width: 1, height: 32, backgroundColor: c.border },
-    favHeader: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'space-between',
-      marginTop: spacing.xl,
-      marginBottom: spacing.md,
-    },
-    favEmpty: {
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-    },
-    favList: { height: 150 },
-    favSeparator: { width: spacing.md },
-    favCard: {
-      width: 150,
-      padding: spacing.sm,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      gap: spacing.xs,
-    },
-    favPhoto: { width: '100%', height: 84, borderRadius: radius.md, backgroundColor: c.skeleton },
-    favMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    menu: {
-      marginTop: spacing.xl,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.background.surface,
-      overflow: 'hidden',
-    },
-    menuRow: {
+    statDivider: { width: StyleSheet.hairlineWidth, height: 28 },
+    wallet: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
-      minHeight: 56,
-      paddingHorizontal: spacing.lg,
+      padding: spacing.md,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
     },
-    menuDivider: { borderBottomWidth: 1, borderBottomColor: c.border },
-    menuIcon: {
-      width: 34,
-      height: 34,
-      borderRadius: radius.md,
-      backgroundColor: c.brand.primarySoft,
+    tiles: { flexDirection: 'row', gap: spacing.sm },
+    tile: { flex: 1, alignItems: 'center', gap: spacing.xs },
+    tileBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -6,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      paddingHorizontal: 4,
       alignItems: 'center',
       justifyContent: 'center',
+      borderWidth: 2,
     },
-    menuLabel: { flex: 1 },
-    logout: { marginTop: spacing.xl },
+    promos: { flexDirection: 'row', gap: spacing.sm },
+    promo: {
+      flex: 1,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      gap: spacing.xs,
+    },
+    groupLabel: { marginBottom: -spacing.sm, marginTop: spacing.xs, paddingHorizontal: spacing.xs },
+    group: {
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      overflow: 'hidden',
+    },
+    logoutRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.md,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+    },
+    footer: { alignItems: 'center', paddingVertical: spacing.lg },
   });
+
+const statStyles = StyleSheet.create({
+  stat: { flex: 1, alignItems: 'center', gap: 2 },
+});
+
+const rowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 60,
+    paddingHorizontal: spacing.md,
+  },
+  rowText: { flex: 1, gap: 1 },
+});

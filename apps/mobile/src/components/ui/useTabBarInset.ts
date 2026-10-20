@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { makeMutable, withSpring } from 'react-native-reanimated';
+import {
+  makeMutable,
+  withSpring,
+  useSharedValue,
+  useAnimatedScrollHandler,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { create } from 'zustand';
 
 import { spring } from '../../theme';
@@ -63,6 +69,30 @@ export function useTabBarScroll(): {
     return () => setTabBarHidden(false);
   }, []);
   return { onScroll };
+}
+
+/**
+ * UI-thread scroll handler for screens that have a collapsing header: exposes
+ * a `scrollY` shared value (drives the CollapsingHeader) and also hides/shows
+ * the floating tab bar by direction — all on the UI thread, 60fps.
+ */
+export function useScreenScroll(): {
+  scrollY: SharedValue<number>;
+  onScroll: ReturnType<typeof useAnimatedScrollHandler>;
+} {
+  const scrollY = useSharedValue(0);
+  const prev = useSharedValue(0);
+  const hidden = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + 24;
+  const onScroll = useAnimatedScrollHandler((e) => {
+    const y = e.contentOffset.y;
+    scrollY.value = y;
+    const dy = y - prev.value;
+    if (y <= 0) tabBarOffset.value = withSpring(0, spring.smooth);
+    else if (dy > 6) tabBarOffset.value = withSpring(hidden, spring.smooth);
+    else if (dy < -6) tabBarOffset.value = withSpring(0, spring.smooth);
+    prev.value = y;
+  });
+  return { scrollY, onScroll };
 }
 
 /** Registry of per-route "scroll to top" callbacks, keyed by route name. */

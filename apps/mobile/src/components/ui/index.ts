@@ -42,11 +42,14 @@ export {
   useTabBarInset,
   tabBarInset,
   useTabBarScroll,
+  useScreenScroll,
   useRegisterScrollTop,
   scrollTabToTop,
   setTabBarHidden,
   TAB_BAR_HEIGHT,
 } from './useTabBarInset';
+export { CollapsingHeader, LargeTitle, COLLAPSING_BAR_HEIGHT } from './CollapsingHeader';
+export type { CollapsingHeaderProps } from './CollapsingHeader';
 export { LiveActivityPill } from './LiveActivityPill';
 export type { LiveActivityPillProps } from './LiveActivityPill';
 // NOVA v3 "Bookit-original" components.
