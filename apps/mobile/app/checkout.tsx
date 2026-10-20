@@ -12,7 +12,7 @@ import Animated, {
   Extrapolation,
   useReducedMotion,
 } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -41,7 +41,7 @@ import {
   type Recurrence,
 } from '../src/stores/bookingsStore';
 import { useAddressStore, type Address } from '../src/stores/addressStore';
-import { computeCart, useCartStore } from '../src/stores/cartStore';
+import { computeCart, useCartStore, ADD_ONS } from '../src/stores/cartStore';
 import { useWalletStore } from '../src/stores/walletStore';
 import { showToast } from '../src/stores/toastStore';
 import { useTokens, radius, spacing, spring } from '../src/theme';
@@ -99,6 +99,10 @@ export default function CheckoutScreen() {
   const addOnIds = useCartStore((s) => s.addOnIds);
   const tip = useCartStore((s) => s.tip);
   const promoApplied = useCartStore((s) => s.promoApplied);
+  const toggleAddOn = useCartStore((s) => s.toggleAddOn);
+  const setTip = useCartStore((s) => s.setTip);
+  const applyPromo = useCartStore((s) => s.applyPromo);
+  const clearPromo = useCartStore((s) => s.clearPromo);
   const clearCart = useCartStore((s) => s.clear);
   const breakdown = useMemo(
     () => computeCart({ items, addOnIds, tip, promoApplied }),
@@ -111,7 +115,14 @@ export default function CheckoutScreen() {
   const walletBalance = useWalletStore((s) => s.balance());
   const debitWallet = useWalletStore((s) => s.debit);
 
-  const [open, setOpen] = useState<StepId>('time');
+  const params = useLocalSearchParams<{ step?: string }>();
+  const initialStep: StepId = (['service', 'time', 'address', 'pay', 'review'] as const).includes(
+    (params.step ?? '') as StepId,
+  )
+    ? (params.step as StepId)
+    : 'time';
+  const [open, setOpen] = useState<StepId>(initialStep);
+  const [promoInput, setPromoInput] = useState('');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [recurrence, setRecurrence] = useState<Recurrence>('none');
@@ -194,6 +205,7 @@ export default function CheckoutScreen() {
     setConfirming(true);
     setFired(true);
     haptics.success();
+    track('slide_to_confirm', { providerId, total: breakdown.total });
     const id = generateBookingId();
     const serviceName =
       items.length === 1 ? items[0].name : `${items[0].name} +${items.length - 1} more`;
@@ -266,6 +278,19 @@ export default function CheckoutScreen() {
                 {money(it.price * it.quantity)}
               </Text>
             </View>
+          ))}
+          <Text variant="caption" tone="muted" style={styles.subLabel}>
+            Add-ons
+          </Text>
+          {ADD_ONS.map((a) => (
+            <SelectRow
+              key={a.id}
+              icon="plus-circle"
+              label={a.name}
+              sub={`+ ${money(a.price)}`}
+              selected={addOnIds.includes(a.id)}
+              onPress={() => toggleAddOn(a.id)}
+            />
           ))}
           <Button
             label="Edit cart"
@@ -505,6 +530,65 @@ export default function CheckoutScreen() {
           setOpen={setOpen}
           done={reviewReady}
         >
+          <Text variant="caption" tone="muted" style={styles.subLabel}>
+            Add a tip
+          </Text>
+          <View style={styles.pinWrap}>
+            {[0, 3, 5, 10].map((amt) => (
+              <Chip
+                key={amt}
+                label={amt === 0 ? 'No tip' : money(amt)}
+                selected={tip === amt}
+                onPress={() => setTip(amt)}
+              />
+            ))}
+          </View>
+
+          <Text variant="caption" tone="muted" style={styles.subLabel}>
+            Promo code
+          </Text>
+          {promoApplied ? (
+            <PressableScale
+              onPress={() => {
+                clearPromo();
+                setPromoInput('');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Remove promo code"
+              style={styles.addNew}
+            >
+              <Icon name="check-circle" size={20} color={t.success} />
+              <Text variant="footnote" tone="success" style={styles.flex1}>
+                BOOKIT10 applied — 10% off
+              </Text>
+              <Text variant="footnote" tone="muted">
+                Remove
+              </Text>
+            </PressableScale>
+          ) : (
+            <View style={styles.promoRow}>
+              <View style={styles.flex1}>
+                <TextField
+                  label="Code"
+                  value={promoInput}
+                  onChangeText={setPromoInput}
+                  placeholder="Enter code (BOOKIT10)"
+                  autoCapitalize="characters"
+                />
+              </View>
+              <Button
+                label="Apply"
+                variant="secondary"
+                fullWidth={false}
+                onPress={() => {
+                  if (applyPromo(promoInput)) showToast('Promo applied');
+                  else showToast('Invalid promo code');
+                }}
+                style={styles.promoApply}
+              />
+            </View>
+          )}
+
           <Card variant="flat" padding={spacing.md} style={styles.reviewCard}>
             <ReviewRow label="When" value={timeSummary ?? '—'} />
             {recurrence !== 'none' ? (
@@ -835,6 +919,8 @@ const styles = StyleSheet.create({
   },
   newAddress: { gap: spacing.sm },
   pinWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  promoRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
+  promoApply: { marginBottom: 2 },
   newActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
   secureNote: {
     flexDirection: 'row',
