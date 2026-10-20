@@ -1,6 +1,8 @@
 // NOVA component library. Import UI primitives from here.
 export { Icon } from './Icon';
 export type { IconName, IconSize, IconProps, IconWeightProp } from './Icon';
+export { Icon3D } from './Icon3D';
+export type { Icon3DProps, Icon3DSize, Icon3DAnimate } from './Icon3D';
 export { Text } from './Text';
 export type { TextVariant, TextTone, TextProps } from './Text';
 export { PressableScale } from './PressableScale';

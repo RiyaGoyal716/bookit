@@ -13,6 +13,15 @@ Bookit uses the following open-source assets. These are also surfaced in-app und
   static assets through `expo-image` (`src/assets/3d/index.tsx` → `Fluent3D`). Files
   were fetched with the dev-only downloader (see below) from
   `https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/<Folder>/3D/<file>_3d.png`.
+- **Icon system v2 (PROMPT 8):** the `<Icon3D>` component (`src/components/ui/Icon3D.tsx`)
+  sits each Fluent 3D illustration on a tinted squircle and now backs account rows,
+  quick tiles, notification types, settings, safety, wallet and empty/status screens.
+  Assets added in this pass: Coin, Red heart, Briefcase, Bell with slash, Page facing up,
+  Gear, Balance scale, Door, Check mark button, Alarm clock, Admission tickets,
+  Glowing star, Locked with key, Motor scooter, Cross mark, Megaphone, Identification card,
+  Police car light, Handshake, Crescent moon, Key, Chart increasing, World map
+  (plus the existing Money bag, Credit card, Round pushpin, Crown, Wrapped gift, Bell,
+  Shield, Spiral calendar, Speech balloon, Star, Globe, Party popper).
 
 MIT licence text: https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE
 

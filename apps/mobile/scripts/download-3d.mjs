@@ -11,6 +11,7 @@
  * where noted so it matches the key used in src/assets/3d/index.tsx.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -61,19 +62,50 @@ const PAIRS = [
   ['Mobile phone', 'mobile_phone'],
   ['Hourglass not done', 'hourglass_not_done'],
   ['Construction', 'construction'],
+  // --- Icon system v2 (PROMPT 8): new 3D glyphs for account rows, quick tiles,
+  // notification types, settings, safety, wallet, empty / status screens. ---
+  ['Coin', 'coin'],
+  ['Red heart', 'red_heart'],
+  ['Briefcase', 'briefcase'],
+  ['Bell with slash', 'bell_with_slash'],
+  ['Page facing up', 'page_facing_up'],
+  ['Gear', 'gear'],
+  ['Balance scale', 'balance_scale'],
+  ['Door', 'door'],
+  ['Check mark button', 'check_mark_button'],
+  ['Alarm clock', 'alarm_clock'],
+  ['Admission tickets', 'admission_tickets'],
+  ['Glowing star', 'glowing_star'],
+  ['Locked with key', 'locked_with_key'],
+  ['Motor scooter', 'motor_scooter'],
+  ['Cross mark', 'cross_mark'],
+  ['Megaphone', 'megaphone'],
+  ['Identification card', 'identification_card'],
+  ['Police car light', 'police_car_light'],
+  ['Handshake', 'handshake'],
+  ['Crescent moon', 'crescent_moon'],
+  ['Key', 'key'],
+  ['Chart increasing', 'chart_increasing'],
+  ['World map', 'world_map'],
 ];
 
 async function main() {
   await mkdir(OUT, { recursive: true });
   let ok = 0;
   let fail = 0;
+  let skip = 0;
   for (const [folder, stem, savedAs] of PAIRS) {
+    const dest = join(OUT, `${savedAs ?? stem}.png`);
+    if (existsSync(dest)) {
+      skip += 1;
+      continue;
+    }
     const url = `${BASE}/${encodeURIComponent(folder)}/3D/${stem}_3d.png`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const buf = new Uint8Array(await res.arrayBuffer());
-      await writeFile(join(OUT, `${savedAs ?? stem}.png`), buf);
+      await writeFile(dest, buf);
       ok += 1;
       console.log(`  ok   ${stem}.png`);
     } catch (e) {
@@ -81,7 +113,7 @@ async function main() {
       console.error(`  FAIL ${stem}  (${url})  ${e.message}`);
     }
   }
-  console.log(`\nFluent 3D download — ${ok} ok, ${fail} failed, into ${OUT}`);
+  console.log(`\nFluent 3D download — ${ok} ok, ${skip} skipped, ${fail} failed, into ${OUT}`);
   if (fail) process.exit(1);
 }
 
