@@ -116,3 +116,26 @@ are migrated to the `<Icon>`/`Text` primitives screen-by-screen and added to the
 flow (`provider/[id]`, `booking/*`, `checkout`, `tracking`, `invoice`), discovery
 (`search`, `concierge`, `category/[slug]`, `compare`, `favourites`, `offers`), pro mode,
 bookings/inbox tabs, and the status/notice screens.
+
+---
+
+## PROMPT 8 — polish pass (location gate, tab bar, Icon3D, Account + Notifications)
+
+Re-audited the launch flow, the tab shell and the Account/Notifications routes while
+landing the PROMPT 8 polish. Before/after per touched area:
+
+| Route / surface | Before | After |
+| --- | --- | --- |
+| Launch flow | Splash → onboarding/tabs; location asked in a later primer | Splash → **LocationGate** (first screen every launch; GPS or UK-postcode fallback, all permission states as a pure reducer); permission primer is notifications-only; foreground guard re-shows the gate if GPS is revoked with no manual address |
+| Floating tab bar | Icon **+ text label**, static pill, one haptic | **Icon-only** 64pt radius-32 island; sliding stretch pill + 4pt active dot; per-tab micro-animations; Account shows the user avatar (ring when active); long-press tooltip; coral badges; hide-on-scroll; `useTabBarInset()` padding so content never hides behind it |
+| Icon language | Line icons inside tinted circles on rows/tiles | **`Icon3D`** (Fluent 3D on a tinted squircle) on Account rows/tiles/promos and every Notifications row + empty state |
+| Account (bug 1, 2, 5) | Plain `title1` overlapping the first card; Log out button hidden behind the tab bar; large bordered boxes | Collapsing large title with a blurred sticky header + correct top inset; `useTabBarInset()` bottom padding; compact 60pt rows on the 4pt grid; hero + wallet + quick tiles + promos + grouped More + danger Log out + version footer |
+| Notifications (bug 4, 5) | "Notification preferences" full-width row; "Mark all" text label cut off; big boxes | Collapsing title + blur; **icon buttons** (Mark all as read, Preferences) with long-press tooltips; Preferences in a bottom sheet; sliding filter chips with unread counts; compact 76–84pt Icon3D rows; needs-action inline controls; swipe to read/delete + Undo; stacking cards |
+| Floating gear (bug 3) | — | No app-owned floating gear button exists on Account/Notifications (the only floating control is Expo Go's own dev launcher, left in place). Resolved by the rebuilds. |
+
+Haptics: every pressable now flows through `PressableScale`; `check:design` fails on raw
+`Pressable`/`Touchable*` outside `src/components/ui`; a 60ms throttle caps buzz spam.
+
+Still pre-NOVA / not revisited in this pass (tracked): provider & booking flow, discovery
+screens, pro mode, settings cluster, and the status/notice screens keep working but were
+not re-styled to the Icon3D row system here.
