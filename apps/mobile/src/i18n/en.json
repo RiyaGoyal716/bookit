@@ -99,5 +99,36 @@
   "money": {
     "from": "from",
     "perHour": "/hr"
+  },
+  "locationGate": {
+    "title": "Bookit needs your location",
+    "body": "We use it to show verified pros near you and their arrival times. We never share it.",
+    "allow": "Allow location",
+    "locating": "Finding your location…",
+    "resolving": "Getting your address…",
+    "foundPrefix": "You're in",
+    "denied": "We need your location",
+    "deniedBody": "Please allow location so we can show pros near you.",
+    "blockedTitle": "Location is off",
+    "blockedBody": "Location access is turned off for Bookit. Open Settings to turn it on.",
+    "openSettings": "Open Settings",
+    "servicesOffTitle": "Location services are off",
+    "servicesOffBody": "Turn on location services to find pros near you.",
+    "turnOn": "Turn on location",
+    "timeoutTitle": "Couldn't get your location",
+    "timeoutBody": "Something went wrong finding you. Try again.",
+    "tryAgain": "Try again",
+    "manualCta": "Enter postcode instead",
+    "manualTitle": "Enter your postcode",
+    "manualBody": "We'll use it to show pros near you.",
+    "manualLabel": "Postcode",
+    "manualPlaceholder": "e.g. LS6 1AB",
+    "manualInvalid": "Enter a valid UK postcode",
+    "manualNotFound": "We couldn't find that postcode",
+    "manualConfirm": "Confirm postcode",
+    "outOfAreaTitle": "We're not in {city} yet",
+    "outOfAreaBody": "Bookit is live in Leeds right now. We'll let you know when we reach you.",
+    "notifyMe": "Notify me",
+    "browseLeeds": "Browse Leeds"
   }
 }

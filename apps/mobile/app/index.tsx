@@ -5,22 +5,22 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AnimatedSplash, Wordmark } from '../src/brand';
 import { route } from '../src/lib/nav';
-import { useOnboardingStore } from '../src/stores/onboardingStore';
 import { useColorSchemeName, useTokens } from '../src/theme';
 
 /**
  * Cold-start entry. Shows the NOVA in-app animated splash (mark draws on, check
- * pops, light haptic), then redirects into onboarding or the tabs. The native
- * splash (expo-splash-screen) already covered the font load.
+ * pops, light haptic), then redirects into the LOCATION GATE — the first screen
+ * on every launch. The gate resolves a location (GPS or manual postcode) and
+ * then continues into onboarding (first launch) or the tabs. The native splash
+ * (expo-splash-screen) already covered the font load.
  */
 export default function Entry() {
   const t = useTokens();
   const scheme = useColorSchemeName();
-  const seen = useOnboardingStore((s) => s.seen);
   const [done, setDone] = useState(false);
 
   if (done) {
-    return <Redirect href={seen ? route('/(tabs)') : route('/onboarding')} />;
+    return <Redirect href={route('/location-gate')} />;
   }
 
   return (

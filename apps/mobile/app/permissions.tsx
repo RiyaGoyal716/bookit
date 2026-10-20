@@ -1,20 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
 
 import { Button, Text, PressableScale } from '../src/components/ui';
-import { IllustrationLocation, IllustrationNotify } from '../src/assets/illustrations';
+import { IllustrationNotify } from '../src/assets/illustrations';
 import { useT } from '../src/i18n';
 import { useOnboardingStore } from '../src/stores/onboardingStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
 import { route } from '../src/lib/nav';
-import { useColors, useColorSchemeName, spacing, radius, type Palette } from '../src/theme';
+import { useColors, useColorSchemeName, spacing, type Palette } from '../src/theme';
 
-type Step = 'location' | 'notifications';
-
+/**
+ * Notifications primer. Location is NOT asked here any more — it is gated up
+ * front by the location gate (app/location-gate.tsx) on every launch, so this
+ * primer only covers push notifications.
+ */
 export default function PermissionsScreen() {
   const router = useRouter();
   const c = useColors();
@@ -24,35 +26,16 @@ export default function PermissionsScreen() {
   const styles = useMemo(() => makeStyles(c), [c]);
   const markSeen = useOnboardingStore((s) => s.markSeen);
   const setNotifications = useSettingsStore((s) => s.setNotificationsEnabled);
-  const [step, setStep] = useState<Step>('location');
-  const [busy, setBusy] = useState(false);
 
   const finish = () => {
     markSeen();
     router.replace(route('/(tabs)'));
   };
 
-  const nextAfterLocation = () => setStep('notifications');
-
-  const onAllowLocation = async () => {
-    setBusy(true);
-    try {
-      await Location.requestForegroundPermissionsAsync();
-    } catch {
-      // Expo Go / denied — proceed regardless; the primer is best-effort.
-    } finally {
-      setBusy(false);
-      nextAfterLocation();
-    }
-  };
-
   const onEnableNotifications = () => {
-    // Mock primer — flip the settings flag and continue.
     setNotifications(true);
     finish();
   };
-
-  const isLocation = step === 'location';
 
   return (
     <View style={styles.root}>
@@ -64,30 +47,22 @@ export default function PermissionsScreen() {
         ]}
       >
         <View style={styles.art}>
-          {isLocation ? <IllustrationLocation size={220} /> : <IllustrationNotify size={220} />}
+          <IllustrationNotify size={220} />
         </View>
 
         <View style={styles.copy}>
-          <View style={styles.dots}>
-            <View style={[styles.dot, isLocation && styles.dotActive]} />
-            <View style={[styles.dot, !isLocation && styles.dotActive]} />
-          </View>
           <Text variant="display" center>
-            {t(isLocation ? 'permissions.locationTitle' : 'permissions.notifTitle')}
+            {t('permissions.notifTitle')}
           </Text>
           <Text variant="body" tone="muted" center style={styles.subtitle}>
-            {t(isLocation ? 'permissions.locationBody' : 'permissions.notifBody')}
+            {t('permissions.notifBody')}
           </Text>
         </View>
 
         <View style={styles.footer}>
-          <Button
-            label={t(isLocation ? 'permissions.allow' : 'permissions.enable')}
-            loading={busy}
-            onPress={isLocation ? onAllowLocation : onEnableNotifications}
-          />
+          <Button label={t('permissions.enable')} onPress={onEnableNotifications} />
           <PressableScale
-            onPress={isLocation ? nextAfterLocation : finish}
+            onPress={finish}
             style={styles.skip}
             accessibilityRole="button"
             accessibilityLabel={t('permissions.notNow')}
@@ -108,9 +83,6 @@ const makeStyles = (c: Palette) =>
     body: { flex: 1, paddingHorizontal: spacing.xl, justifyContent: 'space-between' },
     art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     copy: { alignItems: 'center', gap: spacing.md },
-    dots: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
-    dot: { width: 8, height: 8, borderRadius: radius.pill, backgroundColor: c.border },
-    dotActive: { backgroundColor: c.brand.primary, width: 24 },
     subtitle: { maxWidth: 320 },
     footer: { gap: spacing.sm, marginTop: spacing.xxl },
     skip: { alignItems: 'center', paddingVertical: spacing.md },

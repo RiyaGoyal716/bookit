@@ -40,6 +40,12 @@
         }
       ],
       "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bookit uses your location to show verified pros near you and their arrival times."
+        }
+      ],
       "@sentry/react-native/expo",
       "expo-localization"
     ],

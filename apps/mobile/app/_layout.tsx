@@ -50,6 +50,7 @@ function ThemedStack() {
         }}
       >
         <Stack.Screen name="index" options={{ animation: 'fade' }} />
+        <Stack.Screen name="location-gate" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="region" />
         <Stack.Screen name="login" />

@@ -3,10 +3,12 @@ import { Tabs } from 'expo-router';
 import { useChatStore } from '../../src/stores/chatStore';
 import { useColors } from '../../src/theme';
 import { FloatingTabBar } from '../../src/components/ui';
+import { useLocationGuard } from '../../src/features/location/useLocationGuard';
 
 /** NOVA tab shell: Home · Explore · Bookings · Inbox · Account with a blurred floating tab bar. */
 export default function TabsLayout() {
   const c = useColors();
+  useLocationGuard();
   const unread = useChatStore((s) => s.conversations.reduce((n, conv) => n + conv.unread, 0));
 
   return (
