@@ -85,11 +85,23 @@ function checkFile(abs) {
     if (/from\s+['"]phosphor-react-native['"]/.test(src))
       add(rel, 0, 'icon-import', 'imports phosphor directly (use <Icon>)');
   }
+  // Raw touchables are banned OUTSIDE the ui library (and brand) — every
+  // pressable must go through <PressableScale> so it gets the scale + haptic.
+  const inUi = rel.startsWith('src/components/ui/');
   if (!isTextPrimitive && !inBrand) {
     const rn = rnImports(src);
     if (rn.has('Text')) add(rel, 0, 'raw-text', 'imports Text from react-native (use ui <Text>)');
-    if (rn.has('TouchableOpacity'))
-      add(rel, 0, 'touchable', 'imports TouchableOpacity (use PressableScale)');
+    if (!inUi) {
+      for (const comp of [
+        'Pressable',
+        'TouchableOpacity',
+        'TouchableHighlight',
+        'TouchableWithoutFeedback',
+      ]) {
+        if (rn.has(comp))
+          add(rel, 0, 'touchable', `imports ${comp} from react-native (use PressableScale)`);
+      }
+    }
   }
 
   lines.forEach((ln, i) => {

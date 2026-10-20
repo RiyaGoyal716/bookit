@@ -23,8 +23,35 @@ function enabled(): boolean {
   }
 }
 
+/** Minimum gap between two haptics so rapid events never buzz-spam (ms). */
+export const HAPTIC_MIN_GAP_MS = 60;
+
+let lastFireAt = -Infinity;
+/** Injectable clock so the throttle is unit-testable. */
+let now = () => Date.now();
+
+/** Test hook: override the clock used by the throttle. */
+export function __setHapticClock(fn: () => number): void {
+  now = fn;
+}
+
+/** Test hook: clear the throttle window. */
+export function __resetHapticThrottle(): void {
+  lastFireAt = -Infinity;
+}
+
+/** True when enough time has passed since the last haptic to fire again. */
+export function canFireHaptic(at: number, last: number, gap: number = HAPTIC_MIN_GAP_MS): boolean {
+  return at - last >= gap;
+}
+
 function run(fn: () => Promise<void> | void) {
   if (!enabled()) return;
+  // Throttle: at most one haptic per HAPTIC_MIN_GAP_MS (never during scroll —
+  // haptics are only ever fired from discrete handlers, not scroll events).
+  const at = now();
+  if (!canFireHaptic(at, lastFireAt)) return;
+  lastFireAt = at;
   try {
     void fn();
   } catch {

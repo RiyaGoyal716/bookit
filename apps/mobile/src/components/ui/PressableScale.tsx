@@ -13,7 +13,7 @@ import { haptics } from '../../lib/haptics';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface PressableScaleProps extends Omit<PressableProps, 'style'> {
-  children: ReactNode;
+  children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   /** Scale on press-in. Default 0.97. */
   scaleTo?: number;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet, Pressable, TextInput, Modal, FlatList } from 'react-native';
+import { View, StyleSheet, TextInput, Modal, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -181,9 +181,12 @@ export default function LoginScreen() {
         onRequestClose={() => setPickerOpen(false)}
       >
         <View style={styles.modalRoot}>
-          <Pressable
+          <PressableScale
             style={styles.backdrop}
             onPress={() => setPickerOpen(false)}
+            scaleTo={1}
+            haptic={null}
+            accessibilityRole="button"
             accessibilityLabel="Close"
           />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
