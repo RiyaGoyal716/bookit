@@ -15,7 +15,7 @@ import Animated, {
 import { useColorSchemeName, useTokens, spring } from '../../theme';
 import { Fluent3D, type Fluent3DKey } from '../../assets/3d';
 
-export type Icon3DSize = 24 | 32 | 40 | 56 | 72 | 120;
+export type Icon3DSize = 24 | 32 | 40 | 44 | 48 | 56 | 72 | 120;
 export type Icon3DAnimate = 'none' | 'enter' | 'attention';
 
 export interface Icon3DProps {

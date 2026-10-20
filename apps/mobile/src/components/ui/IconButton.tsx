@@ -7,6 +7,7 @@ import { Icon, type IconName, type IconSize } from './Icon';
 export interface IconButtonProps {
   name: IconName;
   onPress?: () => void;
+  onLongPress?: () => void;
   accessibilityLabel: string;
   size?: IconSize;
   /** Visual button diameter. Default 44 (min hit target). */
@@ -21,6 +22,7 @@ export interface IconButtonProps {
 export function IconButton({
   name,
   onPress,
+  onLongPress,
   accessibilityLabel,
   size = 20,
   diameter = 44,
@@ -35,6 +37,7 @@ export function IconButton({
   return (
     <PressableScale
       onPress={disabled ? undefined : onPress}
+      onLongPress={disabled ? undefined : onLongPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
