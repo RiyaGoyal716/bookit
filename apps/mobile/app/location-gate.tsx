@@ -57,7 +57,13 @@ async function resolveAddress(coords: {
   let city = 'Leeds';
   let postcode: string | undefined;
   try {
-    const [place] = await Location.reverseGeocodeAsync(coords);
+    // reverseGeocodeAsync can hang in Expo Go (no native geocoder / slow network),
+    // so race it against a short timeout and fall back gracefully.
+    const geocode = Location.reverseGeocodeAsync(coords);
+    const timeout = new Promise<Location.LocationGeocodedAddress[]>((resolve) =>
+      setTimeout(() => resolve([]), 2500),
+    );
+    const [place] = await Promise.race([geocode, timeout]);
     if (place) {
       city = place.city ?? place.subregion ?? city;
       postcode = place.postalCode ?? undefined;
@@ -95,6 +101,7 @@ export default function LocationGateScreen() {
   const [postcode, setPostcode] = useState('');
   const [manualError, setManualError] = useState<string | undefined>();
   const navigatedRef = useRef(false);
+  const locatingIdRef = useRef(0);
 
   // --- Animations ---
   const pinDrop = useSharedValue(-120);
@@ -167,7 +174,7 @@ export default function LocationGateScreen() {
   // locating -> get position (8s timeout, last-known fallback) then resolve.
   useEffect(() => {
     if (state.status !== 'locating') return;
-    let cancelled = false;
+    const currentId = ++locatingIdRef.current;
     (async () => {
       try {
         const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
@@ -180,23 +187,26 @@ export default function LocationGateScreen() {
           const last = await Location.getLastKnownPositionAsync();
           coords = last?.coords;
         }
-        if (cancelled) return;
+        if (locatingIdRef.current !== currentId) return;
         if (!coords) {
           dispatch({ type: 'POSITION_TIMEOUT' });
           return;
         }
         dispatch({ type: 'POSITION_OK' });
         const address = await resolveAddress(coords);
-        if (cancelled) return;
+        if (locatingIdRef.current !== currentId) return;
         dispatch({ type: 'RESOLVED', address });
       } catch {
-        if (!cancelled) dispatch({ type: 'RESOLVE_ERROR' });
+        if (locatingIdRef.current === currentId) dispatch({ type: 'RESOLVE_ERROR' });
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [state.status]);
+
+  useEffect(() => {
+    return () => {
+      locatingIdRef.current++;
+    };
+  }, []);
 
   // success / manual -> persist + continue after a beat.
   useEffect(() => {
@@ -269,6 +279,23 @@ export default function LocationGateScreen() {
     haptics.selection();
     setManualOpen(false);
     dispatch({ type: 'MANUAL_CONFIRMED', address: found });
+  };
+
+  const onSkipToLeeds = () => {
+    haptics.light();
+    const leeds: ResolvedLocation = {
+      label: 'Headingley, Leeds',
+      city: 'Leeds',
+      latitude: LEEDS.latitude,
+      longitude: LEEDS.longitude,
+      distanceKm: 0,
+      source: 'manual',
+    };
+    setLocation(leeds);
+    if (!navigatedRef.current) {
+      navigatedRef.current = true;
+      router.replace(seen ? route('/(tabs)') : route('/onboarding'));
+    }
   };
 
   const busy =
@@ -411,17 +438,27 @@ export default function LocationGateScreen() {
         ) : resolved ? null : (
           <View style={styles.actions}>
             <Button label={primaryLabel} onPress={primaryAction} loading={busy} />
+            <PressableScale
+              onPress={onSkipToLeeds}
+              style={styles.secondary}
+              accessibilityRole="button"
+              accessibilityLabel="Explore Leeds (Demo)"
+            >
+              <Text variant="body" style={{ color: tok.primary, fontWeight: '600' }}>
+                Explore Demo (Leeds)
+              </Text>
+            </PressableScale>
             {!busy && (
               <PressableScale
                 onPress={() => {
                   haptics.light();
                   setManualOpen(true);
                 }}
-                style={styles.secondary}
+                style={[styles.secondary, { paddingTop: 0 }]}
                 accessibilityRole="button"
                 accessibilityLabel={t('locationGate.manualCta')}
               >
-                <Text variant="body" style={{ color: tok.primary, fontWeight: '600' }}>
+                <Text variant="footnote" tone="muted">
                   {t('locationGate.manualCta')}
                 </Text>
               </PressableScale>
