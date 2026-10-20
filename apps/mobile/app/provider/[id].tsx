@@ -29,14 +29,15 @@ import {
   Card,
   Chip,
   Rating,
-  StatusPill,
   SegmentedControl,
   EmptyState,
   Screen,
+  ServiceCard,
+  BookingBar,
 } from '../../src/components/ui';
 import type { IconName } from '../../src/components/ui';
-import { getProviderById, getProvidersByCategory } from '../../src/mocks';
-import type { Provider, ProviderBadge, Service } from '../../src/mocks/types';
+import { getProviderById, getProvidersByCategory, getCategoryForProvider } from '../../src/mocks';
+import type { Provider, ProviderBadge } from '../../src/mocks/types';
 import { getSlotsForDay } from '../../src/mocks/availability';
 import { track } from '../../src/lib/analytics';
 import { route } from '../../src/lib/nav';
@@ -103,11 +104,8 @@ export default function ProviderProfileScreen() {
   const toggleCompare = useCompareStore((s) => s.toggle);
   const reviews = useReviewsStore((s) => s.reviews);
   const addItem = useCartStore((s) => s.addItem);
-  const decrement = useCartStore((s) => s.decrement);
-  const cartItems = useCartStore((s) => s.items);
   const cartProviderId = useCartStore((s) => s.providerId);
   const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
-  const cartTotal = useCartStore((s) => s.breakdown().total);
 
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [tab, setTab] = useState(0);
@@ -170,6 +168,7 @@ export default function ProviderProfileScreen() {
   const badges = provider.badges ?? [];
   const stats = provider.stats;
   const sameProviderCart = cartProviderId === provider.id;
+  const categorySlug = getCategoryForProvider(provider.category)?.slug ?? provider.category;
   const slots = getSlotsForDay(provider.id, selectedDay);
 
   const onShare = () => {
@@ -197,23 +196,6 @@ export default function ProviderProfileScreen() {
   const similar = getProvidersByCategory(provider.category)
     .filter((p) => p.id !== provider.id)
     .slice(0, 6);
-
-  const qtyFor = (service: Service): number => {
-    if (!sameProviderCart) return 0;
-    return cartItems.find((i) => i.key === (service.id ?? service.name))?.quantity ?? 0;
-  };
-
-  const addService = (service: Service) => {
-    haptics.medium();
-    addItem({
-      key: service.id ?? service.name,
-      providerId: provider.id,
-      providerName: provider.name,
-      name: service.name,
-      price: service.price,
-      durationMin: service.durationMin,
-    });
-  };
 
   const onGalleryScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setGalleryIndex(Math.round(e.nativeEvent.contentOffset.x / width));
@@ -389,12 +371,9 @@ export default function ProviderProfileScreen() {
           {tab === 0 ? (
             <ServicesTab
               provider={provider}
+              categorySlug={categorySlug}
               sameProviderCart={sameProviderCart}
               cartCount={cartCount}
-              qtyFor={qtyFor}
-              addService={addService}
-              decrement={decrement}
-              money={money}
               selectedDay={selectedDay}
               setSelectedDay={setSelectedDay}
               slots={slots}
@@ -431,32 +410,31 @@ export default function ProviderProfileScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* Sticky book bar */}
-      <View
-        style={[
-          styles.footer,
-          {
-            backgroundColor: t.surface,
-            borderTopColor: t.border,
-            paddingBottom: insets.bottom + spacing.md,
-          },
-        ]}
-      >
-        <View>
-          <Text variant="caption" tone="muted">
-            {cartCount > 0 && sameProviderCart ? `${cartCount} in cart` : 'from'}
-          </Text>
-          <Text variant="title2" tabular>
-            {money(cartCount > 0 && sameProviderCart ? cartTotal : fromPrice)}
-          </Text>
+      {/* Floating basket bar once a service is added; otherwise the book bar. */}
+      {cartCount > 0 && sameProviderCart ? (
+        <BookingBar offset={spacing.sm} />
+      ) : (
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: t.surface,
+              borderTopColor: t.border,
+              paddingBottom: insets.bottom + spacing.md,
+            },
+          ]}
+        >
+          <View>
+            <Text variant="caption" tone="muted">
+              from
+            </Text>
+            <Text variant="title2" tabular>
+              {money(fromPrice)}
+            </Text>
+          </View>
+          <Button label="Book now" icon="calendar" style={styles.bookBtn} onPress={bookNow} />
         </View>
-        <Button
-          label={cartCount > 0 && sameProviderCart ? 'View cart' : 'Book now'}
-          icon={cartCount > 0 && sameProviderCart ? 'cart' : 'calendar'}
-          style={styles.bookBtn}
-          onPress={bookNow}
-        />
-      </View>
+      )}
     </View>
   );
 }
@@ -485,28 +463,24 @@ function Stat({
 
 function ServicesTab({
   provider,
+  categorySlug,
   sameProviderCart,
   cartCount,
-  qtyFor,
-  addService,
-  decrement,
-  money,
   selectedDay,
   setSelectedDay,
   slots,
 }: {
   provider: Provider;
+  categorySlug: string;
   sameProviderCart: boolean;
   cartCount: number;
-  qtyFor: (s: Service) => number;
-  addService: (s: Service) => void;
-  decrement: (key: string) => void;
-  money: (n: number) => string;
   selectedDay: number;
   setSelectedDay: (d: number) => void;
   slots: { time: string; available: boolean }[];
 }) {
   const t = useTokens();
+  const { width } = useWindowDimensions();
+  const cardW = (width - spacing.lg * 2 - spacing.md) / 2;
   return (
     <View style={styles.section}>
       {!sameProviderCart && cartCount > 0 ? (
@@ -518,61 +492,24 @@ function ServicesTab({
         </View>
       ) : null}
 
-      {provider.services.map((s) => {
-        const qty = qtyFor(s);
-        return (
-          <Card key={s.name} variant="outlined" padding={spacing.md} style={styles.serviceRow}>
-            <View style={styles.flex1}>
-              <View style={styles.serviceNameRow}>
-                <Text variant="headline" numberOfLines={1}>
-                  {s.name}
-                </Text>
-                {s.popular ? <StatusPill label="Popular" tone="accent" /> : null}
-              </View>
-              {s.description ? (
-                <Text variant="caption" tone="muted">
-                  {s.description}
-                </Text>
-              ) : null}
-              <Text variant="footnote" tone="muted" tabular>
-                {s.durationMin} min · {money(s.price)}
-              </Text>
-            </View>
-            {qty > 0 ? (
-              <View style={styles.stepper}>
-                <IconButton
-                  name="minus"
-                  size={16}
-                  diameter={36}
-                  variant="surface"
-                  accessibilityLabel={`Remove one ${s.name}`}
-                  onPress={() => decrement(s.id ?? s.name)}
-                />
-                <Text variant="headline" tabular style={styles.qty}>
-                  {qty}
-                </Text>
-                <IconButton
-                  name="plus"
-                  size={16}
-                  diameter={36}
-                  variant="surface"
-                  accessibilityLabel={`Add one ${s.name}`}
-                  onPress={() => addService(s)}
-                />
-              </View>
-            ) : (
-              <Button
-                label="Add"
-                variant="secondary"
-                size="sm"
-                icon="plus"
-                fullWidth={false}
-                onPress={() => addService(s)}
-              />
-            )}
-          </Card>
-        );
-      })}
+      <View style={styles.serviceGrid}>
+        {provider.services.map((s) => (
+          <ServiceCard
+            key={s.id ?? s.name}
+            width={cardW}
+            categorySlug={categorySlug}
+            title={s.name}
+            durationMin={s.durationMin}
+            price={s.price}
+            tag={s.popular ? 'POPULAR' : undefined}
+            rating={provider.rating}
+            ratingCount={provider.reviewCount}
+            cartKey={s.id ?? s.name}
+            providerId={provider.id}
+            providerName={provider.name}
+          />
+        ))}
+      </View>
 
       <Text variant="headline" style={styles.subhead}>
         Availability
@@ -902,6 +839,7 @@ const styles = StyleSheet.create({
   },
   flex1: { flex: 1 },
   serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   serviceNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   qty: { minWidth: 20, textAlign: 'center' },
