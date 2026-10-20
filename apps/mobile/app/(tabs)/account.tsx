@@ -20,7 +20,14 @@ import { useAuthStore } from '../../src/stores/authStore';
 import { useBookingsStore } from '../../src/stores/bookingsStore';
 import { useFavouritesStore } from '../../src/stores/favouritesStore';
 import { useWalletStore } from '../../src/stores/walletStore';
-import { useColors, radius, spacing, type Palette } from '../../src/theme';
+import {
+  useColors,
+  useTokens,
+  radius,
+  spacing,
+  type Palette,
+  type NovaTokens,
+} from '../../src/theme';
 import { useMoney } from '../../src/i18n';
 
 const MENU: { icon: IconName; label: string; href: string }[] = [
@@ -38,9 +45,21 @@ const MENU: { icon: IconName; label: string; href: string }[] = [
   { icon: 'shield-check', label: 'Legal & guidelines', href: '/legal' },
 ];
 
+/** Distinct IconChip tints — cycled so no two adjacent rows share a colour. */
+function chipTints(t: NovaTokens): { bg: string; fg: string }[] {
+  return [
+    { bg: t.coralSoft, fg: t.coral },
+    { bg: t.skySoft, fg: t.sky },
+    { bg: t.successSoft, fg: t.success },
+    { bg: t.sunshineSoft, fg: t.warning },
+    { bg: t.primarySoft, fg: t.text },
+  ];
+}
+
 export default function AccountScreen() {
   const router = useRouter();
   const c = useColors();
+  const t = useTokens();
   const money = useMoney();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -184,23 +203,26 @@ export default function AccountScreen() {
         )}
 
         <View style={styles.menu}>
-          {MENU.map((item, i) => (
-            <PressableScale
-              key={item.label}
-              onPress={() => router.push(route(item.href))}
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-              style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
-            >
-              <View style={styles.menuIcon}>
-                <Icon name={item.icon} size={20} color={c.brand.tint} />
-              </View>
-              <Text variant="headline" style={styles.menuLabel}>
-                {item.label}
-              </Text>
-              <Icon name="chevron-right" size={20} color={c.text.muted} />
-            </PressableScale>
-          ))}
+          {MENU.map((item, i) => {
+            const tint = chipTints(t)[i % chipTints(t).length];
+            return (
+              <PressableScale
+                key={item.label}
+                onPress={() => router.push(route(item.href))}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                style={[styles.menuRow, i < MENU.length - 1 && styles.menuDivider]}
+              >
+                <View style={[styles.menuIcon, { backgroundColor: tint.bg }]}>
+                  <Icon name={item.icon} size={20} color={tint.fg} />
+                </View>
+                <Text variant="headline" style={styles.menuLabel}>
+                  {item.label}
+                </Text>
+                <Icon name="chevron-right" size={20} color={c.text.muted} />
+              </PressableScale>
+            );
+          })}
         </View>
 
         <Button
