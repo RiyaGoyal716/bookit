@@ -1,6 +1,6 @@
 // NOVA component library. Import UI primitives from here.
 export { Icon } from './Icon';
-export type { IconName, IconSize, IconProps } from './Icon';
+export type { IconName, IconSize, IconProps, IconWeightProp } from './Icon';
 export { Text } from './Text';
 export type { TextVariant, TextTone, TextProps } from './Text';
 export { PressableScale } from './PressableScale';
@@ -36,6 +36,15 @@ export { EmptyState } from './EmptyState';
 export type { EmptyArt } from './EmptyState';
 export { FloatingTabBar } from './FloatingTabBar';
 export type { TabBarProps } from './FloatingTabBar';
+export {
+  useTabBarInset,
+  tabBarInset,
+  useTabBarScroll,
+  useRegisterScrollTop,
+  scrollTabToTop,
+  setTabBarHidden,
+  TAB_BAR_HEIGHT,
+} from './useTabBarInset';
 export { LiveActivityPill } from './LiveActivityPill';
 export type { LiveActivityPillProps } from './LiveActivityPill';
 // NOVA v3 "Bookit-original" components.

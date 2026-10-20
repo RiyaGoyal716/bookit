@@ -13,6 +13,8 @@ import {
   PressableScale,
   StatusPill,
   Text,
+  useTabBarInset,
+  useTabBarScroll,
   type StatusTone,
   type ContextMenuAction,
 } from '../../src/components/ui';
@@ -44,6 +46,8 @@ export default function BookingsScreen() {
   const c = useColors();
   const money = useMoney();
   const insets = useSafeAreaInsets();
+  const tabInset = useTabBarInset();
+  const { onScroll } = useTabBarScroll();
   const styles = useMemo(() => makeStyles(c), [c]);
   const bookings = useBookingsStore((s) => s.bookings);
   const addItem = useCartStore((s) => s.addItem);
@@ -142,8 +146,10 @@ export default function BookingsScreen() {
       <FlashList
         data={filtered}
         keyExtractor={(b: Booking) => b.id}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshing={refreshing}
         onRefresh={onRefresh}
         ItemSeparatorComponent={() => <View style={styles.separator} />}

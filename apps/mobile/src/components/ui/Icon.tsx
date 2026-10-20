@@ -238,12 +238,15 @@ const registry = {
 
 export type IconName = keyof typeof registry;
 
-/** Allowed icon sizes (NOVA: 16 / 20 / 24 only). */
-export type IconSize = 16 | 20 | 24;
+/** Phosphor icon weight, re-exported so screens never import phosphor directly. */
+export type IconWeightProp = IconWeight;
+
+/** Allowed icon sizes. 26 / 28 are reserved for floating chrome (the tab bar). */
+export type IconSize = 16 | 20 | 24 | 26 | 28;
 
 export interface IconProps {
   name: IconName;
-  /** 16 / 20 / 24. Default 20. */
+  /** 16 / 20 / 24 (26 / 28 for the tab bar). Default 20. */
   size?: IconSize;
   /** Defaults to the current text colour. */
   color?: string;

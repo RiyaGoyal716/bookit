@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -36,6 +36,9 @@ import {
   LivePill,
   Coachmark,
   LogoRefresh,
+  useTabBarInset,
+  useTabBarScroll,
+  useRegisterScrollTop,
 } from '../../src/components/ui';
 import type { BentoItem } from '../../src/components/ui';
 import { Fluent3D } from '../../src/assets/3d';
@@ -83,6 +86,11 @@ export default function Home() {
   const c = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabInset = useTabBarInset();
+  const { onScroll } = useTabBarScroll();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), []);
+  useRegisterScrollTop('index', scrollToTop);
   const user = useAuthStore((s) => s.user);
   const unread = useNotificationsStore((s) => s.unreadCount());
   const bookings = useBookingsStore((s) => s.bookings);
@@ -164,7 +172,10 @@ export default function Home() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LogoRefresh refreshing={refreshing} topInset={insets.top} />
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + spacing.sm, paddingBottom: 150 }}
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: insets.top + spacing.sm, paddingBottom: tabInset }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.accent} />

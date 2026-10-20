@@ -4,6 +4,8 @@ export interface AuthUser {
   name: string;
   phone: string;
   email?: string;
+  /** Optional profile photo URL; falls back to initials when absent. */
+  avatar?: string;
 }
 
 interface AuthState {

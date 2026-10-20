@@ -5,7 +5,14 @@ import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EmptyState, Icon, PressableScale, Text } from '../../src/components/ui';
+import {
+  EmptyState,
+  Icon,
+  PressableScale,
+  Text,
+  useTabBarInset,
+  useTabBarScroll,
+} from '../../src/components/ui';
 import { route } from '../../src/lib/nav';
 import { useChatStore, type Conversation } from '../../src/stores/chatStore';
 import { useNotificationsStore } from '../../src/stores/notificationsStore';
@@ -15,6 +22,8 @@ export default function InboxScreen() {
   const router = useRouter();
   const c = useColors();
   const insets = useSafeAreaInsets();
+  const tabInset = useTabBarInset();
+  const { onScroll } = useTabBarScroll();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const conversations = useChatStore((s) => s.conversations);
@@ -61,8 +70,10 @@ export default function InboxScreen() {
       <FlashList
         data={sorted}
         keyExtractor={(conv: Conversation) => conv.id}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <EmptyState

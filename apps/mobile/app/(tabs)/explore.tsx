@@ -23,6 +23,8 @@ import {
   EmptyState,
   AnimatedListItem,
   ContextMenu,
+  useTabBarInset,
+  useTabBarScroll,
 } from '../../src/components/ui';
 import { useProviderCardActions } from '../../src/lib/providerActions';
 
@@ -79,6 +81,8 @@ export default function Explore() {
   const t = useTokens();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabInset = useTabBarInset();
+  const { onScroll } = useTabBarScroll();
   const compareIds = useCompareStore((s) => s.ids);
   const [cat, setCat] = useState<string | null>(null);
   const [mode, setMode] = useState(0); // 0 list, 1 map
@@ -143,7 +147,9 @@ export default function Explore() {
         <FlashList
           data={list}
           keyExtractor={(p) => p.id}
-          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 140 }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: tabInset }}
           ListEmptyComponent={
             <EmptyState art="search" title="No pros here yet" message="Try another category." />
           }
